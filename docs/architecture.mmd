@@ -1,0 +1,18 @@
+flowchart TD
+    A[Storage]
+    A --> B[(Flash)]
+    A --> C[(Sd Card)]
+    A --> H[Telemetria]
+
+    D[Sensors]
+    D --> E[IMU]
+    D --> F[Altimeter]
+    D ==> I
+    D -..-> A
+
+    I[Kalman Filter]
+    I ==> G
+    I -..-> A
+
+    G[Flight Mode]
+    G -..->A
