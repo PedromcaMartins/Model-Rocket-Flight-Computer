@@ -1,0 +1,44 @@
+{
+  "configurations": [
+    {
+      "chip": "STM32F413ZHJx",
+      "consoleLogLevel": "Console",
+      "coreConfigs": [
+        {
+          "coreIndex": 0,
+          "programBinary": "target/thumbv7em-none-eabi/debug/test-stm",
+          "rttChannelFormats": [
+            {
+              "channelNumber": 0,
+              "dataFormat": "String",
+              "showTimestamps": true
+            },
+            {
+              "channelNumber": 1,
+              "dataFormat": "BinaryLE"
+            }
+          ],
+          "rttEnabled": true,
+          "svdFile": ""
+        }
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "RUST_LOG": "info"
+      },
+      "flashingConfig": {
+        "flashingEnabled": true,
+        "formatOptions": {},
+        "haltAfterReset": false
+      },
+      "name": "probe_rs",
+      "request": "launch",
+      "runtimeArgs": [
+        "dap-server"
+      ],
+      "runtimeExecutable": "probe-rs",
+      "type": "probe-rs-debug"
+    }
+  ],
+  "version": "0.2.0"
+}

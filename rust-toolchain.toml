@@ -1,0 +1,5 @@
+# This file was automatically generated.
+
+[toolchain]
+components = [ "rust-src", "rustfmt", "llvm-tools" ]
+targets = ["thumbv7em-none-eabihf"]
