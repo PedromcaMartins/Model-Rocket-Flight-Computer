@@ -3,12 +3,13 @@
 
 mod io_mapping;
 
+use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP280};
 #[allow(unused_imports)]
 use defmt::*;
 
-use embassy_stm32::{i2c::I2c, sdmmc::{DataBlock, Sdmmc}, time::Hertz, Config};
+use embassy_stm32::{i2c::I2c, sdmmc::{DataBlock, Sdmmc}, time::Hertz};
 use embassy_time::{Delay, Instant, Timer};
-use io_mapping::{Bno055I2cMode, IOMapping, SdCard, SdCardDma};
+use io_mapping::{Bmp280I2cMode, Bno055I2cMode, IOMapping, SdCard, SdCardDma};
 use {defmt_rtt as _, panic_probe as _};
 
 use embassy_executor::Spawner;
@@ -17,7 +18,7 @@ use bno055::{BNO055OperationMode, Bno055};
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    let mut config = Config::default();
+    let mut config = embassy_stm32::Config::default();
     {
         use embassy_stm32::rcc::*;
         config.rcc.hse = Some(Hse {
@@ -70,6 +71,28 @@ async fn imu(i2c: I2c<'static, Bno055I2cMode>) {
                 error!("{:?}", e);
             }
         }
+    }
+}
+
+#[embassy_executor::task]
+async fn altimeter(i2c: I2c<'static, Bmp280I2cMode>) {
+    let mut altimeter = BMP280::new(i2c).unwrap();
+    altimeter.set_config(Config {
+        filter: Filter::c16, 
+        t_sb: Standby::ms0_5
+    });
+    altimeter.set_control(Control { 
+        osrs_t: Oversampling::x1, 
+        osrs_p: Oversampling::x4, 
+        mode: PowerMode::Normal
+    });
+
+    let pressure = altimeter.pressure();
+    let temperature = altimeter.temp();
+
+    loop {
+        info!("Pressure: {:?} Pa, Temperature: {:?} °C", pressure, temperature);
+        Timer::after_millis(500).await;
     }
 }
 
