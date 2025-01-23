@@ -70,7 +70,7 @@ incremental = true
 defmt = ["dep:defmt"]
 defmt-rtt = ["dep:defmt-rtt"]
 panic-probe = ["dep:panic-probe"]
-default = ["debug"]
+default = ["debug", "io_mapping_v1"]
 debug = [
     "defmt",
     "defmt-rtt",
@@ -85,7 +85,9 @@ debug = [
     # "embassy-usbd/defmt",
     # "embassy-net/defmt",
     # "embassy-net-wiznet/defmt",
+    "bno055/defmt-03",
 ]
 release = [
     "embassy-stm32/low-power",
 ]
+io_mapping_v1 = []
