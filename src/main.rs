@@ -21,27 +21,35 @@ async fn main(spawner: Spawner) {
     let mut config = embassy_stm32::Config::default();
     {
         use embassy_stm32::rcc::*;
-        config.rcc.hse = Some(Hse {
-            freq: Hertz(8_000_000),
-            mode: HseMode::Bypass,
-        });
-        config.rcc.pll_src = PllSource::HSE;
+        use embassy_stm32::rcc::mux::*;
+        config.rcc.hsi = true;
+        config.rcc.hse = None;
+        config.rcc.sys = Sysclk::PLL1_P;
+        config.rcc.pll_src = PllSource::HSI;
         config.rcc.pll = Some(Pll {
-            prediv: PllPreDiv::DIV4,
-            mul: PllMul::MUL168,
-            divp: Some(PllPDiv::DIV2), // 8mhz / 4 * 168 / 2 = 168Mhz.
-            divq: Some(PllQDiv::DIV7), // 8mhz / 4 * 168 / 7 = 48Mhz.
+            prediv: PllPreDiv::DIV8,
+            mul: PllMul::MUL100,
+            divp: Some(PllPDiv::DIV2), // 16mhz / 8 * 96 / 2 = 96Mhz.
+            divq: Some(PllQDiv::DIV4), // 16mhz / 8 * 96 / 4 = 48Mhz.
             divr: None,
         });
+        config.rcc.plli2s = Some(Pll { 
+            prediv: PllPreDiv::DIV16, 
+            mul: PllMul::MUL192, 
+            divp: None, 
+            divq: Some(PllQDiv::DIV2), // 16mhz / 16 * 192 / 2 = 96Mhz.
+            divr: None, 
+        });
         config.rcc.ahb_pre = AHBPrescaler::DIV1;
-        config.rcc.apb1_pre = APBPrescaler::DIV4;
-        config.rcc.apb2_pre = APBPrescaler::DIV2;
-        config.rcc.sys = Sysclk::PLL1_P;
+        config.rcc.apb1_pre = APBPrescaler::DIV2;
+        config.rcc.apb2_pre = APBPrescaler::DIV1;
+
+        config.rcc.mux.sdiosel = Sdiosel::CLK48;
     }
     let p = embassy_stm32::init(config);
     let io_mapping = IOMapping::init(p);
 
-    unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
+    // unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
     unwrap!(spawner.spawn(sd_card(io_mapping.sd_card)));
 }
 
@@ -103,7 +111,7 @@ async fn sd_card(mut sd_card: Sdmmc<'static, SdCard, SdCardDma>) {
 
     let mut err = None;
     loop {
-        match sd_card.init_card(Hertz::mhz(2)).await {
+        match sd_card.init_card(Hertz::mhz(25)).await {
             Ok(_) => break,
             Err(e) => {
                 if err != Some(e) {
