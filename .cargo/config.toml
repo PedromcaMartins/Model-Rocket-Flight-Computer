@@ -5,7 +5,7 @@ runner = [
   "probe-rs", "run", 
   "--chip", "STM32F413ZHJx", 
   "--connect-under-reset", 
-#   "--log-format", "[{t} {L:>1} {f}:{l:>0}] {s}"
+  "--log-format", "[{t} {L:>1} {f}:{l:>0}] {s}"
 ]
 
 rustflags = [

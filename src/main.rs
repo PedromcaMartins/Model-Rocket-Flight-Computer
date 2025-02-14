@@ -49,7 +49,7 @@ async fn main(spawner: Spawner) {
     let p = embassy_stm32::init(config);
     let io_mapping = IOMapping::init(p);
 
-    // unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
+    unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
     unwrap!(spawner.spawn(sd_card(io_mapping.sd_card)));
 }
 
@@ -59,7 +59,7 @@ async fn imu(i2c: I2c<'static, Bno055I2cMode>) {
     Timer::at(Instant::from_millis(650)).await;
 
     let mut delay = Delay;
-    let mut imu = Bno055::new(i2c);
+    let mut imu = Bno055::new(i2c).with_alternative_address();
 
     imu.init(&mut delay).unwrap();
 
@@ -126,29 +126,4 @@ async fn sd_card(mut sd_card: Sdmmc<'static, SdCard, SdCardDma>) {
 
     info!("Card: {:#?}", Debug2Format(card));
     info!("Clock: {}", sd_card.clock());
-
-    // Arbitrary block index
-    let block_idx = 16;
-
-    // SDMMC uses `DataBlock` instead of `&[u8]` to ensure 4 byte alignment required by the hardware.
-    let mut block = DataBlock([0u8; 512]);
-
-    sd_card.read_block(block_idx, &mut block).await.unwrap();
-    info!("Read: {=[u8]:X}...{=[u8]:X}", block[..8], block[512 - 8..]);
-
-    info!("Filling block with 0x55");
-    block.fill(0x55);
-    sd_card.write_block(block_idx, &block).await.unwrap();
-    info!("Write done");
-
-    sd_card.read_block(block_idx, &mut block).await.unwrap();
-    info!("Read: {=[u8]:X}...{=[u8]:X}", block[..8], block[512 - 8..]);
-
-    info!("Filling block with 0xAA");
-    block.fill(0xAA);
-    sd_card.write_block(block_idx, &block).await.unwrap();
-    info!("Write done");
-
-    sd_card.read_block(block_idx, &mut block).await.unwrap();
-    info!("Read: {=[u8]:X}...{=[u8]:X}", block[..8], block[512 - 8..]);
 }

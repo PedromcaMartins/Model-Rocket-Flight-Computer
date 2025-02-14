@@ -32,7 +32,7 @@ impl IOMapping<'_> {
                 version: 1,
                 bno055_i2c: I2c::new_blocking(p.I2C2, p.PB10, p.PB11, Hertz::khz(400), Default::default()),
                 bmp280_i2c: I2c::new_blocking(p.I2C1, p.PB8, p.PB9, Hertz::khz(400), Default::default()),
-                sd_card: Sdmmc::new_4bit(p.SDIO, Irqs, p.DMA2_CH3, p.PC12, p.PD2, p.PC8, p.PC9, p.PC10, p.PC11, Default::default()),
+                sd_card: Sdmmc::new_1bit(p.SDIO, Irqs, p.DMA2_CH3, p.PC12, p.PD2, p.PC8, Default::default()),
                 sd_card_detect: Input::new(p.PG2, Pull::None),
             }
         )
