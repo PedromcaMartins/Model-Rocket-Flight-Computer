@@ -5,10 +5,10 @@ name = "flight-computer"
 edition = "2021"
 version = "0.1.0"
 
-[patch.crates-io]
-embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
-embassy-executor = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
-embassy-stm32 = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
+# [patch.crates-io]
+# embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
+# embassy-executor = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
+# embassy-stm32 = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
 
 [dependencies]
 embassy-executor = { version = "0.7.0", features = ["task-arena-size-4096", "arch-cortex-m", "executor-thread"] }
@@ -47,6 +47,7 @@ bno055 = "0.4.0"
 # micromath = "2.0.0"
 # static_cell = "2"
 # chrono = { version = "^0.4", default-features = false}
+critical-section = "1.2"
 
 [[bin]]
 name = "flight-computer"
@@ -54,17 +55,17 @@ path = "src/main.rs"
 test = false
 bench = false
 
-[profile.dev]
-debug = true
-lto = true
-opt-level = "z"
-incremental = true
+# [profile.dev]
+# debug = true
+# lto = true
+# opt-level = "z"
+# incremental = true
 
-[profile.release]
-debug = false
-lto = true
-opt-level = "z"
-incremental = true
+# [profile.release]
+# debug = false
+# lto = true
+# opt-level = "z"
+# incremental = true
 
 [features]
 defmt = ["dep:defmt"]
