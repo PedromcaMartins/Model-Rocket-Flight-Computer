@@ -7,7 +7,7 @@ use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP
 #[allow(unused_imports)]
 use defmt::*;
 
-use embassy_stm32::{i2c::I2c, sdmmc::{DataBlock, Sdmmc}, time::Hertz};
+use embassy_stm32::{i2c::I2c, sdmmc::Sdmmc, time::Hertz};
 use embassy_time::{Delay, Instant, Timer};
 use io_mapping::{Bmp280I2cMode, Bno055I2cMode, IOMapping, SdCard, SdCardDma};
 use {defmt_rtt as _, panic_probe as _};
