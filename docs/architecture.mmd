@@ -1,18 +1,15 @@
 flowchart TD
-    A[Storage]
-    A --> B[(Flash)]
-    A --> C[(Sd Card)]
-    A --> H[Telemetry]
+    A[Telemetry]
+    %% A --> Flash[(Flash)]
+    A --> SdCard[(Sd Card)]
+    A --> Uart
+    %% A --> OLED
+    A -.-> macro_telemetry!["telemetry!()"]
+    A -.-> macro_error!["error!()"]
 
-    D[Sensors]
-    D --> E[IMU]
-    D --> F[Altimeter]
-    D ==> G
-    D -..-> A
+    %% FlightMode[Flight Mode]
 
-    %% I[Kalman Filter]
-    %% I ==> G
-    %% I -..-> A
-
-    G[Flight Mode]
-    G -..->A
+    B[Sensors]
+    B --> IMU[BNO055]
+    B --> GPS[Ublox Neo-7M]
+    B --> Barometer[BMP180]
