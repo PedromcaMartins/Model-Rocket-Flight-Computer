@@ -1,10 +1,10 @@
-use gui::{simulated_telem, MyApp};
+use gui::{simulated_telem, GroundStation};
 use tokio::sync::mpsc;
 
 mod defmt_parser;
 mod gui;
 
-type Message = String;
+type Message = (u64, f64);
 
 #[tokio::main]
 async fn main() -> eframe::Result<()> {
@@ -24,7 +24,7 @@ async fn main() -> eframe::Result<()> {
         "Ground Station",
         options,
         Box::new(|_cc| {
-            Ok(Box::new(MyApp::new(rx)))
+            Ok(Box::new(GroundStation::new(rx)))
         }),
     )
 }

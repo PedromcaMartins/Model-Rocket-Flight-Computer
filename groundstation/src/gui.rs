@@ -1,40 +1,61 @@
-use std::fmt::format;
-
 use eframe::egui;
-use egui_plot::{Line, Plot, PlotPoints};
 use tokio::{sync::mpsc, time::Instant};
 
 use crate::Message;
 
-pub struct MyApp {
+#[derive(PartialEq)]
+enum Sections {
+    // Home,
+    Terminal,
+    // Graphs,
+}
+
+pub struct GroundStation {
     rx: mpsc::Receiver<Message>,
-    data: Vec<Message>
+    data: Vec<Message>,
+    section: Sections,
 }
 
-impl MyApp {
+impl GroundStation {
     pub fn new(rx: mpsc::Receiver<Message>) -> Self {
-        Self { rx, data: Vec::new() }
+        Self { rx, data: Vec::new(), section: Sections::Terminal }
     }
-}
 
-impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Receive Message updates
+    fn update_data(&mut self) {
         while let Ok(point) = self.rx.try_recv() {
             self.data.push(point);
             if self.data.len() > 100 {
                 self.data.remove(0); // Keep last 500 points for performance
             }
         }
+    }
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // display the messages in a scrollable area
-            ui.heading("Telemetry Data");
-            egui::ScrollArea::both().show(ui, |ui| {
-                for message in &self.data {
-                    ui.label(message);
+    fn terminal(&mut self, ui: &mut egui::Ui) {
+        egui::ScrollArea::both()
+            .max_height(f32::INFINITY)
+            .max_width(f32::INFINITY)
+            .auto_shrink(false)
+            .stick_to_bottom(true)
+            .show(ui, |ui| {
+                for (time, value) in &self.data {
+                    ui.label(format!("Time: {}, Value: {}", time, value));
                 }
             });
+    }
+}
+
+impl eframe::App for GroundStation {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.update_data();
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.selectable_value(&mut self.section, Sections::Terminal, "Terminal");
+            ui.separator();
+            match self.section {
+                Sections::Terminal => {
+                    self.terminal(ui);
+                }
+            }
         });
 
         ctx.request_repaint(); // Keep updating UI
@@ -43,12 +64,11 @@ impl eframe::App for MyApp {
 
 pub async fn simulated_telem(tx: mpsc::Sender<Message>) {
     let start_time = Instant::now();
-    let mut value = 0;
+    let mut value;
     loop {
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-        // let time = start_time.elapsed().as_secs_f64();
-        // value = (time * 2.0).sin(); // Simulated Message data (sine wave)
-        value += 1;
-        tx.send(format!("{}", value)).await.ok();
+        tokio::time::sleep(std::time::Duration::from_millis(40)).await;
+        let time = start_time.elapsed().as_millis() as u64;
+        value = (time as f64 * 2.0).sin(); // Simulated telemetry data (sine wave)
+        tx.send((time, value)).await.ok();
     }
 }
