@@ -1,10 +1,9 @@
-use std::{path::PathBuf, time::Duration};
+use std::{path::{Path, PathBuf}, time::Duration};
 
 use anyhow::anyhow;
 use defmt_decoder::{DecodeError, Frame, Location, Locations, Table};
 use tokio::{fs, io::{self, AsyncReadExt, Stdin}, net::TcpStream, sync::mpsc::Sender};
 use tokio_serial::{SerialPort, SerialPortBuilderExt, SerialStream};
-
 
 #[derive(Debug)]
 pub struct LogMessage {
@@ -16,6 +15,17 @@ pub struct LogMessage {
 
 impl LogMessage {
     pub fn new(frame: &Frame, locs: &Option<Locations>) -> Self {
+        let location = locs.as_ref()
+        .and_then(|locs| locs.get(&frame.index()))
+        .map(|loc| {
+            let path = to_relative_from_src(&loc.file).unwrap_or_else(|| loc.file.clone());
+            Location {
+                file: path,
+                line: loc.line,
+                module: loc.module.clone(),
+            }
+        });
+
         Self {
             timestamp: frame
                 .display_timestamp()
@@ -23,9 +33,7 @@ impl LogMessage {
                 .unwrap_or_default(),
             level: frame.level(),
             message: frame.display_message().to_string(),
-            location: locs.as_ref()
-                .and_then(|locs| locs.get(&frame.index()))
-                .cloned(),
+            location,
         }
     }
 }
@@ -79,7 +87,7 @@ pub async fn handle_stream(elf: PathBuf, source: &mut Source, tx: Sender<LogMess
     };
 
     let mut buf = [0; READ_BUFFER_SIZE];
-    let mut num_messages: u64 = 0;
+    log::info!("listening for defmt messages");
 
     loop {
         // read from stdin or tcpstream and push it to the decoder
@@ -89,13 +97,11 @@ pub async fn handle_stream(elf: PathBuf, source: &mut Source, tx: Sender<LogMess
         loop {
             match table.decode(&buf[start..n]) {
                 Ok((frame, consumed)) => {
-                    println!("{:?}", LogMessage::new(&frame, &locs));
+                    let message = LogMessage::new(&frame, &locs);
+                    log::info!("{:?}", message);
+                    tx.send(message).await?;
+
                     start += consumed;
-                    num_messages += 1;
-                    if num_messages % 1000 == 0 {
-                        log::debug!("{} messages decoded", num_messages);
-                    }
-                    tx.send(LogMessage::new(&frame, &locs)).await?;
                 },
                 Err(DecodeError::UnexpectedEof) => break,
                 Err(DecodeError::Malformed) => match table.encoding().can_recover() {
@@ -127,7 +133,7 @@ use tokio::{
 
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 
-fn list_ports() -> anyhow::Result<()> {
+pub fn list_ports() -> anyhow::Result<()> {
     let ports = tokio_serial::available_ports()?;
     if ports.is_empty() {
         println!("No COM ports found.");
@@ -140,7 +146,7 @@ fn list_ports() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_and_watch(elf: PathBuf, source: &mut Source, tx_log: Sender<LogMessage>) -> anyhow::Result<()> {
+pub async fn run_and_watch(elf: PathBuf, mut source: Source, tx_log: Sender<LogMessage>) -> anyhow::Result<()> {
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
 
     let path = elf.clone().canonicalize().unwrap();
@@ -159,7 +165,7 @@ async fn run_and_watch(elf: PathBuf, source: &mut Source, tx_log: Sender<LogMess
 
     loop {
         select! {
-            r = handle_stream(elf.clone(), source, tx_log.clone()) => r?,
+            r = handle_stream(elf.clone(), &mut source, tx_log.clone()) => r?,
             _ = has_file_changed(&mut rx, &path) => ()
         }
     }
@@ -176,4 +182,16 @@ async fn has_file_changed(rx: &mut Receiver<Result<Event, notify::Error>>, path:
         }
     }
     true
+}
+
+fn to_relative_from_src(absolute_path: &Path) -> Option<PathBuf> {
+    // Find "src" in the path components
+    for (i, component) in absolute_path.components().enumerate() {
+        if component.as_os_str() == "src" {
+            // Create a relative path after "src/"
+            return Some(absolute_path.iter().skip(i + 1).collect());
+        }
+    }
+    
+    None // "src" not found in the path
 }
