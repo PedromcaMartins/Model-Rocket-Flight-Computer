@@ -2,16 +2,16 @@ use std::{path::PathBuf, time::Duration};
 
 use anyhow::anyhow;
 use defmt_decoder::{DecodeError, Frame, Location, Locations, Table};
-use tokio::{fs, io::{self, AsyncReadExt, Stdin}, net::TcpStream};
+use tokio::{fs, io::{self, AsyncReadExt, Stdin}, net::TcpStream, sync::mpsc::Sender};
 use tokio_serial::{SerialPort, SerialPortBuilderExt, SerialStream};
 
 
 #[derive(Debug)]
 pub struct LogMessage {
-    timestamp: String,
-    level: Option<defmt_parser::Level>,
-    message: String,
-    location: Option<Location>, 
+    pub timestamp: String,
+    pub level: Option<defmt_parser::Level>,
+    pub message: String,
+    pub location: Option<Location>, 
 }
 
 impl LogMessage {
@@ -65,7 +65,7 @@ impl Source {
 
 const READ_BUFFER_SIZE: usize = 1024;
 
-pub async fn handle_stream(elf: PathBuf, source: &mut Source) -> anyhow::Result<()> {
+pub async fn handle_stream(elf: PathBuf, source: &mut Source, tx: Sender<LogMessage>) -> anyhow::Result<()> {
     let bytes = fs::read(elf).await?;
     let table = Table::parse(&bytes)?.ok_or_else(|| anyhow!(".defmt data not found"))?;
     let locs = table.get_locations(&bytes)?;
@@ -95,6 +95,7 @@ pub async fn handle_stream(elf: PathBuf, source: &mut Source) -> anyhow::Result<
                     if num_messages % 1000 == 0 {
                         log::debug!("{} messages decoded", num_messages);
                     }
+                    tx.send(LogMessage::new(&frame, &locs)).await?;
                 },
                 Err(DecodeError::UnexpectedEof) => break,
                 Err(DecodeError::Malformed) => match table.encoding().can_recover() {
@@ -119,9 +120,6 @@ pub async fn handle_stream(elf: PathBuf, source: &mut Source) -> anyhow::Result<
 /*                                   Extras                                   */
 /* -------------------------------------------------------------------------- */
 
-use std::{
-    env, 
-};
 use tokio::{
     select,
     sync::mpsc::Receiver,
@@ -142,7 +140,7 @@ fn list_ports() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_and_watch(elf: PathBuf, source: &mut Source) -> anyhow::Result<()> {
+async fn run_and_watch(elf: PathBuf, source: &mut Source, tx_log: Sender<LogMessage>) -> anyhow::Result<()> {
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
 
     let path = elf.clone().canonicalize().unwrap();
@@ -161,7 +159,7 @@ async fn run_and_watch(elf: PathBuf, source: &mut Source) -> anyhow::Result<()> 
 
     loop {
         select! {
-            r = handle_stream(elf.clone(), source) => r?,
+            r = handle_stream(elf.clone(), source, tx_log.clone()) => r?,
             _ = has_file_changed(&mut rx, &path) => ()
         }
     }

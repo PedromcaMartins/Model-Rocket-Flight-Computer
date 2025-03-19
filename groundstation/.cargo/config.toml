@@ -1,0 +1,2 @@
+[alias]
+mock = "run --bin mock"

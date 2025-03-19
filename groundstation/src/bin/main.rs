@@ -1,19 +1,13 @@
-use gui::{simulated_telem, GroundStation};
+use groundstation::GroundStation;
 use tokio::sync::mpsc;
 
-mod defmt_parser;
-mod gui;
-
-type Message = (u64, f64);
+use groundstation::LogMessage;
 
 #[tokio::main]
 async fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    let (tx, rx) = mpsc::channel::<Message>(100);
-
-    // Simulated telemetry data sender (runs in the background)
-    tokio::spawn(simulated_telem(tx));
+    let (_tx, rx) = mpsc::channel::<LogMessage>(100);
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default(),
