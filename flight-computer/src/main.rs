@@ -6,15 +6,16 @@ mod logger;
 mod tasks;
 mod drivers;
 
+use embassy_time::Timer;
 use io_mapping::IOMapping;
-use logger::init_logger_uart;
+use logger::{init_logger_rtt, init_logger_uart};
 use tasks::{altimeter, imu, sd_card};
 use panic_probe as _;
 
 use embassy_executor::Spawner;
 
 #[embassy_executor::main]
-async fn main(spawner: Spawner) {
+async fn main(_spawner: Spawner) {
     let mut config = embassy_stm32::Config::default();
     {
         use embassy_stm32::rcc::*;
@@ -46,9 +47,20 @@ async fn main(spawner: Spawner) {
     let p = embassy_stm32::init(config);
     let io_mapping = IOMapping::init(p);
 
+    init_logger_rtt();
     init_logger_uart(io_mapping.telemetry_uart);
 
-    defmt::unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
-    defmt::unwrap!(spawner.spawn(sd_card(io_mapping.sd_card)));
-    defmt::unwrap!(spawner.spawn(altimeter(io_mapping.bmp280_i2c)));
+    // defmt::unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
+    // defmt::unwrap!(spawner.spawn(sd_card(io_mapping.sd_card)));
+    // defmt::unwrap!(spawner.spawn(altimeter(io_mapping.bmp280_i2c)));
+
+    loop {
+        defmt::info!("Hello, world!");
+        Timer::after_millis(1000).await;
+        defmt::trace!("Hello, world!");
+        defmt::debug!("Hello, world!");
+        defmt::info!("Hello, world!");
+        defmt::warn!("Hello, world!");
+        defmt::error!("Hello, world!");
+    }
 }

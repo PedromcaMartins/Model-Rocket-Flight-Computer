@@ -1,7 +1,10 @@
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use defmt::{global_logger, Logger};
+use defmt::{global_logger, Encoder, Logger};
 use embassy_stm32::{mode::Async, usart::UartTx};
+use rtt::{do_write, handle};
+
+mod rtt;
 
 #[global_logger]
 struct MyLogger;
@@ -10,11 +13,18 @@ struct MyLogger;
 static TAKEN: AtomicBool = AtomicBool::new(false);
 static mut CS_RESTORE: critical_section::RestoreState = critical_section::RestoreState::invalid();
 
+static mut LOG_RTT: Option<Encoder> = None;
 static mut LOG_UART: Option<UartTx<'static, Async>> = None;
+
+pub fn init_logger_rtt() {
+    unsafe {
+        LOG_RTT = Some(Encoder::new())
+    }
+}
 
 pub fn init_logger_uart(uart: UartTx<'static, Async>) {
     unsafe {
-        LOG_UART = Some(uart);
+        LOG_UART = Some(uart)
     }
 }
 
@@ -33,9 +43,23 @@ unsafe impl Logger for MyLogger {
 
         // safety: accessing the `static mut` is OK because we have acquired a critical section.
         unsafe { CS_RESTORE = restore };
+
+        // safety: accessing the `static mut` is OK because we have acquired a critical section.
+        unsafe {
+            if let Some(ref mut rtt) = LOG_RTT {
+                rtt.start_frame(do_write);
+            }
+        }
     }
 
-    unsafe fn release() {
+    unsafe fn release() {        
+        // safety: accessing the `static mut` is OK because we have acquired a critical section.
+        unsafe {
+            if let Some(ref mut rtt) = LOG_RTT {
+                rtt.end_frame(do_write);
+            }
+        }
+
         // safety: accessing the atomic without CAS is OK because we have acquired a critical section.
         TAKEN.store(false, Ordering::Relaxed);
 
@@ -55,6 +79,13 @@ unsafe impl Logger for MyLogger {
                 uart.blocking_write(bytes).unwrap();
             }
         }
+
+        // safety: accessing the `static mut` is OK because we have acquired a critical section.
+        unsafe {
+            if let Some(ref mut rtt) = LOG_RTT {
+                rtt.write(bytes, do_write);
+            }
+        }
     }
 
     unsafe fn flush() {
@@ -64,5 +95,8 @@ unsafe impl Logger for MyLogger {
                 uart.blocking_flush().unwrap();
             }
         }
+
+        // safety: accessing the `&'static _` is OK because we have acquired a critical section.
+        handle().flush();
     }
 }
