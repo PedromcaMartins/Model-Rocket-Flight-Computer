@@ -23,7 +23,7 @@ impl Terminal {
         ui.horizontal(|ui| {
             ui.collapsing("Terminal Config", |ui| {
                 ui.horizontal(|ui| {
-                    ui.label("Default");
+                    ui.label("Presets");
                     ui.radio_value(&mut self.config, TerminalPresets::Raw, "Raw");
                     ui.radio_value(&mut self.config, TerminalPresets::ProbeRS, "Probe-rs");
                 });
@@ -54,21 +54,18 @@ impl Terminal {
                                     ui.label("[");
                                     ui.label(log.timestamp.as_str());
                                     if let Some(level) = log.level {
-                                        ui.label(" ");
                                         match level {
-                                            Level::Trace => ui.colored_label(Color32::GRAY, "TRACE"),
+                                            Level::Trace => ui.colored_label(Color32::LIGHT_GRAY, "TRACE"),
                                             Level::Debug => ui.colored_label(Color32::WHITE, "DEBUG"),
-                                            Level::Info  => ui.colored_label(Color32::GREEN, "INFO"),
-                                            Level::Warn  => ui.colored_label(Color32::ORANGE, "WARN"),
-                                            Level::Error => ui.colored_label(Color32::RED, "ERROR"),
+                                            Level::Info  => ui.colored_label(Color32::LIGHT_GREEN, "INFO"),
+                                            Level::Warn  => ui.colored_label(Color32::LIGHT_YELLOW, "WARN"),
+                                            Level::Error => ui.colored_label(Color32::LIGHT_RED, "ERROR"),
                                         };
                                     }
                                     if let Some(ref loc) = log.location {
-                                        ui.label(" ");
                                         ui.label(format!("{:?}", loc));
                                     }
                                     ui.label("]");
-                                    ui.label(" ");
                                     ui.label(&log.message);
                                 });
                             }

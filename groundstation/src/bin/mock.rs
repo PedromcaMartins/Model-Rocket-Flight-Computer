@@ -31,7 +31,7 @@ async fn simulated_telem(tx: mpsc::Sender<LogMessage>) {
 
         tx.send(
             LogMessage {
-                timestamp: time.to_string(),
+                timestamp: format!("{:.9}", start_time.elapsed().as_secs_f64()),
                 level: Some(Level::Info),
                 message: format!("Value: {}", value),
                 location: Some(Location {
@@ -42,6 +42,6 @@ async fn simulated_telem(tx: mpsc::Sender<LogMessage>) {
             }
         ).await.ok();
 
-        tokio::time::sleep(std::time::Duration::from_millis(40)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
     }
 }
