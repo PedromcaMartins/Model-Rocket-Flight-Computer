@@ -21,13 +21,9 @@ impl Terminal {
         let row_height = ui.text_style_height(&text_style);
 
         ui.horizontal(|ui| {
-            ui.collapsing("Terminal Config", |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Presets");
-                    ui.radio_value(&mut self.config, TerminalPresets::Raw, "Raw");
-                    ui.radio_value(&mut self.config, TerminalPresets::ProbeRS, "Probe-rs");
-                });
-            });
+            ui.label("Presets");
+            ui.radio_value(&mut self.config, TerminalPresets::Raw, "Raw");
+            ui.radio_value(&mut self.config, TerminalPresets::ProbeRS, "Probe-rs");
         });
 
         ui.add_space(8.0);

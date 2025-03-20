@@ -29,3 +29,6 @@ eframe = "0.31"         # Main UI framework (built on egui)
 egui = "0.31"           # UI framework for rendering widgets
 egui_plot = "0.31"      # For real-time plots
 egui_extras = { version = "0.31", features = ["default", "image"] }
+plotters-backend = "0.3"
+plotters = "0.3"
+egui-plotter = "0.4.0"

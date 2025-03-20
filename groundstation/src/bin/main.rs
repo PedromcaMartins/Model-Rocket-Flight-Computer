@@ -9,7 +9,7 @@ use groundstation::LogMessage;
 async fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    let (tx, rx) = mpsc::channel::<LogMessage>(100);
+    let (tx, _rx) = mpsc::channel::<LogMessage>(100);
 
     list_ports().unwrap();
 
@@ -37,7 +37,7 @@ async fn main() -> eframe::Result<()> {
         "Ground Station",
         options,
         Box::new(|_cc| {
-            Ok(Box::new(GroundStation::new(rx)))
+            Ok(Box::new(GroundStation::default()))
         }),
     )
 }

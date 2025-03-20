@@ -2,7 +2,7 @@ use std::{path::{Path, PathBuf}, time::Duration};
 
 use anyhow::anyhow;
 use defmt_decoder::{DecodeError, Frame, Location, Locations, Table};
-use tokio::{fs, io::{self, AsyncReadExt, Stdin}, net::TcpStream, sync::mpsc::Sender};
+use tokio::{fs::{self, File}, io::AsyncReadExt, net::TcpStream};
 use tokio_serial::{SerialPort, SerialPortBuilderExt, SerialStream};
 
 #[derive(Debug)]
@@ -39,14 +39,17 @@ impl LogMessage {
 }
 
 pub enum Source {
-    Stdin(Stdin),
+    File(File),
     Tcp(TcpStream),
     Serial(SerialStream),
 }
 
 impl Source {
-    pub fn stdin() -> Self {
-        Source::Stdin(io::stdin())
+    pub async fn file(path: PathBuf) -> anyhow::Result<Self> {
+        match File::open(path).await {
+            Ok(file) => Ok(Source::File(file)),
+            Err(e) => Err(anyhow!(e)),
+        }
     }
 
     pub async fn tcp(host: String, port: u16) -> anyhow::Result<Self> {
@@ -64,7 +67,7 @@ impl Source {
 
     pub async fn read(&mut self, buf: &mut [u8]) -> anyhow::Result<usize> {
         match self {
-            Source::Stdin(stdin) => Ok(stdin.read(buf).await?),
+            Source::File(file) => Ok(file.read(buf).await?),
             Source::Tcp(tcpstream) => Ok(tcpstream.read(buf).await?),
             Source::Serial(serial) => Ok(serial.read(buf).await?),
         }
@@ -73,7 +76,7 @@ impl Source {
 
 const READ_BUFFER_SIZE: usize = 1024;
 
-pub async fn handle_stream(elf: PathBuf, source: &mut Source, tx: Sender<LogMessage>) -> anyhow::Result<()> {
+pub async fn handle_stream(elf: PathBuf, source: &mut Source, tx: mpsc::Sender<LogMessage>) -> anyhow::Result<()> {
     let bytes = fs::read(elf).await?;
     let table = Table::parse(&bytes)?.ok_or_else(|| anyhow!(".defmt data not found"))?;
     let locs = table.get_locations(&bytes)?;
@@ -128,7 +131,7 @@ pub async fn handle_stream(elf: PathBuf, source: &mut Source, tx: Sender<LogMess
 
 use tokio::{
     select,
-    sync::mpsc::Receiver,
+    sync::mpsc,
 };
 
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
@@ -146,7 +149,7 @@ pub fn list_ports() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn run_and_watch(elf: PathBuf, mut source: Source, tx_log: Sender<LogMessage>) -> anyhow::Result<()> {
+pub async fn run_and_watch(elf: PathBuf, mut source: Source, tx_log: mpsc::Sender<LogMessage>) -> anyhow::Result<()> {
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
 
     let path = elf.clone().canonicalize().unwrap();
@@ -171,7 +174,7 @@ pub async fn run_and_watch(elf: PathBuf, mut source: Source, tx_log: Sender<LogM
     }
 }
 
-async fn has_file_changed(rx: &mut Receiver<Result<Event, notify::Error>>, path: &PathBuf) -> bool {
+async fn has_file_changed(rx: &mut mpsc::Receiver<Result<Event, notify::Error>>, path: &PathBuf) -> bool {
     loop {
         if let Some(Ok(event)) = rx.recv().await {
             if event.paths.contains(path) {

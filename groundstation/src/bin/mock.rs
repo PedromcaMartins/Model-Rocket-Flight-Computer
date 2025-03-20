@@ -11,15 +11,15 @@ use groundstation::LogMessage;
 async fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    let (tx, rx) = mpsc::channel::<LogMessage>(100);
+    let groundstation = GroundStation::default();
 
-    tokio::spawn(simulated_telem(tx));
+    tokio::spawn(simulated_telem(groundstation.clone_tx()));
 
     // Spawn the GUI in a separate thread
     eframe::run_native(
         "Ground Station",
         Default::default(),
-        Box::new(|_cc| Ok(Box::new(GroundStation::new(rx)))),
+        Box::new(|_cc| Ok(Box::new(groundstation))),
     )
 }
 
