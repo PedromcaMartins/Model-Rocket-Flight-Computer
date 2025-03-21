@@ -10,6 +10,7 @@ mod config;
 use config::Config;
 
 mod graphs;
+use graphs::Graphs;
 
 #[derive(PartialEq, Default)]
 enum Sections {
@@ -19,7 +20,8 @@ enum Sections {
     Terminal,
     /// The configuration section
     Config,
-    // Graphs,
+    /// The graphs section
+    Graphs,
 }
 
 /// The Ground Station
@@ -39,6 +41,8 @@ pub struct GroundStation {
     terminal: Terminal,
     /// The configuration section
     config: Config,
+    /// The graphs section
+    graphs: Graphs,
 }
 
 impl Default for GroundStation {
@@ -60,6 +64,7 @@ impl Default for GroundStation {
             section: Default::default(),
             terminal: Default::default(),
             config: Config::new(tx_source),
+            graphs: Default::default(),
         }
     }
 }
@@ -85,6 +90,7 @@ impl eframe::App for GroundStation {
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut self.section, Sections::Terminal, "Terminal");
                 ui.selectable_value(&mut self.section, Sections::Config, "Config");
+                ui.selectable_value(&mut self.section, Sections::Graphs, "Graphs");
             });
 
             ui.separator();
@@ -95,6 +101,9 @@ impl eframe::App for GroundStation {
                 },
                 Sections::Config => {
                     self.config.ui(ui);
+                },
+                Sections::Graphs => {
+                    self.graphs.ui(ui);
                 },
             }
         });
