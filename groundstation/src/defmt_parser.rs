@@ -1,200 +1,125 @@
-use std::{path::{Path, PathBuf}, time::Duration};
+use std::{collections::BTreeMap, env, io::BufRead, path::PathBuf};
 
 use anyhow::anyhow;
-use defmt_decoder::{DecodeError, Frame, Location, Locations, Table};
-use tokio::{fs::{self, File}, io::AsyncReadExt, net::TcpStream};
-use tokio_serial::{SerialPort, SerialPortBuilderExt, SerialStream};
+use circular_buffer::CircularBuffer;
+use defmt_decoder::{DecodeError, Location, Table};
+use tokio::{fs::{self}, sync::mpsc};
 
-#[derive(Debug)]
-pub struct LogMessage {
-    pub timestamp: String,
-    pub level: Option<defmt_parser::Level>,
-    pub message: String,
-    pub location: Option<Location>, 
-}
-
-impl LogMessage {
-    pub fn new(frame: &Frame, locs: &Option<Locations>) -> Self {
-        let location = locs.as_ref()
-        .and_then(|locs| locs.get(&frame.index()))
-        .map(|loc| {
-            let path = to_relative_from_src(&loc.file).unwrap_or_else(|| loc.file.clone());
-            Location {
-                file: path,
-                line: loc.line,
-                module: loc.module.clone(),
-            }
-        });
-
-        Self {
-            timestamp: frame
-                .display_timestamp()
-                .map(|ts| ts.to_string())
-                .unwrap_or_default(),
-            level: frame.level(),
-            message: frame.display_message().to_string(),
-            location,
-        }
-    }
-}
-
-pub enum Source {
-    File(File),
-    Tcp(TcpStream),
-    Serial(SerialStream),
-}
-
-impl Source {
-    pub async fn file(path: PathBuf) -> anyhow::Result<Self> {
-        match File::open(path).await {
-            Ok(file) => Ok(Source::File(file)),
-            Err(e) => Err(anyhow!(e)),
-        }
-    }
-
-    pub async fn tcp(host: String, port: u16) -> anyhow::Result<Self> {
-        match TcpStream::connect((host, port)).await {
-            Ok(stream) => Ok(Source::Tcp(stream)),
-            Err(e) => Err(anyhow!(e)),
-        }
-    }
-
-    pub fn serial(path: PathBuf, baud: u32) -> anyhow::Result<Self> {
-        let mut ser = tokio_serial::new(path.to_string_lossy(), baud).open_native_async()?;
-        ser.set_timeout(Duration::from_millis(500))?;
-        Ok(Source::Serial(ser))
-    }
-
-    pub async fn read(&mut self, buf: &mut [u8]) -> anyhow::Result<usize> {
-        match self {
-            Source::File(file) => Ok(file.read(buf).await?),
-            Source::Tcp(tcpstream) => Ok(tcpstream.read(buf).await?),
-            Source::Serial(serial) => Ok(serial.read(buf).await?),
-        }
-    }
-}
+mod log_message;
+pub use log_message::LogMessage;
+mod source;
+pub use source::Source;
+mod elf_watcher;
+pub use elf_watcher::ElfWatcher;
 
 const READ_BUFFER_SIZE: usize = 1024;
 
-pub async fn handle_stream(elf: PathBuf, source: &mut Source, tx: mpsc::Sender<LogMessage>) -> anyhow::Result<()> {
-    let bytes = fs::read(elf).await?;
-    let table = Table::parse(&bytes)?.ok_or_else(|| anyhow!(".defmt data not found"))?;
-    let locs = table.get_locations(&bytes)?;
+pub struct DefmtParser {
+    elf: PathBuf,
+    table: Table,
+    locs: Option<BTreeMap<u64, Location>>,
+    elf_watcher: ElfWatcher,
 
-    // check if the locations info contains all the indicies
-    let locs = if table.indices().all(|idx| locs.contains_key(&(idx as u64))) {
-        Some(locs)
-    } else {
-        log::warn!("(BUG) location info is incomplete; it will be omitted from the output");
-        None
-    };
+    rx_source: mpsc::Receiver<Option<Source>>,
 
-    let mut buf = [0; READ_BUFFER_SIZE];
-    log::info!("listening for defmt messages");
+    source: Option<Source>,
+    buf: CircularBuffer<1024, u8>,
+    tx_defmt: mpsc::Sender<LogMessage>,
+}
 
-    loop {
-        // read from stdin or tcpstream and push it to the decoder
-        let n = source.read(&mut buf).await?;
-        let mut start = 0;
+impl DefmtParser {
+    pub async fn new(tx_defmt: mpsc::Sender<LogMessage>, rx_source: mpsc::Receiver<Option<Source>>) -> anyhow::Result<Self> {
+        let mut manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+        let _ = manifest_dir.pop();
+        let elf = manifest_dir
+            .join("target")
+            .join("thumbv7em-none-eabihf")
+            .join("debug")
+            .join("flight-computer");
+    
+        log::debug!("absolute path of elf file with defmt messages: {:?}", elf);
+
+        let (table, locs) = Self::load_elf(&elf).await?;
+
+        let elf_watcher = ElfWatcher::new(elf.clone())?;
+
+        Ok(Self {
+            elf,
+            table,
+            locs,
+            elf_watcher,
+            tx_defmt,
+            rx_source,
+            source: None,
+            buf: CircularBuffer::<1024, u8>::new(),
+        })
+    }
+
+    pub async fn run(&mut self) -> anyhow::Result<()> {
+        loop {
+            if self.elf_watcher.has_file_changed().await {
+                (self.table, self.locs) = Self::load_elf(&self.elf).await?;
+                log::info!("elf file changed; reloaded");
+            }
+
+            if let Some(source) = self.rx_source.recv().await {
+                self.source = source;
+                log::info!("source changed to {:?}", self.source);
+            };
+
+            self.handle_source().await?;
+        }
+    }
+
+    async fn load_elf(elf: &PathBuf) -> anyhow::Result<(Table, Option<BTreeMap<u64, Location>>)> {
+        let bytes = fs::read(elf).await?;
+        let table = Table::parse(&bytes)?.ok_or_else(|| anyhow!(".defmt data not found"))?;
+        let locs = table.get_locations(&bytes)?;
+
+        // check if the locations info contains all the indicies
+        let locs = if table.indices().all(|idx| locs.contains_key(&(idx as u64))) {
+            Some(locs)
+        } else {
+            log::warn!("(BUG) location info is incomplete; it will be omitted from the output");
+            None
+        };
+
+        Ok((table, locs))
+    }
+
+    async fn handle_source(&mut self) -> anyhow::Result<()> {
+        let source = self.source.as_mut().ok_or_else(|| anyhow!("source not set"))?;
+        let mut temp = [0; READ_BUFFER_SIZE/2];
+        log::info!("listening for defmt messages");
 
         loop {
-            match table.decode(&buf[start..n]) {
-                Ok((frame, consumed)) => {
-                    let message = LogMessage::new(&frame, &locs);
-                    log::info!("{:?}", message);
-                    tx.send(message).await?;
+            // read from stdin or tcpstream and push it to the decoder
+            let n = source.read(&mut temp).await?;
+            self.buf.extend_from_slice(&temp[..n]);
 
-                    start += consumed;
-                },
-                Err(DecodeError::UnexpectedEof) => break,
-                Err(DecodeError::Malformed) => match table.encoding().can_recover() {
-                    // if recovery is impossible, abort
-                    false => {
-                        log::error!("malformed frame; impossible to recover");
-                        return Err(DecodeError::Malformed.into())
+            loop {
+                match self.table.decode(self.buf.make_contiguous()) {
+                    Ok((frame, consumed)) => {
+                        let message = LogMessage::new(&frame, &self.locs);
+                        log::info!("{:?}", message);
+                        self.tx_defmt.send(message).await?;
+                        self.buf.consume(consumed);
                     },
-                    // if recovery is possible, skip the current frame and continue with new data
-                    true => {
-                        log::warn!("malformed frame skipped");
-                        break;
-                    }
-                },
-            }
-        }
-    }
-}
-
-
-/* -------------------------------------------------------------------------- */
-/*                                   Extras                                   */
-/* -------------------------------------------------------------------------- */
-
-use tokio::{
-    select,
-    sync::mpsc,
-};
-
-use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
-
-pub fn list_ports() -> anyhow::Result<()> {
-    let ports = tokio_serial::available_ports()?;
-    if ports.is_empty() {
-        println!("No COM ports found.");
-    } else {
-        println!("Available COM Ports:");
-        for port in ports {
-            println!(" - {}", port.port_name);
-        }
-    }
-    Ok(())
-}
-
-pub async fn run_and_watch(elf: PathBuf, mut source: Source, tx_log: mpsc::Sender<LogMessage>) -> anyhow::Result<()> {
-    let (tx, mut rx) = tokio::sync::mpsc::channel(1);
-
-    let path = elf.clone().canonicalize().unwrap();
-
-    // We want the elf directory instead of the elf, since some editors remove
-    // and recreate the file on save which will remove the notifier
-    let directory_path = path.parent().unwrap();
-
-    let mut watcher = RecommendedWatcher::new(
-        move |res| {
-            let _ = tx.blocking_send(res);
-        },
-        Config::default(),
-    )?;
-    watcher.watch(directory_path.as_ref(), RecursiveMode::NonRecursive)?;
-
-    loop {
-        select! {
-            r = handle_stream(elf.clone(), &mut source, tx_log.clone()) => r?,
-            _ = has_file_changed(&mut rx, &path) => ()
-        }
-    }
-}
-
-async fn has_file_changed(rx: &mut mpsc::Receiver<Result<Event, notify::Error>>, path: &PathBuf) -> bool {
-    loop {
-        if let Some(Ok(event)) = rx.recv().await {
-            if event.paths.contains(path) {
-                if let notify::EventKind::Create(_) | notify::EventKind::Modify(_) = event.kind {
-                    break;
+                    Err(DecodeError::UnexpectedEof) => break,
+                    Err(DecodeError::Malformed) => match self.table.encoding().can_recover() {
+                        // if recovery is impossible, abort
+                        false => {
+                            log::error!("malformed frame; impossible to recover");
+                            return Err(DecodeError::Malformed.into())
+                        },
+                        // if recovery is possible, skip the current frame and continue with new data
+                        true => {
+                            log::warn!("malformed frame skipped");
+                            break;
+                        }
+                    },
                 }
             }
         }
     }
-    true
-}
-
-fn to_relative_from_src(absolute_path: &Path) -> Option<PathBuf> {
-    // Find "src" in the path components
-    for (i, component) in absolute_path.components().enumerate() {
-        if component.as_os_str() == "src" {
-            // Create a relative path after "src/"
-            return Some(absolute_path.iter().skip(i + 1).collect());
-        }
-    }
-    
-    None // "src" not found in the path
 }

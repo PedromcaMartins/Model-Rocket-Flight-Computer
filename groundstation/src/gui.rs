@@ -1,9 +1,7 @@
-use std::path::PathBuf;
-
 use eframe::egui;
 use tokio::sync::mpsc;
 
-use crate::LogMessage;
+use crate::{defmt_parser::{DefmtParser, Source}, LogMessage};
 
 mod terminal;
 use terminal::Terminal;
@@ -29,9 +27,9 @@ enum Sections {
 /// Keeps track of the log messages and the GUI state
 pub struct GroundStation {
     /// The receiver for the log messages
-    rx: mpsc::Receiver<LogMessage>,
+    rx_log_messages: mpsc::Receiver<LogMessage>,
     /// The sender for the log messages
-    tx: mpsc::Sender<LogMessage>,
+    tx_log_messages: mpsc::Sender<LogMessage>,
     /// The log messages
     data: Vec<LogMessage>,
 
@@ -41,25 +39,27 @@ pub struct GroundStation {
     terminal: Terminal,
     /// The configuration section
     config: Config,
-
-    /// Defmt Parser
-    /// 
-    /// The path to the elf file
-    elf: PathBuf,
-    // source: Option<Source>,
 }
 
 impl Default for GroundStation {
     fn default() -> Self {
-        let (tx, rx) = mpsc::channel::<LogMessage>(100);
+        let (tx_log_messages, rx_log_messages) = mpsc::channel::<LogMessage>(100);
+        let (tx_source, rx_source) = mpsc::channel::<Option<Source>>(1);
+
+        let tx = tx_log_messages.clone();
+        tokio::spawn(async move {
+            let mut defmt_parser = DefmtParser::new(tx, rx_source).await.unwrap();
+            defmt_parser.run().await.unwrap();
+        });
+
         Self {
-            rx, 
-            tx,
+            rx_log_messages, 
+            tx_log_messages,
             data: Vec::new(), 
-            section: Default::default(), 
-            terminal: Default::default(), 
-            config: Default::default(), 
-            elf: Default::default(),
+
+            section: Default::default(),
+            terminal: Default::default(),
+            config: Config::new(tx_source),
         }
     }
 }
@@ -67,14 +67,13 @@ impl Default for GroundStation {
 impl GroundStation {
     /// update the data using messages from the receiver
     fn update_data(&mut self) {
-        while let Ok(point) = self.rx.try_recv() {
+        while let Ok(point) = self.rx_log_messages.try_recv() {
             self.data.push(point);
         }
     }
 
-    /// Clone the sender for the log messages
     pub fn clone_tx(&self) -> mpsc::Sender<LogMessage> {
-        self.tx.clone()
+        self.tx_log_messages.clone()
     }
 }
 

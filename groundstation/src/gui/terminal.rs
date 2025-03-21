@@ -10,6 +10,36 @@ pub enum TerminalPresets {
     ProbeRS,
 }
 
+impl TerminalPresets {
+    pub fn ui(&mut self, ui: &mut egui::Ui, row: usize, log: &LogMessage) {
+        match self {
+            TerminalPresets::Raw => {
+                ui.label(format!("{}\t {:?}", row + 1, log));
+            }
+            TerminalPresets::ProbeRS => {
+                ui.horizontal_wrapped(|ui| {
+                    ui.label("[");
+                    ui.label(log.timestamp.as_str());
+                    if let Some(level) = log.level {
+                        match level {
+                            Level::Trace => ui.colored_label(Color32::LIGHT_GRAY, "TRACE"),
+                            Level::Debug => ui.colored_label(Color32::WHITE, "DEBUG"),
+                            Level::Info  => ui.colored_label(Color32::LIGHT_GREEN, "INFO"),
+                            Level::Warn  => ui.colored_label(Color32::LIGHT_YELLOW, "WARN"),
+                            Level::Error => ui.colored_label(Color32::LIGHT_RED, "ERROR"),
+                        };
+                    }
+                    if let Some(ref loc) = log.location {
+                        ui.label(format!("{:?}", loc));
+                    }
+                    ui.label("]");
+                    ui.label(&log.message);
+                });
+            }
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct Terminal {
     config: TerminalPresets,
@@ -30,45 +60,21 @@ impl Terminal {
         ui.separator();
 
         egui::ScrollArea::both()
-            .max_height(f32::INFINITY)
-            .max_width(f32::INFINITY)
-            .auto_shrink(false)
-            .stick_to_bottom(true)
-            .show_rows(
-                ui,
-                row_height,
-                total_rows,
-                |ui, row_range| {
-                    for row in row_range {
-                        let log = &data[row];
-                        match self.config {
-                            TerminalPresets::Raw => {
-                                ui.label(format!("{}\t {:?}", row + 1, log));
-                            }
-                            TerminalPresets::ProbeRS => {
-                                ui.horizontal_wrapped(|ui| {
-                                    ui.label("[");
-                                    ui.label(log.timestamp.as_str());
-                                    if let Some(level) = log.level {
-                                        match level {
-                                            Level::Trace => ui.colored_label(Color32::LIGHT_GRAY, "TRACE"),
-                                            Level::Debug => ui.colored_label(Color32::WHITE, "DEBUG"),
-                                            Level::Info  => ui.colored_label(Color32::LIGHT_GREEN, "INFO"),
-                                            Level::Warn  => ui.colored_label(Color32::LIGHT_YELLOW, "WARN"),
-                                            Level::Error => ui.colored_label(Color32::LIGHT_RED, "ERROR"),
-                                        };
-                                    }
-                                    if let Some(ref loc) = log.location {
-                                        ui.label(format!("{:?}", loc));
-                                    }
-                                    ui.label("]");
-                                    ui.label(&log.message);
-                                });
-                            }
-                        }
-                    }
+        .max_height(f32::INFINITY)
+        .max_width(f32::INFINITY)
+        .auto_shrink(false)
+        .stick_to_bottom(true)
+        .show_rows(
+            ui,
+            row_height,
+            total_rows,
+            |ui, row_range| {
+                for row in row_range {
+                    let log = &data[row];
+                    self.config.ui(ui, row, log);
                 }
-            );
+            }
+        );
 
         ui.ctx().request_repaint();
     }

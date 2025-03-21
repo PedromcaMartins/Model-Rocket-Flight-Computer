@@ -4,7 +4,7 @@
 mod io_mapping;
 mod logger;
 mod tasks;
-mod drivers;
+// mod drivers;
 
 use embassy_time::Timer;
 use io_mapping::IOMapping;
