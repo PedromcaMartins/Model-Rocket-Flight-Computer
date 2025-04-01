@@ -9,8 +9,10 @@ mod tasks;
 use embassy_time::Timer;
 use io_mapping::IOMapping;
 use logger::{init_logger_rtt, init_logger_uart};
-use tasks::{altimeter, gps, imu, sd_card};
 use panic_probe as _;
+
+#[allow(unused_imports)]
+use tasks::{altimeter, gps, imu, sd_card};
 
 use embassy_executor::Spawner;
 

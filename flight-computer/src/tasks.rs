@@ -1,5 +1,5 @@
 use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP280};
-use bno055::{BNO055OperationMode, Bno055};
+use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
 
 use defmt::Debug2Format;
 use embassy_stm32::{i2c::I2c, sdmmc::Sdmmc, time::Hertz, usart::Uart, mode};
@@ -22,39 +22,108 @@ pub async fn imu(i2c: I2c<'static, Bno055I2cMode>) {
     // Enable 9-degrees-of-freedom sensor fusion mode with fast magnetometer calibration
     imu.set_mode(BNO055OperationMode::NDOF, &mut delay).unwrap();
 
-    let mut euler_angles;
+    // Set power mode to normal
+    imu.set_power_mode(BNO055PowerMode::NORMAL).unwrap();
+
+    // Enable usage of external crystal
+    imu.set_external_crystal(true, &mut delay).unwrap();
 
     loop {
         match imu.euler_angles() {
             Ok(val) => {
-                euler_angles = val;
-                defmt::info!("IMU angles: ({:?}, {:?}, {:?})", euler_angles.a, euler_angles.b, euler_angles.c);
-                Timer::after_millis(500).await;
+                defmt::info!("IMU angles: {:?}", Debug2Format(&val));
             }
             Err(e) => {
                 defmt::error!("{:?}", e);
             }
         }
+
+        match imu.quaternion() {
+            Ok(val) => {
+                defmt::info!("IMU quaternion: {:?}", Debug2Format(&val));
+            }
+            Err(e) => {
+                defmt::error!("{:?}", e);
+            }
+        }
+
+        match imu.linear_acceleration() {
+            Ok(val) => {
+                defmt::info!("IMU linear acceleration: {:?}", Debug2Format(&val));
+            }
+            Err(e) => {
+                defmt::error!("{:?}", e);
+            }
+        }
+
+        match imu.gravity() {
+            Ok(val) => {
+                defmt::info!("IMU gravity: {:?}", Debug2Format(&val));
+            }
+            Err(e) => {
+                defmt::error!("{:?}", e);
+            }
+        }
+
+        match imu.accel_data() {
+            Ok(val) => {
+                defmt::info!("IMU acceleration: {:?}", Debug2Format(&val));
+            }
+            Err(e) => {
+                defmt::error!("{:?}", e);
+            }
+        }
+
+        match imu.gyro_data() {
+            Ok(val) => {
+                defmt::info!("IMU gyro: {:?}", Debug2Format(&val));
+            }
+            Err(e) => {
+                defmt::error!("{:?}", e);
+            }
+        }
+
+        match imu.mag_data() {
+            Ok(val) => {
+                defmt::info!("IMU mag: {:?}", Debug2Format(&val));
+            }
+            Err(e) => {
+                defmt::error!("{:?}", e);
+            }
+        }
+
+        match imu.temperature() {
+            Ok(val) => {
+                defmt::info!("IMU temperature: {:?}", val);
+            }
+            Err(e) => {
+                defmt::error!("{:?}", e);
+            }
+        }
+
+        Timer::after_millis(500).await;
     }
 }
 
 #[embassy_executor::task]
 pub async fn altimeter(i2c: I2c<'static, Bmp280I2cMode>) {
     let mut altimeter = BMP280::new(i2c).unwrap();
+
     altimeter.set_config(Config {
         filter: Filter::c16, 
         t_sb: Standby::ms0_5
     });
+
     altimeter.set_control(Control { 
         osrs_t: Oversampling::x1, 
         osrs_p: Oversampling::x4, 
         mode: PowerMode::Normal
     });
 
-    let pressure = altimeter.pressure();
-    let temperature = altimeter.temp();
-
     loop {
+        let pressure = altimeter.pressure();
+        let temperature = altimeter.temp();
+
         defmt::info!("Pressure: {:?} Pa, Temperature: {:?} °C", pressure, temperature);
         Timer::after_millis(500).await;
     }
