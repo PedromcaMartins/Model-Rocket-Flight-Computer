@@ -1,0 +1,9 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "Cargo.toml",
+
+        "flight-computer/Cargo.toml",
+        "groundstation/Cargo.toml",
+        "telemetry/Cargo.toml",
+    ]
+}
