@@ -4,10 +4,28 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-mint = "0.5.9"
 chrono = { version = "^0.4", default-features = false}
 nmea = { version = "0.7.0", default-features = false, features = ["GGA", "RMC"] }
 
+serde = { version = "1.0", default-features = false, optional = true }
+defmt = { version = "0.3", optional = true }
+
 [features]
-default = [
+## For testing purposes
+# default = ["defmt-03", "serde"]
+
+## Enable the `std` (standard library) usage
+std = ["chrono/std", "serde?/std"]
+
+## Enable derives for (De)Serialization with `serde`
+serde = [
+    "serde/derive", 
+    "chrono/serde", 
+    "nmea/serde"
+]
+
+## Enable derives of `defmt@0.3` formatting for embedded platforms
+defmt-03 = [
+    "dep:defmt",
+    "nmea/defmt-03"
 ]
