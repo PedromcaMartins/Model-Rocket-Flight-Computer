@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "flight-computer",
-    "groundstation"
+    "groundstation",
+    "telemetry",
 ]
 resolver = "3"
 
