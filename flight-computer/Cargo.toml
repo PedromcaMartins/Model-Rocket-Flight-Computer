@@ -20,7 +20,8 @@ embassy-time = { version = "0.4", features = ["tick-hz-32_768"] }
 # embassy-net = { version = "0.6.0", features = ["tcp", "dhcpv4", "medium-ethernet", ] }
 # embassy-net-wiznet = { version = "0.2.0" }
 
-defmt = { version = "0.3.8", optional = true }
+#[derive(Format)]
+defmt = { version = "0.3.8", optional = true, features = ["encoding-rzcobs"] }
 defmt-rtt = { version = "0.4.1", optional = true }
 # defmt-test = "0.3.2"
 
@@ -41,11 +42,11 @@ cortex-m-rt = "0.7.3"
 # Drivers
 bmp280-ehal = "0.0.6"
 bno055 = "0.4.0"
-nmea = { version = "0.7.0", default-features = false, features = ["GGA", "RMC"] }
+nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
 
 # Application specific dependencies
 # heapless = { version = "0.8", default-features = false }
-# micromath = "2.0.0"
+micromath = "2.0.0"
 # static_cell = "2"
 # chrono = { version = "^0.4", default-features = false}
 critical-section = "1.2"

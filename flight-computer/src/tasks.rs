@@ -105,6 +105,27 @@ pub async fn imu(i2c: I2c<'static, Bno055I2cMode>) {
     }
 }
 
+mod altitude {
+    use micromath::F32Ext;
+
+    /// Calculates altitude (in meters) from pressure (Pa)
+    /// Uses the standard barometric formula.
+    ///
+    /// - `pressure`: The measured atmospheric pressure in Pascals.
+    /// - `temperature`: The measured temperature in Kelvin.
+    ///
+    /// Returns altitude in meters.
+    pub fn pressure_to_altitude(pressure: f32) -> f32 {
+        const P0: f32 = 101325.0; // Sea level standard atmospheric pressure (Pa)
+        const MAGIC_NUMBER: f32 = 0.1902632; // Magic number for altitude calculation
+        const MAGIC_NUMBER_2: f32 = 44330.77; // Magic number for altitude calculation
+
+        let ratio = pressure / P0;
+
+        MAGIC_NUMBER_2 * (1.0 - ratio.powf(MAGIC_NUMBER))
+    }
+}
+
 #[embassy_executor::task]
 pub async fn altimeter(i2c: I2c<'static, Bmp280I2cMode>) {
     let mut altimeter = BMP280::new(i2c).unwrap();
@@ -122,9 +143,11 @@ pub async fn altimeter(i2c: I2c<'static, Bmp280I2cMode>) {
 
     loop {
         let pressure = altimeter.pressure();
-        let temperature = altimeter.temp();
+        let temperature = altimeter.temp() as f32;
 
-        defmt::info!("Pressure: {:?} Pa, Temperature: {:?} °C", pressure, temperature);
+        let altitude = altitude::pressure_to_altitude(pressure as f32);
+
+        defmt::info!("Pressure: {:?} Pa, Temperature: {:?} °C, Altitude: {:?} m", pressure, temperature, altitude);
         Timer::after_millis(500).await;
     }
 }
@@ -156,10 +179,7 @@ pub async fn sd_card(mut sd_card: Sdmmc<'static, SdCard, SdCardDma>) {
 #[embassy_executor::task]
 pub async fn gps(mut uart: Uart<'static, mode::Async>) {
     let mut buf = [0; nmea::SENTENCE_MAX_LEN];
-    let mut nmea = Nmea::create_for_navigation(&[
-        SentenceType::GGA,
-        SentenceType::RMC
-    ]).unwrap();
+    let mut nmea = Nmea::create_for_navigation(&[SentenceType::GGA]).unwrap();
 
     loop {
         let len = uart.read_until_idle(&mut buf).await.unwrap();
