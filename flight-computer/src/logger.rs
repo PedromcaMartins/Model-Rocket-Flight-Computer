@@ -18,13 +18,25 @@ static mut LOG_UART: Option<UartTx<'static, Async>> = None;
 
 pub fn init_logger_rtt() {
     unsafe {
-        LOG_RTT = Some(Encoder::new())
+        critical_section::with(|_| {
+            assert!(
+                LOG_RTT.is_none(),
+                "Tried to init logger rtt when already initialized."
+            );
+            LOG_RTT = Some(Encoder::new())
+        });
     }
 }
 
 pub fn init_logger_uart(uart: UartTx<'static, Async>) {
     unsafe {
-        LOG_UART = Some(uart)
+        critical_section::with(|_| {
+            assert!(
+                LOG_UART.is_none(),
+                "Tried to assign serial port when one was already assigned."
+            );
+            LOG_UART = Some(uart)
+        });
     }
 }
 
