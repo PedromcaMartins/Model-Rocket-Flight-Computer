@@ -16,10 +16,11 @@ static mut CS_RESTORE: critical_section::RestoreState = critical_section::Restor
 static mut LOG_RTT: Option<Encoder> = None;
 static mut LOG_UART: Option<UartTx<'static, Async>> = None;
 
+#[allow(static_mut_refs)]
 pub fn init_logger_rtt() {
     unsafe {
         critical_section::with(|_| {
-            assert!(
+            defmt::assert!(
                 LOG_RTT.is_none(),
                 "Tried to init logger rtt when already initialized."
             );
@@ -28,10 +29,11 @@ pub fn init_logger_rtt() {
     }
 }
 
+#[allow(static_mut_refs)]
 pub fn init_logger_uart(uart: UartTx<'static, Async>) {
     unsafe {
         critical_section::with(|_| {
-            assert!(
+            defmt::assert!(
                 LOG_UART.is_none(),
                 "Tried to assign serial port when one was already assigned."
             );
