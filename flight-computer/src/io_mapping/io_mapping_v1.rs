@@ -31,7 +31,7 @@ pub struct IOMapping<'d> {
 
 impl IOMapping<'_> {
     pub fn init(p: embassy_stm32::Peripherals) -> Self {
-        let (uart_tx, _uart_rx) = Uart::new(p.USART3, p.PD9, p.PD8, Irqs, p.DMA1_CH3, p.DMA1_CH1, Default::default()).unwrap().split();
+        let (uart_tx, _uart_rx) = defmt::unwrap!(Uart::new(p.USART3, p.PD9, p.PD8, Irqs, p.DMA1_CH3, p.DMA1_CH1, Default::default())).split();
 
         Self {
             version: 1,

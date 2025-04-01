@@ -9,13 +9,13 @@ mod tasks;
 use embassy_time::Timer;
 use io_mapping::IOMapping;
 use logger::{init_logger_rtt, init_logger_uart};
-use tasks::{altimeter, imu, sd_card};
+use tasks::{altimeter, gps, imu, sd_card};
 use panic_probe as _;
 
 use embassy_executor::Spawner;
 
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
+async fn main(spawner: Spawner) {
     let mut config = embassy_stm32::Config::default();
     {
         use embassy_stm32::rcc::*;
@@ -53,14 +53,10 @@ async fn main(_spawner: Spawner) {
     // defmt::unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
     // defmt::unwrap!(spawner.spawn(sd_card(io_mapping.sd_card)));
     // defmt::unwrap!(spawner.spawn(altimeter(io_mapping.bmp280_i2c)));
+    defmt::unwrap!(spawner.spawn(gps(io_mapping.ublox_neo_7m)));
 
     loop {
         defmt::info!("Hello, world!");
         Timer::after_millis(1000).await;
-        defmt::trace!("Hello, world!");
-        defmt::debug!("Hello, world!");
-        defmt::info!("Hello, world!");
-        defmt::warn!("Hello, world!");
-        defmt::error!("Hello, world!");
     }
 }

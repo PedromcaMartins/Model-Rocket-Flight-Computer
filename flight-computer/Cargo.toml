@@ -41,6 +41,7 @@ cortex-m-rt = "0.7.3"
 # Drivers
 bmp280-ehal = "0.0.6"
 bno055 = "0.4.0"
+nmea = { version = "0.7.0", default-features = false }
 
 # Application specific dependencies
 # heapless = { version = "0.8", default-features = false }
@@ -87,6 +88,7 @@ debug = [
     # "embassy-net/defmt",
     # "embassy-net-wiznet/defmt",
     "bno055/defmt-03",
+    "nmea/defmt-03",
 ]
 release = [
     "embassy-stm32/low-power",

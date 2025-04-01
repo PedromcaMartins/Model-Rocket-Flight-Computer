@@ -2,8 +2,9 @@ use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP
 use bno055::{BNO055OperationMode, Bno055};
 
 use defmt::Debug2Format;
-use embassy_stm32::{i2c::I2c, sdmmc::Sdmmc, time::Hertz};
+use embassy_stm32::{i2c::I2c, sdmmc::Sdmmc, time::Hertz, usart::Uart, mode};
 use embassy_time::{Delay, Instant, Timer};
+use nmea::{Nmea, SentenceType};
 
 use crate::io_mapping::{Bmp280I2cMode, Bno055I2cMode, SdCard, SdCardDma};
 
@@ -81,4 +82,27 @@ pub async fn sd_card(mut sd_card: Sdmmc<'static, SdCard, SdCardDma>) {
 
     defmt::info!("Card: {:#?}", Debug2Format(card));
     defmt::info!("Clock: {}", sd_card.clock());
+}
+
+#[embassy_executor::task]
+pub async fn gps(mut uart: Uart<'static, mode::Async>) {
+    let mut buf = [0; nmea::SENTENCE_MAX_LEN];
+    let mut nmea = Nmea::create_for_navigation(&[
+        SentenceType::GGA,
+        SentenceType::RMC
+    ]).unwrap();
+
+    loop {
+        let len = uart.read_until_idle(&mut buf).await.unwrap();
+        let message = core::str::from_utf8(&buf[..len]).unwrap();
+
+        match nmea.parse(message) {
+            Ok(_) => {
+                defmt::info!("GPS: {:?}", nmea);
+            }
+            Err(e) => {
+                defmt::error!("{:?}", defmt::Debug2Format(&e));
+            }
+        }
+    }
 }
