@@ -1,6 +1,6 @@
 #![no_std]
 
-use chrono::{NaiveDate, NaiveTime};
+use chrono::NaiveTime;
 use nmea::sentences::FixType;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -29,6 +29,8 @@ pub struct ImuMessage {
     pub mag: [f32; 3],
     /// Temperature of the chip in Celsius degrees.
     pub temperature: f32,
+    /// Timestamp in microseconds.
+    pub timestamp: u64,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -41,6 +43,8 @@ pub struct AltimeterMessage {
     pub altitude: f32,
     /// Temperature in Celsius degrees.
     pub temperature: f32,
+    /// Timestamp in microseconds.
+    pub timestamp: u64,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -59,4 +63,6 @@ pub struct GpsMessage {
     pub altitude: f32,
     /// Number of satellites used for fix.
     pub num_of_fix_satellites: u8,
+    /// Timestamp in microseconds.
+    pub timestamp: u64,
 }
