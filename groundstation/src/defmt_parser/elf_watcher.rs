@@ -4,7 +4,7 @@ use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use tokio::sync::mpsc;
 
 pub struct ElfWatcher {
-    path: PathBuf,
+    pub path: PathBuf,
     rx: mpsc::Receiver<Result<Event, notify::Error>>,
 }
 

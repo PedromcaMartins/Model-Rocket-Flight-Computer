@@ -12,6 +12,8 @@ name = "mock"
 path = "src/bin/mock.rs"
 
 [dependencies]
+telemetry = { version = "*", path = "../telemetry" }
+
 anyhow = "1"
 clap = { version = "4.0", features = ["derive", "env"] }
 defmt-decoder = { version = "=0.4.0" }
@@ -25,6 +27,12 @@ notify = "8"
 tokio = { version = "1.38", features = ["full"] }
 tokio-serial = "5.4"
 circular-buffer = "1.1.0"
+time = { version = "0.3", default-features = false, features = [
+    "alloc",
+    "formatting",
+    "large-dates",
+    "macros",
+] }
 
 eframe = "0.31"         # Main UI framework (built on egui)
 egui = "0.31"           # UI framework for rendering widgets

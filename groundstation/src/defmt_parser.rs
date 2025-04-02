@@ -3,10 +3,10 @@ use std::{collections::BTreeMap, env, io::BufRead, path::PathBuf};
 use anyhow::anyhow;
 use circular_buffer::CircularBuffer;
 use defmt_decoder::{DecodeError, Location, Table};
-use tokio::{fs::{self}, sync::mpsc};
+use tokio::{fs::{self}, select, sync::mpsc};
 
 mod log_message;
-pub use log_message::LogMessage;
+pub use log_message::{LogMessage, ModulePath, Location as LocationMessage};
 mod source;
 pub use source::Source;
 mod elf_watcher;
@@ -14,17 +14,63 @@ pub use elf_watcher::ElfWatcher;
 
 const READ_BUFFER_SIZE: usize = 1024;
 
-pub struct DefmtParser {
-    elf: PathBuf,
+struct SourceHandler {
     table: Table,
     locs: Option<BTreeMap<u64, Location>>,
-    elf_watcher: ElfWatcher,
-
-    rx_source: mpsc::Receiver<Option<Source>>,
 
     source: Option<Source>,
-    buf: CircularBuffer<1024, u8>,
+    buf: CircularBuffer<READ_BUFFER_SIZE, u8>,
+}
+
+impl SourceHandler {
+    async fn run(&mut self) -> anyhow::Result<LogMessage> {
+        let source = self.source.as_mut().ok_or_else(|| anyhow!("source not set"))?;
+        let mut temp = [0; READ_BUFFER_SIZE/2];
+
+        let mut current_dir = env::current_dir()?; 
+        let _ = current_dir.pop();
+        current_dir.push("flight-computer");
+        current_dir.push("src");
+
+        log::info!("listening for defmt messages");
+
+        loop {
+            // read from stdin or tcpstream and push it to the decoder
+            let n = source.read(&mut temp).await?;
+            self.buf.extend_from_slice(&temp[..n]);
+
+            match self.table.decode(self.buf.make_contiguous()) {
+                Ok((frame, consumed)) => {
+                    let message = LogMessage::new(&frame, &self.locs, &current_dir);
+                    log::info!("{:?}", message);
+                    self.buf.consume(consumed);
+                    return Ok(message);
+                },
+                Err(DecodeError::UnexpectedEof) => continue,
+                Err(DecodeError::Malformed) => match self.table.encoding().can_recover() {
+                    // if recovery is impossible, abort
+                    false => {
+                        log::error!("malformed frame; impossible to recover");
+                        return Err(DecodeError::Malformed.into())
+                    },
+                    // if recovery is possible, skip the current frame and continue with new data
+                    true => {
+                        log::warn!("malformed frame skipped");
+                        continue;
+                    }
+                },
+            }
+        }
+    }
+}
+
+pub struct DefmtParser {
+    elf_watcher: ElfWatcher,
+
     tx_defmt: mpsc::Sender<LogMessage>,
+    rx_source: mpsc::Receiver<Option<Source>>,
+
+    source_handler: SourceHandler,
 }
 
 impl DefmtParser {
@@ -36,38 +82,45 @@ impl DefmtParser {
             .join("thumbv7em-none-eabihf")
             .join("debug")
             .join("flight-computer");
-    
-        log::debug!("absolute path of elf file with defmt messages: {:?}", elf);
+
+        log::info!("absolute path of elf file with defmt messages: {:?}", elf);
 
         let (table, locs) = Self::load_elf(&elf).await?;
 
-        let elf_watcher = ElfWatcher::new(elf.clone())?;
-
         Ok(Self {
-            elf,
-            table,
-            locs,
-            elf_watcher,
+            elf_watcher: ElfWatcher::new(elf)?,
             tx_defmt,
             rx_source,
-            source: None,
-            buf: CircularBuffer::<1024, u8>::new(),
+            source_handler: SourceHandler {
+                table,
+                locs,
+                source: None,
+                buf: CircularBuffer::<READ_BUFFER_SIZE, u8>::new(),
+            },
         })
     }
 
     pub async fn run(&mut self) -> anyhow::Result<()> {
         loop {
-            if self.elf_watcher.has_file_changed().await {
-                (self.table, self.locs) = Self::load_elf(&self.elf).await?;
-                log::info!("elf file changed; reloaded");
+            select! {
+                changed = self.elf_watcher.has_file_changed() => {
+                    if changed {
+                        (self.source_handler.table, self.source_handler.locs) = Self::load_elf(&self.elf_watcher.path).await?;
+                        log::info!("elf file changed; reloaded");
+                    }
+                }
+                source = self.rx_source.recv() => {
+                    if let Some(source) = source {
+                        self.source_handler.source = source;
+                        log::info!("source changed to {:?}", self.source_handler.source);
+                    }
+                }
+                message = self.source_handler.run() => {
+                    if let Ok(message) = message {
+                        self.tx_defmt.send(message).await?;
+                    }
+                }
             }
-
-            if let Some(source) = self.rx_source.recv().await {
-                self.source = source;
-                log::info!("source changed to {:?}", self.source);
-            };
-
-            self.handle_source().await?;
         }
     }
 
@@ -85,41 +138,5 @@ impl DefmtParser {
         };
 
         Ok((table, locs))
-    }
-
-    async fn handle_source(&mut self) -> anyhow::Result<()> {
-        let source = self.source.as_mut().ok_or_else(|| anyhow!("source not set"))?;
-        let mut temp = [0; READ_BUFFER_SIZE/2];
-        log::info!("listening for defmt messages");
-
-        loop {
-            // read from stdin or tcpstream and push it to the decoder
-            let n = source.read(&mut temp).await?;
-            self.buf.extend_from_slice(&temp[..n]);
-
-            loop {
-                match self.table.decode(self.buf.make_contiguous()) {
-                    Ok((frame, consumed)) => {
-                        let message = LogMessage::new(&frame, &self.locs);
-                        log::info!("{:?}", message);
-                        self.tx_defmt.send(message).await?;
-                        self.buf.consume(consumed);
-                    },
-                    Err(DecodeError::UnexpectedEof) => break,
-                    Err(DecodeError::Malformed) => match self.table.encoding().can_recover() {
-                        // if recovery is impossible, abort
-                        false => {
-                            log::error!("malformed frame; impossible to recover");
-                            return Err(DecodeError::Malformed.into())
-                        },
-                        // if recovery is possible, skip the current frame and continue with new data
-                        true => {
-                            log::warn!("malformed frame skipped");
-                            break;
-                        }
-                    },
-                }
-            }
-        }
     }
 }
