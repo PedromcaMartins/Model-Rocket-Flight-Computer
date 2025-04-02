@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, env, io::BufRead, path::PathBuf};
 
 use anyhow::anyhow;
 use circular_buffer::CircularBuffer;
-use defmt_decoder::{DecodeError, Location, Table};
+use defmt_decoder::{Location, Table};
 use tokio::{fs::{self}, select, sync::mpsc};
 
 mod log_message;
@@ -46,18 +46,9 @@ impl SourceHandler {
                     self.buf.consume(consumed);
                     return Ok(message);
                 },
-                Err(DecodeError::UnexpectedEof) => continue,
-                Err(DecodeError::Malformed) => match self.table.encoding().can_recover() {
-                    // if recovery is impossible, abort
-                    false => {
-                        log::error!("malformed frame; impossible to recover");
-                        return Err(DecodeError::Malformed.into())
-                    },
-                    // if recovery is possible, skip the current frame and continue with new data
-                    true => {
-                        log::warn!("malformed frame skipped");
-                        continue;
-                    }
+                Err(err) => {
+                    log::error!("error decoding defmt frame: {:?}", err);
+                    self.buf.clear();
                 },
             }
         }
