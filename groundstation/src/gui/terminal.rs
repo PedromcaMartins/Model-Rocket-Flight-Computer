@@ -30,7 +30,7 @@ impl TerminalPresets {
                         };
                     }
                     if let Some(ref loc) = log.location {
-                        ui.label(format!("{:?}", loc));
+                        ui.label(format!("{}:{:?}", loc.file, loc.line));
                     }
                     ui.label("]");
                     ui.label(&log.message);
