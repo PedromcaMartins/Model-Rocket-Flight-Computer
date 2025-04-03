@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use egui::{Color32, ComboBox};
 use tokio::sync::mpsc;
 
-use crate::defmt_parser::Source;
+use crate::parser::Source;
 
 #[derive(PartialEq, Eq)]
 enum SelectedSource {

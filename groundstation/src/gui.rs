@@ -1,7 +1,7 @@
 use eframe::egui;
 use tokio::sync::mpsc;
 
-use crate::{defmt_parser::{DefmtParser, Source}, LogMessage};
+use crate::parser::{DefmtParser, Source, LogMessage};
 
 mod terminal;
 use terminal::Terminal;

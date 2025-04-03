@@ -1,11 +1,9 @@
 use std::{path::PathBuf, str::FromStr};
 
 use defmt_parser::Level;
-use groundstation::{GroundStation, LocationMessage, ModulePath};
+use groundstation::{parser::{LocationMessage, LogMessage, ModulePath}, GroundStation};
 use time::OffsetDateTime;
 use tokio::{sync::mpsc, time::Instant};
-
-use groundstation::LogMessage;
 
 #[tokio::main]
 async fn main() -> eframe::Result<()> {

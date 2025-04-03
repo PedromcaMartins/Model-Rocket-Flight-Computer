@@ -1,7 +1,7 @@
 use defmt_parser::Level;
 use egui::{Color32, TextStyle};
 
-use crate::LogMessage;
+use crate::parser::LogMessage;
 
 #[derive(PartialEq, Default)]
 pub enum TerminalPresets {
