@@ -33,7 +33,7 @@ impl TerminalPresets {
                         ui.label(format!("{}:{:?}", loc.file, loc.line));
                     }
                     ui.label("]");
-                    ui.label(&log.message);
+                    ui.label(format!("{:?}", &log.message));
                 });
             }
         }
@@ -46,7 +46,7 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn ui(&mut self, ui: &mut egui::Ui, total_rows: usize, data: &[LogMessage]) {        
+    pub fn ui(&mut self, ui: &mut egui::Ui, data: &[LogMessage]) {        
         let text_style = TextStyle::Body;
         let row_height = ui.text_style_height(&text_style);
 
@@ -67,7 +67,7 @@ impl Terminal {
         .show_rows(
             ui,
             row_height,
-            total_rows,
+            data.len(),
             |ui, row_range| {
                 for row in row_range {
                     let log = &data[row];

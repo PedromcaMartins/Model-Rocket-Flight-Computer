@@ -33,6 +33,8 @@ time = { version = "0.3", default-features = false, features = [
     "large-dates",
     "macros",
 ] }
+chrono = { version = "^0.4", default-features = false}
+nmea = { version = "0.7.0", default-features = false }
 
 eframe = "0.31"         # Main UI framework (built on egui)
 egui = "0.31"           # UI framework for rendering widgets

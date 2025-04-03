@@ -1,5 +1,40 @@
-use std::path::{Path, PathBuf};
+use std::{convert::Infallible, fmt, path::{Path, PathBuf}, str::FromStr};
+use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
 use time::OffsetDateTime;
+
+pub enum MessageType {
+    AltimeterMessage(AltimeterMessage),
+    GpsMessage(GpsMessage),
+    ImuMessage(ImuMessage),
+    String(String),
+}
+
+impl FromStr for MessageType {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(msg) = s.parse::<AltimeterMessage>() {
+            Ok(Self::AltimeterMessage(msg))
+        } else if let Ok(msg) = s.parse::<GpsMessage>() {
+            Ok(Self::GpsMessage(msg))
+        } else if let Ok(msg) = s.parse::<ImuMessage>() {
+            Ok(Self::ImuMessage(msg))
+        } else {
+            Ok(Self::String(s.to_string()))
+        }
+    }
+}
+
+impl std::fmt::Debug for MessageType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::AltimeterMessage(msg) => write!(f, "{:?}", msg),
+            Self::GpsMessage(msg) => write!(f, "{:?}", msg),
+            Self::ImuMessage(msg) => write!(f, "{:?}", msg),
+            Self::String(msg) => write!(f, "{}", msg),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct LogMessage {
@@ -7,7 +42,7 @@ pub struct LogMessage {
     /// Unix timestamp in nanoseconds
     pub host_timestamp: i64,
     pub level: Option<defmt_parser::Level>,
-    pub message: String,
+    pub message: MessageType,
     pub location: Option<Location>,
 }
 
@@ -54,7 +89,7 @@ impl LogMessage {
             host_timestamp,
             timestamp,
             level: frame.level(),
-            message: frame.display_message().to_string(),
+            message: frame.display_message().to_string().parse::<MessageType>().unwrap(),
             location,
         }
     }

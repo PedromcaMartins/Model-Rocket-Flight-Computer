@@ -6,7 +6,7 @@ use defmt_decoder::{Location, Table};
 use tokio::{fs::{self}, select, sync::mpsc};
 
 mod log_message;
-pub use log_message::{LogMessage, ModulePath, Location as LocationMessage};
+pub use log_message::{LogMessage, ModulePath, Location as LocationMessage, MessageType};
 mod source;
 pub use source::Source;
 mod elf_watcher;

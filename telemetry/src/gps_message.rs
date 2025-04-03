@@ -22,7 +22,7 @@ pub struct GpsMessage {
 }
 
 use nom::{
-    bytes::complete::{is_not, tag}, character::complete::{char, space0, u64, u8}, number::complete::{double}, sequence::delimited, Finish, IResult, Parser
+    bytes::complete::{is_not, tag}, character::complete::{char, space0, u64, u8}, number::complete::double, sequence::delimited, Finish, IResult, Parser
 };
 
 // Helper parser to extract a quoted string.

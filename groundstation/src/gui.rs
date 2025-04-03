@@ -1,7 +1,8 @@
 use eframe::egui;
+use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
 use tokio::sync::mpsc;
 
-use crate::parser::{DefmtParser, Source, LogMessage};
+use crate::parser::{DefmtParser, LogMessage, MessageType, Source};
 
 mod terminal;
 use terminal::Terminal;
@@ -32,8 +33,15 @@ pub struct GroundStation {
     rx_log_messages: mpsc::Receiver<LogMessage>,
     /// The sender for the log messages
     tx_log_messages: mpsc::Sender<LogMessage>,
-    /// The log messages
-    data: Vec<LogMessage>,
+
+    /// The log messages from strings
+    string_messages: Vec<LogMessage>,
+    /// The log messages from imu
+    imu_messages: Vec<ImuMessage>,
+    /// The log messages from altimeter
+    altimeter_messages: Vec<AltimeterMessage>,
+    /// The log messages from gps
+    gps_messages: Vec<GpsMessage>,
 
     /// The current section
     section: Sections,
@@ -59,7 +67,11 @@ impl Default for GroundStation {
         Self {
             rx_log_messages, 
             tx_log_messages,
-            data: Vec::new(), 
+
+            string_messages: Default::default(), 
+            imu_messages: Default::default(),
+            altimeter_messages: Default::default(),
+            gps_messages: Default::default(),
 
             section: Default::default(),
             terminal: Default::default(),
@@ -72,8 +84,21 @@ impl Default for GroundStation {
 impl GroundStation {
     /// update the data using messages from the receiver
     fn update_data(&mut self) {
-        while let Ok(point) = self.rx_log_messages.try_recv() {
-            self.data.push(point);
+        while let Ok(log) = self.rx_log_messages.try_recv() {
+            match log.message {
+                MessageType::String(_) => {
+                    self.string_messages.push(log);
+                },
+                MessageType::ImuMessage(message) => {
+                    self.imu_messages.push(message);
+                },
+                MessageType::AltimeterMessage(message) => {
+                    self.altimeter_messages.push(message);
+                },
+                MessageType::GpsMessage(message) => {
+                    self.gps_messages.push(message);
+                },
+            }
         }
     }
 
@@ -97,13 +122,13 @@ impl eframe::App for GroundStation {
 
             match self.section {
                 Sections::Terminal => {
-                    self.terminal.ui(ui, self.data.len(), &self.data);
+                    self.terminal.ui(ui, &self.string_messages);
                 },
                 Sections::Config => {
                     self.config.ui(ui);
                 },
                 Sections::Graphs => {
-                    self.graphs.ui(ui);
+                    self.graphs.ui(ui, &self.imu_messages, &self.altimeter_messages, &self.gps_messages);
                 },
             }
         });
