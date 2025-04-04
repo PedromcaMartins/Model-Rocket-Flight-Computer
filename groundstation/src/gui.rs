@@ -53,8 +53,15 @@ pub struct GroundStation {
     graphs: Graphs,
 }
 
-impl Default for GroundStation {
-    fn default() -> Self {
+impl GroundStation {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // Disable feathering as it causes artifacts with plotters
+        let context = &cc.egui_ctx;
+        context.tessellation_options_mut(|tess_options| {
+            tess_options.feathering = false;
+        });
+        context.set_pixels_per_point(0.8); // Disable horizontal / vertical bands
+
         let (tx_log_messages, rx_log_messages) = mpsc::channel::<LogMessage>(100);
         let (tx_source, rx_source) = mpsc::channel::<Option<Source>>(1);
 
@@ -79,9 +86,7 @@ impl Default for GroundStation {
             graphs: Default::default(),
         }
     }
-}
 
-impl GroundStation {
     /// update the data using messages from the receiver
     fn update_data(&mut self) {
         while let Ok(log) = self.rx_log_messages.try_recv() {

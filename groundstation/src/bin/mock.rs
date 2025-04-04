@@ -1,4 +1,4 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{f64::consts::PI, path::PathBuf, str::FromStr};
 
 use chrono::NaiveTime;
 use defmt_parser::Level;
@@ -12,15 +12,15 @@ use tokio::{sync::mpsc, time::Instant};
 async fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    let groundstation = GroundStation::default();
-
-    tokio::spawn(simulated_telem(groundstation.clone_tx()));
-
     // Spawn the GUI in a separate thread
     eframe::run_native(
         "Ground Station",
         Default::default(),
-        Box::new(|_cc| Ok(Box::new(groundstation))),
+        Box::new(|cc| {            
+            let groundstation = GroundStation::new(cc);
+            tokio::spawn(simulated_telem(groundstation.clone_tx()));
+            Ok(Box::new(groundstation))
+        }),
     )
 }
 
@@ -32,7 +32,7 @@ async fn simulated_telem(tx: mpsc::Sender<LogMessage>) {
         tx.send(simulate_gps_message(&start_time)).await.ok();
         tx.send(simulate_imu_message(&start_time)).await.ok();
 
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
     }
 }
 
@@ -67,11 +67,18 @@ fn simulate_altimeter_message(start_time: &Instant) -> LogMessage {
     let time = start_time.elapsed().as_nanos() as u64;
     let value = (time as f64 * 2.0).sin(); // Simulated telemetry data (sine wave)
 
+    let q = 3.0;
+    let r_minor = 2.0;
+
+    let time = start_time.elapsed().as_millis() as u64;
+    let t = 2.0 * PI * time as f64 / 10_000_f64;
+    let z = r_minor * (q * t).sin();
+
     let altimeter_message = MessageType::AltimeterMessage(AltimeterMessage {
-        altitude: value as f32,
+        altitude: z as f32,
         pressure: value,
         temperature: value as f32,
-        timestamp: time/1_000,
+        timestamp: start_time.elapsed().as_micros() as u64,
     });
 
     LogMessage {
@@ -100,14 +107,24 @@ fn simulate_gps_message(start_time: &Instant) -> LogMessage {
     let time = start_time.elapsed().as_nanos() as u64;
     let value = (time as f64 * 2.0).sin(); // Simulated telemetry data (sine wave)
 
+    let p = 2.0;
+    let q = 3.0;
+    let r = 5.0;
+    let r_minor = 2.0;
+
+    let time = start_time.elapsed().as_millis() as u64;
+    let t = 2.0 * PI * time as f64 / 10_000_f64;
+    let x = (r + r_minor * (q * t).cos()) * (p * t).cos();
+    let y = (r + r_minor * (q * t).cos()) * (p * t).sin();
+
     let gps_message = MessageType::GpsMessage(GpsMessage {
         fix_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
         fix_type: FixType::Gps,
-        latitude: value,
-        longitude: value,
+        latitude: x,
+        longitude: y,
         altitude: value as f32,
         num_of_fix_satellites: 10,
-        timestamp: time/1_000,
+        timestamp: start_time.elapsed().as_micros() as u64,
     });
 
     LogMessage {
