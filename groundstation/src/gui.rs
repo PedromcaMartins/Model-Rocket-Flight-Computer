@@ -17,11 +17,11 @@ use graphs::Graphs;
 enum Sections {
     // Home,
     /// The terminal section
-    #[default]
     Terminal,
     /// The configuration section
     Config,
     /// The graphs section
+    #[default]
     Graphs,
 }
 

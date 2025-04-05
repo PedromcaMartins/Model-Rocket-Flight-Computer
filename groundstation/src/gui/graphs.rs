@@ -40,7 +40,7 @@ impl Graphs {
             let (points_x, points_y, points_z) = imu_data
                 .iter()
                 .rev()
-                .take(100)
+                .take(200)
                 .map(|data| ((data.timestamp as f64 / 1_000_000_f64), data.acceleration))
                 .map(|(ts, [x, y, z])| ([ts, x as f64], [ts, y as f64], [ts, z as f64]))
                 .collect::<(Vec<_>, Vec<_>, Vec<_>)>();
@@ -78,15 +78,15 @@ impl Graphs {
             let (points_x, points_y, points_z) = imu_data
                 .iter()
                 .rev()
-                .take(100)
-                .map(|data| ((data.timestamp as f64 / 1_000_000_f64), data.gyro))
+                .take(200)
+                .map(|data| ((data.timestamp as f64 / 1_000_000_f64), data.euler_angles))
                 .map(|(ts, [x, y, z])| ([ts, x as f64], [ts, y as f64], [ts, z as f64]))
                 .collect::<(Vec<_>, Vec<_>, Vec<_>)>();
 
             for (points, label, color) in [
-                (points_x, "Acceleration X", Color32::LIGHT_RED),
-                (points_y, "Acceleration Y", Color32::LIGHT_GREEN),
-                (points_z, "Acceleration Z", Color32::LIGHT_BLUE)
+                (points_x, "Roll", Color32::LIGHT_RED),
+                (points_y, "Pitch", Color32::LIGHT_GREEN),
+                (points_z, "Yaw", Color32::LIGHT_BLUE)
             ] {
                 ui.allocate_ui([panel_width, chart_height].into(), |ui| {
                     ui.vertical_centered(|ui| {

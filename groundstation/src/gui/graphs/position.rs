@@ -1,4 +1,6 @@
 use egui_plotter::{EguiBackend, DEFAULT_MOVE_SCALE, DEFAULT_SCROLL_SCALE};
+use log::info;
+use nalgebra::{Quaternion, UnitQuaternion, Vector3};
 use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
 use plotters::prelude::*;
 
@@ -69,29 +71,31 @@ impl PositionChart {
             .iter()
             .zip(altimeter_data.iter())
             .rev()
-            .take(100)
+            .take(120)
             .map(|(gps, altimeter)| {
-                let lat = gps.latitude;
                 let lon = gps.longitude;
+                let lat = gps.latitude;
                 let alt = altimeter.altitude as f64;
 
-                (lat, lon, alt)
+                (lon, alt, lat)
             });
 
-        let mut orientations = imu_data
-            .iter()
-            .rev()
-            .take(100)
+        let current_position = positions
+            .next()
+            .map(|(x, y, z)| {
+                Vector3::from_vec([x, y, z].into())
+            });
+
+        let current_orientation = imu_data
+            .last()
             .map(|imu| {
-                let roll = imu.euler_angles[0];
-                let pitch = imu.euler_angles[1];
-                let yaw = imu.euler_angles[2];
-
-                (yaw, pitch, roll)
+                Quaternion::from_vector([
+                    imu.quaternion[0] as f64,
+                    imu.quaternion[1] as f64,
+                    imu.quaternion[2] as f64,
+                    imu.quaternion[3] as f64,
+                ].into())
             });
-
-        let current_position = positions.next();
-        let current_orientation = orientations.next();
 
         self.mouse_data.update_mouse_data(ui);
 
@@ -133,6 +137,114 @@ impl PositionChart {
             .unwrap()
             .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLACK));
 
+        // create the axes styles
+        let axis_style_x = ShapeStyle {
+            color: RED.to_rgba(),
+            filled: false,
+            stroke_width: 2,
+        };
+
+        let axis_style_y = ShapeStyle {
+            color: GREEN.to_rgba(),
+            filled: false,
+            stroke_width: 2,
+        };
+
+        let axis_style_z = ShapeStyle {
+            color: BLUE.to_rgba(),
+            filled: false,
+            stroke_width: 2,
+        };
+
+        // if there's no position information, don't draw the world axys
+        if current_position.is_some() {
+            // draw the world axys
+            chart.draw_series(std::iter::once(PathElement::new(
+                vec![(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)],
+                axis_style_x,
+            ))).unwrap();
+
+            chart.draw_series(std::iter::once(PathElement::new(
+                vec![(0.0, 0.0, 0.0), (0.0, 0.0, 1.0)],
+                axis_style_y,
+            ))).unwrap();
+
+            chart.draw_series(std::iter::once(PathElement::new(
+                vec![(0.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+                axis_style_z,
+            ))).unwrap();
+        }
+
+        // draw body axys according to position and orientation
+        let (body_vector_x, body_vector_y, body_vector_z) = match current_orientation {
+            Some(orientation) => get_body_frame_vectors(orientation),
+            None => (Vector3::x(), Vector3::y(), Vector3::z()),
+        };
+
+        let current_position = match current_position {
+            Some(pos) => pos,
+            None if altimeter_data.is_empty() => {
+                info!("No position data available");
+                Vector3::default()
+            },
+            _ => {
+                let alt = altimeter_data.last().unwrap().altitude as f64;
+                info!("Using altimeter data for position, altitude: {:?}", alt);
+                Vector3::new(0.0, 0.0, alt)
+            }
+        };
+
+        let body_vector_x = current_position + body_vector_x;
+        let body_vector_y = current_position + body_vector_y;
+        let body_vector_z = current_position + body_vector_z;
+
+        let current_position = (current_position.x, current_position.y, current_position.z);
+
+        chart.draw_series(std::iter::once(PathElement::new(
+            vec![
+                current_position,
+                (body_vector_x.x, body_vector_x.y, body_vector_x.z),
+            ],
+            axis_style_x,
+        ))).unwrap();
+
+        chart.draw_series(std::iter::once(PathElement::new(
+            vec![
+                current_position,
+                (body_vector_y.x, body_vector_y.y, body_vector_y.z),
+            ],
+            axis_style_y,
+        ))).unwrap();
+
+        chart.draw_series(std::iter::once(PathElement::new(
+            vec![
+                current_position,
+                (body_vector_z.x, body_vector_z.y, body_vector_z.z),
+            ],
+            axis_style_z,
+        ))).unwrap();
+
         root.present().unwrap();
     }
+}
+
+/// Returns the body frame unit vectors (X, Y, Z) in world coordinates,
+/// given a quaternion orientation.
+fn get_body_frame_vectors(
+    orientation: Quaternion<f64>,
+) -> (Vector3<f64>, Vector3<f64>, Vector3<f64>) {
+    // Convert to a UnitQuaternion to safely use rotation
+    let rotation = UnitQuaternion::from_quaternion(orientation);
+
+    // Standard basis vectors in body frame
+    let x_body = Vector3::x();
+    let y_body = Vector3::y();
+    let z_body = Vector3::z();
+
+    // Rotate the basis vectors using the quaternion
+    let x_world = rotation.transform_vector(&x_body);
+    let y_world = rotation.transform_vector(&y_body);
+    let z_world = rotation.transform_vector(&z_body);
+
+    (x_world, y_world, z_world)
 }
