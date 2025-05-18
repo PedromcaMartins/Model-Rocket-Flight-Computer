@@ -1,15 +1,64 @@
 flowchart TD
-    A[Telemetry]
-    %% A --> Flash[(Flash)]
-    A --> SdCard[(Sd Card)]
-    A --> Uart
-    %% A --> OLED
-    A -.-> macro_telemetry!["telemetry!()"]
-    A -.-> macro_error!["error!()"]
+    macro_telemetry["telemetry!()"] -.telemetry crate messages.-> TelemService
+    macro_trace["trace!()"] -.-> TelemService
+    macro_debug["debug!()"] -.-> TelemService
+    macro_info["info!()"] -.-> TelemService
+    macro_warning["warning!()"] -.-> TelemService
+    macro_error["error!()"] -.-> TelemService
+    TelemService[Telemetry Service]
+    TelemService --non-volatile storage--> FileSystem
+    TelemService --real-time debugging--> DebugService
+    TelemService -.statistics and fault tracking.-> State
 
-    %% FlightMode[Flight Mode]
+    FileSystem[File System Service]
+    FileSystem --> SdCard
+    FileSystem --> Flash
 
-    B[Sensors]
-    B --> IMU[BNO055]
-    B --> GPS[Ublox Neo-7M]
-    B --> Barometer[BMP180]
+    %% DeviceDrivers[Device Drivers]
+    IMU[BNO055]
+    GPS[Ublox Neo-7M]
+    Barometer[BMP180]
+    DebugUart[Debug Uart]
+    SdCard[(Sd Card)]
+    Flash[(Flash)]
+    OLED
+    LED
+
+    DebugService[Debug Service]
+    DebugService --> DebugUart
+
+    State[Flight State Machine]
+    State --"on state change"--> DisplayStateService
+    State --unrecoverable error--> Abort
+
+    DisplayStateService[Display State Service]
+    DisplayStateService --> OLED
+    DisplayStateService --> LED
+
+    State --init--> Init
+    Init --all Services check--> Standby
+    Standby --arm command ?--> Armed
+    Armed --abs acc > threshold--> Liftoff
+    Liftoff --acc < 0--> CoastAscent
+    CoastAscent --vel < 0--> BalisticDescent
+    BalisticDescent --abs vel < threshold --> ParachuteDescent
+    BalisticDescent --vel = 0 --> Landing
+    ParachuteDescent --vel = 0--> Landing
+    State -.state change.-> TelemService
+
+    SensorsService[Sensors Service]
+    SensorsService -.-> macro_telemetry
+    SensorsService -.latest data used for state transition.-> State
+    SensorsService --> IMU
+    SensorsService --> GPS
+    SensorsService --> Barometer
+
+%% File System Service and Debug Service receive new data from Telemetry Service via Channel. 
+%% Threads: Sd Card, Flash, Debug Uart
+
+%% In case of Err in any of the threads, Telemetry Service should receive it, and attemp to restart the threads
+%% This could be accomplished by a housekeeping thread, instead of the Telemetry Service
+
+%% Display State Service works the same way, but receives new data from Flight State Machine. 
+
+%% Flight State machine need sensor data. It should subscribe to the data it needs. 
