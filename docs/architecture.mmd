@@ -1,64 +1,68 @@
-flowchart TD
-    macro_telemetry["telemetry!()"] -.telemetry crate messages.-> TelemService
-    macro_trace["trace!()"] -.-> TelemService
-    macro_debug["debug!()"] -.-> TelemService
-    macro_info["info!()"] -.-> TelemService
-    macro_warning["warning!()"] -.-> TelemService
-    macro_error["error!()"] -.-> TelemService
-    TelemService[Telemetry Service]
-    TelemService --non-volatile storage--> FileSystem
-    TelemService --real-time debugging--> DebugService
-    TelemService -.statistics and fault tracking.-> State
+flowchart LR
+    HouseKeepingService[Housekeeping Service]
 
-    FileSystem[File System Service]
-    FileSystem --> SdCard
-    FileSystem --> Flash
+    SensorsService -.latest data used for state transition.-> StateMachineService
+    TelemetryService -.statistics and fault tracking.-> StateMachineService
 
-    %% DeviceDrivers[Device Drivers]
-    IMU[BNO055]
-    GPS[Ublox Neo-7M]
-    Barometer[BMP180]
-    DebugUart[Debug Uart]
-    SdCard[(Sd Card)]
-    Flash[(Flash)]
-    OLED
-    LED
+    StateMachineService -.state change.-> TelemetryService
+    SensorsService -.sensor data.-> TelemetryService
 
-    DebugService[Debug Service]
-    DebugService --> DebugUart
+    subgraph SensorsService[Sensors Service]
+        IMU[BNO055]
+        GPS[Ublox Neo-7M]
+        Barometer[BMP180]
+    end
 
-    State[Flight State Machine]
-    State --"on state change"--> DisplayStateService
-    State --unrecoverable error--> Abort
+    subgraph TelemetryService[Telemetry Service]
+        direction LR
+        macro_telemetry["telemetry!()"] -."sensor data + state change".-> Logger
+        macro_trace["trace!()"] -.-> Logger
+        macro_debug["debug!()"] -.-> Logger
+        macro_info["info!()"] -.-> Logger
+        macro_warning["warning!()"] -.-> Logger
+        macro_error["error!()"] -.-> Logger
 
-    DisplayStateService[Display State Service]
-    DisplayStateService --> OLED
-    DisplayStateService --> LED
+        Logger --real-time debugging--> DebugService
+        Logger --non-volatile storage--> FileSystemService
 
-    State --init--> Init
-    Init --all Services check--> Standby
-    Standby --arm command ?--> Armed
-    Armed --abs acc > threshold--> Liftoff
-    Liftoff --acc < 0--> CoastAscent
-    CoastAscent --vel < 0--> BalisticDescent
-    BalisticDescent --abs vel < threshold --> ParachuteDescent
-    BalisticDescent --vel = 0 --> Landing
-    ParachuteDescent --vel = 0--> Landing
-    State -.state change.-> TelemService
+        Logger[Logger]
 
-    SensorsService[Sensors Service]
-    SensorsService -.-> macro_telemetry
-    SensorsService -.latest data used for state transition.-> State
-    SensorsService --> IMU
-    SensorsService --> GPS
-    SensorsService --> Barometer
+        subgraph DebugService[Debug Service]
+            direction TB
+            DebugUart[Debug Uart]
+            DebugRTT[RTT]
+        end
 
-%% File System Service and Debug Service receive new data from Telemetry Service via Channel. 
-%% Threads: Sd Card, Flash, Debug Uart
+        subgraph FileSystemService[Filesystem Service]
+            direction TB
+            SdCard[(Sd Card)]
+            Flash[(Flash)]
+        end
+    end
 
-%% In case of Err in any of the threads, Telemetry Service should receive it, and attemp to restart the threads
-%% This could be accomplished by a housekeeping thread, instead of the Telemetry Service
+    subgraph StateMachineService[Flight State Machine Service]
+        direction LR
+        StateMachine --unrecoverable error--> Abort
+        StateMachine --"on state change"--> DisplayStateService
 
-%% Display State Service works the same way, but receives new data from Flight State Machine. 
+        Abort(Abort)
 
-%% Flight State machine need sensor data. It should subscribe to the data it needs. 
+        subgraph DisplayStateService[Display State Service]
+            direction TB
+            OLED
+            LED
+        end
+
+        subgraph StateMachine[Flight State Machine]
+            direction TB
+            Init(Init) --all Services check--> Standby
+            Standby(Standby) --arm command--> Armed
+            Armed(Armed) --"abs(acc) > threshold"--> Liftoff
+            Liftoff(Liftoff) --acc < 0--> CoastAscent
+            CoastAscent(CoastAscent) --vel < 0--> BalisticDescent
+            BalisticDescent(BalisticDescent) --"abs(vel) < threshold"--> ParachuteDescent
+            BalisticDescent(BalisticDescent) --"vel ~ 0"--> Landing
+            ParachuteDescent(ParachuteDescent) --"vel ~ 0"--> Landing
+            Landing(Landing)
+        end
+    end
