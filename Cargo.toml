@@ -14,11 +14,11 @@ resolver = "3"
 [profile.dev]
 debug = true
 lto = true
-opt-level = "z"
+overflow-checks = true
 incremental = true
 
 [profile.release]
 debug = false
 lto = true
-opt-level = "z"
+opt-level = "s"
 incremental = true

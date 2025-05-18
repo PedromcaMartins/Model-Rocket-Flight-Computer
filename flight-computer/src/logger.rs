@@ -2,9 +2,7 @@ use core::sync::atomic::{AtomicBool, Ordering};
 
 use defmt::{global_logger, Encoder, Logger};
 use embassy_stm32::{mode::Async, usart::UartTx};
-use rtt::{do_write, handle};
-
-mod rtt;
+use crate::drivers::rtt::{do_write, handle};
 
 #[global_logger]
 struct MyLogger;
