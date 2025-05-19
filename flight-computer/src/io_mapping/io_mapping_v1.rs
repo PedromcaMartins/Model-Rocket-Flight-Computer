@@ -1,6 +1,6 @@
 
 pub mod types {
-    use embassy_stm32::{mode, peripherals::{DMA2_CH3, I2C1, SDIO}};
+    use embassy_stm32::{mode, peripherals::{DMA2_CH3, I2C1, SDIO}, usart::UartTx};
 
     pub type Bno055I2cMode = mode::Blocking;
 
@@ -8,6 +8,8 @@ pub mod types {
 
     pub type SdCard = SDIO;
     pub type SdCardDma = DMA2_CH3;
+
+    pub type DebugUart<'d> = UartTx<'d, mode::Async>;
 }
 pub use types::*;
 
@@ -25,7 +27,7 @@ pub struct IOMapping<'d> {
     pub bmp280_i2c: I2c<'d, Bmp280I2cMode>,
     pub sd_card: Sdmmc<'d, SdCard, SdCardDma>,
     pub sd_card_detect: Input<'d>,
-    pub telemetry_uart: UartTx<'d, mode::Async>,
+    pub debug_uart: DebugUart<'d>,
     pub ublox_neo_7m: Uart<'d, mode::Async>,
 }
 
@@ -39,7 +41,7 @@ impl IOMapping<'_> {
             bmp280_i2c: I2c::new_blocking(p.I2C1, p.PB8, p.PB9, Hertz::khz(400), Default::default()),
             sd_card: Sdmmc::new_1bit(p.SDIO, Irqs, p.DMA2_CH3, p.PC12, p.PD2, p.PC8, Default::default()),
             sd_card_detect: Input::new(p.PG2, Pull::None),
-            telemetry_uart: uart_tx,
+            debug_uart: uart_tx,
             ublox_neo_7m: defmt::unwrap!(Uart::new(p.USART2, p.PD6, p.PD5, Irqs, p.DMA1_CH6, p.DMA1_CH5, Default::default())),
         }
     }

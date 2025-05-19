@@ -11,6 +11,9 @@ version = "0.1.0"
 # embassy-stm32 = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
 
 [dependencies]
+telemetry = { version = "*", path = "../telemetry" }
+chrono = { version = "^0.4", default-features = false}
+
 embassy-executor = { version = "0.7.0", features = ["task-arena-size-4096", "arch-cortex-m", "executor-thread"] }
 embassy-futures = "0.1"
 embassy-stm32 = { version = "0.2", features = ["stm32f413zh", "memory-x", "exti", "chrono", "unstable-pac", "time-driver-any"] }
@@ -35,8 +38,8 @@ cortex-m-rt = "0.7.3"
 # embedded-hal = "1.0.0"
 # embedded-hal-async = "1.0.0"
 # embedded-hal-bus = { version = "0.2", features = ["async"] }
-# embedded-io = { version = "0.6.0" }
-# embedded-io-async = { version = "0.6.1" }
+embedded-io = { version = "0.6.0" }
+embedded-io-async = { version = "0.6.1" }
 # embedded-storage = "0.3.1"
 
 # Drivers
@@ -47,7 +50,7 @@ nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
 # Application specific dependencies
 # heapless = { version = "0.8", default-features = false }
 micromath = "2.0.0"
-# static_cell = "2"
+static_cell = "2"
 # chrono = { version = "^0.4", default-features = false}
 critical-section = "1.2"
 
@@ -90,6 +93,7 @@ debug = [
     # "embassy-net-wiznet/defmt",
     "bno055/defmt-03",
     "nmea/defmt-03",
+    "telemetry/defmt-03",
 ]
 release = [
     "embassy-stm32/low-power",

@@ -1,8 +1,7 @@
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use defmt::{global_logger, Encoder, Logger};
-use embassy_stm32::{mode::Async, usart::UartTx};
-use crate::drivers::rtt::{do_write, handle};
+use crate::{drivers::rtt::{do_write, handle}, tasks::telemetry::LoggerPipeWriter};
 
 #[global_logger]
 struct MyLogger;
@@ -12,7 +11,7 @@ static TAKEN: AtomicBool = AtomicBool::new(false);
 static mut CS_RESTORE: critical_section::RestoreState = critical_section::RestoreState::invalid();
 
 static mut LOG_RTT: Option<Encoder> = None;
-static mut LOG_UART: Option<UartTx<'static, Async>> = None;
+static mut LOG_PIPE_WRITER: Option<LoggerPipeWriter> = None;
 
 #[allow(static_mut_refs)]
 pub fn init_logger_rtt() {
@@ -28,14 +27,14 @@ pub fn init_logger_rtt() {
 }
 
 #[allow(static_mut_refs)]
-pub fn init_logger_uart(uart: UartTx<'static, Async>) {
+pub fn init_async_logger(writer: LoggerPipeWriter) {
     unsafe {
         critical_section::with(|_| {
             defmt::assert!(
-                LOG_UART.is_none(),
-                "Tried to assign serial port when one was already assigned."
+                LOG_PIPE_WRITER.is_none(),
+                "Tried to assign a logger pipe writer when one was already assigned."
             );
-            LOG_UART = Some(uart)
+            LOG_PIPE_WRITER = Some(writer)
         });
     }
 }
@@ -84,30 +83,31 @@ unsafe impl Logger for MyLogger {
         }
     }
 
-    unsafe fn write(bytes: &[u8]) {
-        // safety: accessing the `static mut` is OK because we have acquired a critical section.
-        unsafe {
-            if let Some(ref mut uart) = LOG_UART {
-                uart.blocking_write(bytes).unwrap();
-            }
-        }
-
+    unsafe fn write(mut bytes: &[u8]) {
         // safety: accessing the `static mut` is OK because we have acquired a critical section.
         unsafe {
             if let Some(ref mut rtt) = LOG_RTT {
                 rtt.write(bytes, do_write);
             }
         }
+
+        unsafe {
+            if let Some(ref mut pipe_writer) = LOG_PIPE_WRITER {
+                while !bytes.is_empty() {
+                    match pipe_writer.try_write(bytes) {
+                        Ok(written) => bytes = &bytes[written..],
+                        Err(_) => {
+                            // TODO: silent diagnostics
+                            // panic!();
+                            break
+                        },
+                    }
+                }
+            }
+        }
     }
 
     unsafe fn flush() {
-        // safety: accessing the `static mut` is OK because we have acquired a critical section.
-        unsafe {
-            if let Some(ref mut uart) = LOG_UART {
-                uart.blocking_flush().unwrap();
-            }
-        }
-
         // safety: accessing the `&'static _` is OK because we have acquired a critical section.
         handle().flush();
     }

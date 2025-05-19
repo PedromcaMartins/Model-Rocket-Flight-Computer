@@ -4,17 +4,16 @@
 mod io_mapping;
 mod logger;
 mod tasks;
-// mod drivers;
+mod drivers;
+mod services;
 
 use embassy_time::Timer;
 use io_mapping::IOMapping;
-use logger::{init_logger_rtt, init_logger_uart};
+use embassy_executor::Spawner;
+
 use panic_probe as _;
 
-#[allow(unused_imports)]
-use tasks::{altimeter, gps, imu, sd_card};
-
-use embassy_executor::Spawner;
+use tasks::{sensors::{altimeter, gps, imu, sd_card}, telemetry::TelemetryTasks};
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
@@ -33,12 +32,12 @@ async fn main(spawner: Spawner) {
             divq: Some(PllQDiv::DIV4), // 16mhz / 8 * 96 / 4 = 48Mhz.
             divr: None,
         });
-        config.rcc.plli2s = Some(Pll { 
-            prediv: PllPreDiv::DIV16, 
-            mul: PllMul::MUL192, 
-            divp: None, 
+        config.rcc.plli2s = Some(Pll {
+            prediv: PllPreDiv::DIV16,
+            mul: PllMul::MUL192,
+            divp: None,
             divq: Some(PllQDiv::DIV2), // 16mhz / 16 * 192 / 2 = 96Mhz.
-            divr: None, 
+            divr: None,
         });
         config.rcc.ahb_pre = AHBPrescaler::DIV1;
         config.rcc.apb1_pre = APBPrescaler::DIV2;
@@ -49,13 +48,15 @@ async fn main(spawner: Spawner) {
     let p = embassy_stm32::init(config);
     let io_mapping = IOMapping::init(p);
 
-    init_logger_rtt();
-    init_logger_uart(io_mapping.telemetry_uart);
+    TelemetryTasks::new()
+        .use_rtt_service()
+        .use_debug_uart_service(io_mapping.debug_uart)
+        .spawn(&spawner);
 
     // defmt::unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
     // defmt::unwrap!(spawner.spawn(sd_card(io_mapping.sd_card)));
     // defmt::unwrap!(spawner.spawn(altimeter(io_mapping.bmp280_i2c)));
-    defmt::unwrap!(spawner.spawn(gps(io_mapping.ublox_neo_7m)));
+    // defmt::unwrap!(spawner.spawn(gps(io_mapping.ublox_neo_7m)));
 
     loop {
         defmt::info!("Hello, world!");
