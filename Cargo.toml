@@ -1,9 +1,17 @@
 [workspace]
 members = [
-    "flight-computer",
+    "flight_computer_lib",
+    "flight_computer_nucleo_f413zh",
     "groundstation",
     "telemetry",
 ]
+
+default-members = [
+    "flight_computer_lib",
+    "groundstation",
+    "telemetry",
+]
+
 resolver = "3"
 
 # [patch.crates-io]

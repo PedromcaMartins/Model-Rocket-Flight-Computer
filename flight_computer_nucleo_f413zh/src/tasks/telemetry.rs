@@ -2,7 +2,8 @@ use embassy_executor::Spawner;
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, pipe::{self, Pipe}};
 use static_cell::ConstStaticCell;
 
-use crate::{io_mapping::DebugUart, logger::{init_async_logger, init_logger_rtt}, services::telemetry::{debug_uart::DebugUartService, TelemetryService}};
+use crate::{io_mapping::DebugUart, logger::{init_async_logger, init_logger_rtt}};
+use flight_computer_lib::services::telemetry::{debug_uart::DebugUartService, TelemetryService};
 
 const LOGGER_PIPE_CAPACITY: usize = 32;
 
