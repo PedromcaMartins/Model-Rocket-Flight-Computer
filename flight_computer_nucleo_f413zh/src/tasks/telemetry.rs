@@ -17,46 +17,33 @@ static DEBUG_UART_PIPE_CELL: ConstStaticCell<LoggerPipe> = ConstStaticCell::new(
 
 pub struct TelemetryTasks {
     telemetry_service: TelemetryService<LoggerPipeReader, LoggerPipeWriter>,
-    debug_uart_service: Option<DebugUartService<LoggerPipeReader, DebugUart<'static>>>,
+    debug_uart_service: DebugUartService<LoggerPipeReader, DebugUart<'static>>,
 }
 
 impl TelemetryTasks {
-    pub fn new() -> Self {
+    pub fn new(debug_uart: DebugUart<'static>) -> Self {
+        // RTT
+        init_logger_rtt();
+
+        // Pipe from Logger to Telemetry Service
         let logger_pipe = LOGGER_PIPE_CELL.take();
         let (logger_reader, logger_writer) = logger_pipe.split();
         init_async_logger(logger_writer);
 
-        Self {
-            telemetry_service: TelemetryService::new(logger_reader),
-            debug_uart_service: None,
-        }
-    }
-
-    pub fn use_rtt_service(self) -> Self {
-        init_logger_rtt();
-
-        self
-    }
-
-    pub fn use_debug_uart_service(mut self, debug_uart: DebugUart<'static>) -> Self {
+        // Pipe from Telemetry Service to Debug Uart Service
         let debug_uart_pipe = DEBUG_UART_PIPE_CELL.take();
         let (debug_uart_reader, debug_uart_writer) = debug_uart_pipe.split();
-        let debug_uart_service = DebugUartService::new(debug_uart, debug_uart_reader);
 
-        self.telemetry_service.set_debug_uart(debug_uart_writer);
-
+        // Initializing dependant services
         Self {
-            debug_uart_service: Some(debug_uart_service),
-            ..self
+            telemetry_service: TelemetryService::new(logger_reader, debug_uart_writer),
+            debug_uart_service: DebugUartService::new(debug_uart, debug_uart_reader),
         }
     }
 
     pub fn spawn(self, spawner: &Spawner) {
         defmt::unwrap!(spawner.spawn(telemetry_service_task(self.telemetry_service)));
-
-        if let Some(debug_uart_service) = self.debug_uart_service {
-            defmt::unwrap!(spawner.spawn(debug_uart_service_task(debug_uart_service)));
-        }
+        defmt::unwrap!(spawner.spawn(debug_uart_service_task(self.debug_uart_service)));
     }
 }
 

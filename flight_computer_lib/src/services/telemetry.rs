@@ -6,7 +6,7 @@ where
     WRITERS: embedded_io_async::Write,
 {
     log_message_bus: LOG,
-    debug_uart_bus: Option<WRITERS>
+    debug_uart_bus: WRITERS,
 }
 
 impl<LOG, WRITERS> TelemetryService<LOG, WRITERS>
@@ -16,15 +16,12 @@ where
 {
     pub fn new(
         log_message_bus: LOG,
+        debug_uart_bus: WRITERS,
     ) -> Self {
         Self {
             log_message_bus,
-            debug_uart_bus: None,
+            debug_uart_bus,
         }
-    }
-
-    pub fn set_debug_uart(&mut self, debug_uart_bus: WRITERS) {
-        self.debug_uart_bus = Some(debug_uart_bus);
     }
 
     #[inline]
@@ -38,11 +35,9 @@ where
             let bytes = log_message_bus.fill_buf().await.unwrap();
             let len = bytes.len();
 
-            if let Some(ref mut debug_uart_bus) = debug_uart_bus {
-                debug_uart_bus.write_all(
-                    bytes
-                ).await.unwrap();
-            }
+            debug_uart_bus.write_all(
+                bytes
+            ).await.unwrap();
 
             log_message_bus.consume(len);
         }

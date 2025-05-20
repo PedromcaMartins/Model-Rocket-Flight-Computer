@@ -46,11 +46,8 @@ async fn main(spawner: Spawner) {
     }
     let p = embassy_stm32::init(config);
     let io_mapping = IOMapping::init(p);
-
-    TelemetryTasks::new()
-        .use_rtt_service()
-        .use_debug_uart_service(io_mapping.debug_uart)
-        .spawn(&spawner);
+    
+    TelemetryTasks::new(io_mapping.debug_uart).spawn(&spawner);
 
     // defmt::unwrap!(spawner.spawn(imu(io_mapping.bno055_i2c)));
     // defmt::unwrap!(spawner.spawn(sd_card(io_mapping.sd_card)));

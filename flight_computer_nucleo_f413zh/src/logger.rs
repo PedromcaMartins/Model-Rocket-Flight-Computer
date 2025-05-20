@@ -1,6 +1,7 @@
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use defmt::{global_logger, Encoder, Logger};
+use static_cell::ConstStaticCell;
 use crate::{drivers::rtt::{do_write, handle}, tasks::telemetry::LoggerPipeWriter};
 
 #[global_logger]

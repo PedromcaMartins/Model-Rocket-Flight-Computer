@@ -1,7 +1,7 @@
 pub struct DebugUartService<LOG, UART> 
 where 
-    LOG: embedded_io_async::BufRead, 
     UART: embedded_io_async::Write, 
+    LOG: embedded_io_async::BufRead, 
 {
     debug_uart: UART,
     log_message_bus: LOG,
@@ -9,8 +9,8 @@ where
 
 impl<LOG, UART> DebugUartService<LOG, UART> 
 where 
-    LOG: embedded_io_async::BufRead, 
     UART: embedded_io_async::Write, 
+    LOG: embedded_io_async::BufRead, 
 {
     pub fn new(debug_uart: UART, log_message_bus: LOG) -> Self {
         Self {

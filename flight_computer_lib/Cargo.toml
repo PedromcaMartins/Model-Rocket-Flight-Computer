@@ -47,6 +47,11 @@ nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
 # chrono = { version = "^0.4", default-features = false}
 # critical-section = "1.2"
 
+[dev-dependencies]
+embedded-io-adapters = { version = "0.6.1", features = ["tokio-1"] }
+tokio = { version = "1", features = ["full"]}
+heapless = { version = "0.8", default-features = false }
+
 [lib]
 name = "flight_computer_lib"
 path = "src/lib.rs"
