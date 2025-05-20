@@ -1,5 +1,5 @@
 use std::{convert::Infallible, fmt, path::{Path, PathBuf}, str::FromStr};
-use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
+use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use time::OffsetDateTime;
 
 pub enum MessageType {

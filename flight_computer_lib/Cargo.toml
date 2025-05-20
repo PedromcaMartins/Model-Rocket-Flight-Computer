@@ -11,7 +11,7 @@ version = "0.1.0"
 # embassy-stm32 = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
 
 [dependencies]
-telemetry = { version = "*", path = "../telemetry" }
+telemetry_messages = { version = "*", path = "../telemetry_messages" }
 chrono = { version = "^0.4", default-features = false}
 
 # embassy-executor = { version = "0.7.0", features = ["task-arena-size-4096", "arch-cortex-m", "executor-thread"] }
@@ -82,7 +82,7 @@ path = "src/lib.rs"
 #     # "embassy-net-wiznet/defmt",
 #     "bno055/defmt-03",
 #     "nmea/defmt-03",
-#     "telemetry/defmt-03",
+#     "telemetry_messages/defmt-03",
 # ]
 # release = [
 #     "embassy-stm32/low-power",

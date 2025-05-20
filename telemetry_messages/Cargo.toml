@@ -1,5 +1,5 @@
 [package]
-name = "telemetry"
+name = "telemetry_messages"
 version = "0.1.0"
 edition = "2024"
 

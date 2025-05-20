@@ -1,7 +1,7 @@
 use egui_plotter::{EguiBackend, DEFAULT_MOVE_SCALE, DEFAULT_SCROLL_SCALE};
 use log::info;
 use nalgebra::{Quaternion, UnitQuaternion, Vector3};
-use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
+use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use plotters::prelude::*;
 
 pub struct MouseData {

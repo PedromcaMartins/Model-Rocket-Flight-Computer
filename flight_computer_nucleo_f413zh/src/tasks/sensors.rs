@@ -5,7 +5,7 @@ use defmt::Debug2Format;
 use embassy_stm32::{i2c::I2c, sdmmc::Sdmmc, time::Hertz, usart::Uart, mode};
 use embassy_time::{Delay, Instant, Timer};
 use nmea::{Nmea, SentenceType};
-use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
+use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 
 use crate::io_mapping::{Bmp280I2cMode, Bno055I2cMode, SdCard, SdCardDma};
 

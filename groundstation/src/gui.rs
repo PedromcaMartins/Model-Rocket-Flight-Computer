@@ -1,5 +1,5 @@
 use eframe::egui;
-use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
+use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use tokio::sync::mpsc;
 
 use crate::parser::{DefmtParser, LogMessage, MessageType, Source};

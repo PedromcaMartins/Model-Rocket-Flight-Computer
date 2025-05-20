@@ -5,7 +5,7 @@ use defmt_parser::Level;
 use groundstation::{parser::{LocationMessage, LogMessage, MessageType, ModulePath}, GroundStation};
 use nalgebra::{UnitQuaternion, Vector3};
 use nmea::sentences::FixType;
-use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
+use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use time::OffsetDateTime;
 use tokio::{sync::mpsc, time::Instant};
 

@@ -5,6 +5,6 @@
         "flight_computer_lib/Cargo.toml",
         "flight_computer_nucleo_f413zh/Cargo.toml",
         "groundstation/Cargo.toml",
-        "telemetry/Cargo.toml",
+        "telemetry_messages/Cargo.toml",
     ],
 }

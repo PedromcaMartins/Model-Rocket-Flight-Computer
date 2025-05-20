@@ -1,6 +1,6 @@
 use egui::{Color32, Stroke};
 use egui_plot::{Line, Plot};
-use telemetry::{AltimeterMessage, GpsMessage, ImuMessage};
+use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 
 mod position;
 use position::PositionChart;

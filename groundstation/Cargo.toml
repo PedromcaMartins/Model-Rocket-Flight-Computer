@@ -12,7 +12,7 @@ name = "mock"
 path = "src/bin/mock.rs"
 
 [dependencies]
-telemetry = { version = "*", path = "../telemetry" }
+telemetry_messages = { version = "*", path = "../telemetry_messages" }
 
 anyhow = "1"
 clap = { version = "4.0", features = ["derive", "env"] }
