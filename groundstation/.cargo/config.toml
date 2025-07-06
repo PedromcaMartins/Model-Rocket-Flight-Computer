@@ -1,3 +1,0 @@
-[alias]
-mock = "run --bin mock"
-main = "run --bin groundstation"

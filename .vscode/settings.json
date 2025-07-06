@@ -2,9 +2,11 @@
     "rust-analyzer.linkedProjects": [
         "Cargo.toml",
 
-        "flight_computer_lib/Cargo.toml",
-        "flight_computer_nucleo_f413zh/Cargo.toml",
-        "groundstation/Cargo.toml",
-        "telemetry_messages/Cargo.toml",
+        "crates/flight_computer/Cargo.toml",
+        "crates/flight_computer_nucleo_f413zh/Cargo.toml",
+        "crates/groundstation_backend/Cargo.toml",
+        "crates/groundstation_frontend/Cargo.toml",
+        "crates/telemetry_messages/Cargo.toml",
     ],
+    "rust-analyzer.checkOnSave": false,
 }

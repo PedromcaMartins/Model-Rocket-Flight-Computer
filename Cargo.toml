@@ -1,15 +1,13 @@
 [workspace]
 members = [
-    "flight_computer_lib",
-    "flight_computer_nucleo_f413zh",
-    "groundstation",
-    "telemetry_messages",
+    "crates/*",
 ]
 
 default-members = [
-    "flight_computer_lib",
-    "groundstation",
-    "telemetry_messages",
+    "crates/flight_computer",
+    "crates/groundstation_backend",
+    "crates/groundstation_frontend",
+    "crates/telemetry_messages",
 ]
 
 resolver = "3"
@@ -22,6 +20,7 @@ resolver = "3"
 [profile.dev]
 debug = true
 lto = true
+opt-level = "s"
 overflow-checks = true
 incremental = true
 
@@ -29,4 +28,5 @@ incremental = true
 debug = false
 lto = true
 opt-level = "s"
+overflow-checks = true
 incremental = true
