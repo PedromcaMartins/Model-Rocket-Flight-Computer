@@ -3,11 +3,11 @@
 #![deny(unsafe_code)]
 
 mod io_mapping;
+use io_mapping::IOMapping;
 
 use {defmt_rtt as _, panic_probe as _};
 
 use embassy_time::Timer;
-use io_mapping::IOMapping;
 use embassy_executor::Spawner;
 
 #[embassy_executor::main]

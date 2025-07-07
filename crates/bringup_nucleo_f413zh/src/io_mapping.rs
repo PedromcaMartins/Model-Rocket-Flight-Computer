@@ -1,33 +1,18 @@
-
-mod types {
-    use embassy_stm32::{mode, peripherals::{DMA2_CH3, SDIO}, usart::UartTx};
-
-    pub type Bno055I2cMode = mode::Blocking;
-
-    pub type Bmp280I2cMode = mode::Blocking;
-
-    pub type SdCard = SDIO;
-    pub type SdCardDma = DMA2_CH3;
-
-    pub type DebugUart<'d> = UartTx<'d, mode::Async>;
-}
-pub use types::*;
-
-use embassy_stm32::{bind_interrupts, gpio::{Input, Pull}, i2c::I2c, mode, peripherals::{USART2, USART3}, sdmmc::{self, Sdmmc}, time::Hertz, usart::{self, Uart}};
+use embassy_stm32::{bind_interrupts, gpio::{Input, Pull}, i2c::I2c, mode, peripherals::{DMA2_CH3, SDIO, USART2, USART3}, sdmmc::{self, Sdmmc}, time::Hertz, usart::{self, Uart, UartTx}};
 
 bind_interrupts!(struct Irqs {
-    SDIO => sdmmc::InterruptHandler<SdCard>;
+    SDIO => sdmmc::InterruptHandler<SDIO>;
     USART2 => usart::InterruptHandler<USART2>;
     USART3 => usart::InterruptHandler<USART3>;
 });
 
 pub struct IOMapping<'d> {
     pub version: u16,
-    pub bno055_i2c: I2c<'d, Bno055I2cMode>,
-    pub bmp280_i2c: I2c<'d, Bmp280I2cMode>,
-    pub sd_card: Sdmmc<'d, SdCard, SdCardDma>,
+    pub bno055_i2c: I2c<'d, mode::Blocking>,
+    pub bmp280_i2c: I2c<'d, mode::Blocking>,
+    pub sd_card: Sdmmc<'d, SDIO, DMA2_CH3>,
     pub sd_card_detect: Input<'d>,
-    pub debug_uart: DebugUart<'d>,
+    pub debug_uart: UartTx<'d, mode::Async>,
     pub ublox_neo_7m: Uart<'d, mode::Async>,
 }
 

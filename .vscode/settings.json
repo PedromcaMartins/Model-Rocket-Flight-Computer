@@ -7,6 +7,7 @@
         "crates/groundstation_backend/Cargo.toml",
         "crates/groundstation_frontend/Cargo.toml",
         "crates/telemetry_messages/Cargo.toml",
+        "crates/bringup_nucleo_f413zh/Cargo.toml",
     ],
     "rust-analyzer.checkOnSave": false,
 }
