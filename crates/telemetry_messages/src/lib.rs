@@ -1,12 +1,28 @@
 #![no_std]
+#![allow(unused_imports)]
 #![deny(unsafe_code)]
 
-use chrono::NaiveTime;
+use core::ops::Deref;
+
+use chrono::{DateTime, NaiveTime, Utc};
 use nalgebra::{UnitQuaternion, Vector3};
 use nmea::sentences::FixType;
 use uom::si::quantities::{Acceleration, Angle, AngularVelocity, Length, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Time};
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+use postcard_schema::{Schema, schema};
+use postcard_rpc::{endpoint, topic};
+use serde::{Deserialize, Serialize};
+
+pub type UID = [u8; 12];
+
+endpoint!(PingEndpoint, u32, u32, "ping");
+endpoint!(GetUniqueIdEndpoint, (), UID, "unique_id/get");
+
+topic!(AltimeterTopic, AltimeterMessage, "altimeter/data");
+topic!(GpsTopic, GpsMessage, "gps/data");
+topic!(ImuTopic, ImuMessage, "imu/data");
+
+#[derive(Serialize, Deserialize, Schema, Debug)]
 pub struct AltimeterMessage {
     /// Pressure in Pascal.
     pub pressure: Pressure<f64>,
@@ -18,12 +34,12 @@ pub struct AltimeterMessage {
     pub timestamp: Time<f64>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Serialize, Deserialize, Schema, Debug)]
 pub struct GpsMessage {
     /// Timestamp
-    pub fix_time: NaiveTime,
+    pub fix_time: DateTime<Utc>,
     /// Type of GPS Fix
-    pub fix_type: FixType,
+    pub fix_type: FixTypeWraper,
     /// Latitude in degrees.
     pub latitude: Angle<f64>,
     /// Longitude in degrees.
@@ -36,7 +52,7 @@ pub struct GpsMessage {
     pub timestamp: Time<f64>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Serialize, Deserialize, Schema, Debug)]
 pub struct ImuMessage {
     /// Euler angles representation of heading in degrees.
     /// Euler angles is represented as (`roll`, `pitch`, `yaw/heading`).
@@ -62,4 +78,65 @@ pub struct ImuMessage {
     pub temperature: ThermodynamicTemperature<f32>,
     /// Timestamp in microseconds.
     pub timestamp: Time<f64>,
+}
+
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FixTypeWraper(FixType);
+
+impl Schema for FixTypeWraper {
+    const SCHEMA: &'static schema::NamedType = &schema::NamedType {
+        name: "FixType",
+        ty: &schema::DataModelType::Enum(&[
+            &schema::NamedVariant {
+                name: "Invalid",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+            &schema::NamedVariant {
+                name: "Gps",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+            &schema::NamedVariant {
+                name: "DGps",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+            &schema::NamedVariant {
+                name: "Pps",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+            &schema::NamedVariant {
+                name: "Rtk",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+            &schema::NamedVariant {
+                name: "FloatRtk",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+            &schema::NamedVariant {
+                name: "Estimated",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+            &schema::NamedVariant {
+                name: "Manual",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+            &schema::NamedVariant {
+                name: "Simulation",
+                ty: &schema::DataModelVariant::UnitVariant,
+            },
+        ]),
+    };
+}
+
+impl From<FixType> for FixTypeWraper {
+    fn from(value: FixType) -> Self {
+        Self(value)
+    }
+}
+
+impl FixTypeWraper {
+    pub fn into_inner(self) -> FixType {
+        self.0
+    }
 }
