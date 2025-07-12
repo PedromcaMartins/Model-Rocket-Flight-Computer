@@ -80,8 +80,6 @@ pub struct ImuMessage {
     pub timestamp: Time<f64>,
 }
 
-
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FixTypeWraper(FixType);
 
@@ -129,14 +127,16 @@ impl Schema for FixTypeWraper {
     };
 }
 
-impl From<FixType> for FixTypeWraper {
-    fn from(value: FixType) -> Self {
-        Self(value)
+impl FixTypeWraper {
+    #[must_use]
+    pub const fn into_inner(self) -> FixType {
+        self.0
     }
 }
 
-impl FixTypeWraper {
-    pub fn into_inner(self) -> FixType {
-        self.0
-    }
+#[test]
+fn fix_type_wrapping() {
+    let x = FixType::DGps;
+    let y = FixTypeWraper(x.clone());
+    assert_eq!(x, y.into_inner());
 }

@@ -4,18 +4,17 @@ members = [
 ]
 
 default-members = [
-    "crates/flight_computer",
-    "crates/groundstation_backend",
-    "crates/groundstation_frontend",
     "crates/telemetry_messages",
 ]
 
 resolver = "3"
 
-# [patch.crates-io]
-# embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
-# embassy-executor = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
-# embassy-stm32 = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
+[patch.crates-io]
+postcard-rpc = { path = "../postcard-rpc/source/postcard-rpc" }
+postcard-schema = { path = "../postcard/source/postcard-schema" }
+# embassy-stm32 ={ git = "https://github.com/embassy-rs/embassy.git"}
+# embassy-time ={ git = "https://github.com/embassy-rs/embassy.git"}
+# embassy-time-driver ={ git = "https://github.com/embassy-rs/embassy.git"}
 
 [profile.dev]
 debug = true

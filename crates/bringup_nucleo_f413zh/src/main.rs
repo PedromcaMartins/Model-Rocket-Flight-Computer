@@ -16,7 +16,7 @@ use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
 
 use defmt::Debug2Format;
 use embassy_stm32::time::Hertz;
-use embassy_time::{Delay, Duration, Instant, Ticker, Timer};
+use embassy_time::{Delay, Instant, Timer};
 use nmea::{Nmea, SentenceType};
 
 #[embassy_executor::main]
@@ -24,13 +24,13 @@ async fn main(spawner: Spawner) {
     let p = embassy_stm32::init(get_config());
     let io_mapping = IOMapping::init(p);
     let IOMapping {
-        bno055_port,
-        bmp280_port,
-        sd_card_port,
-        sd_card_detect_port,
-        sd_card_status_led_port,
-        debug_uart_port,
-        ublox_neo_7m_port,
+        bno055: bno055_port,
+        bmp280: bmp280_port,
+        sd_card: sd_card_port,
+        sd_card_detect: sd_card_detect_port,
+        sd_card_status_led: sd_card_status_led_port,
+        debug_uart: debug_uart_port,
+        ublox_neo_7m: ublox_neo_7m_port,
     } = io_mapping;
 
     defmt::info!("{:#?}", embassy_stm32::uid::uid());
@@ -42,6 +42,7 @@ async fn main(spawner: Spawner) {
     spawner.must_spawn(debug_uart(debug_uart_port));
 }
 
+#[allow(clippy::wildcard_imports)]
 fn get_config() -> embassy_stm32::Config {
     use embassy_stm32::rcc::*;
     use embassy_stm32::rcc::mux::*;
@@ -154,6 +155,7 @@ async fn bmp280_task(bmp280_port: Bmp280Port) {
 
     loop {
         let pressure = bmp280.pressure();
+        #[allow(clippy::cast_possible_truncation)]
         let temperature = bmp280.temp() as f32;
 
         defmt::info!("Pressure: {:?} Pa, Temperature: {:?} °C", pressure, temperature);
@@ -170,7 +172,7 @@ async fn sd_card_task(mut sd_card_port: SdCardPort, sd_card_detect_port: SdCardD
     let mut err = None;
     loop {
         match sd_card_port.init_card(Hertz::mhz(25)).await {
-            Ok(_) => break,
+            Ok(()) => break,
             Err(e) => {
                 if err != Some(e) {
                     defmt::error!("waiting for card error, retrying: {:?}", e);
@@ -186,10 +188,9 @@ async fn sd_card_task(mut sd_card_port: SdCardPort, sd_card_detect_port: SdCardD
     defmt::info!("Clock: {}", sd_card_port.clock());
     defmt::info!("Sd Card Detect State: {:#?}", sd_card_detect_port.get_level());
 
-    let mut tick = Ticker::every(Duration::from_secs(1));
-    loop {
+    for _ in 1..=4 {
         sd_card_status_led_port.toggle();
-        tick.next().await;
+        Timer::after_secs(1).await;
     }
 }
 
@@ -205,7 +206,7 @@ async fn gps(mut uart: UbloxNeo7mPort) {
         match nmea.parse(message) {
             Ok(_) => defmt::info!("GPS: {:?}", nmea),
             Err(e) => defmt::error!("{:?}", Debug2Format(&e)),
-        };
+        }
 
         Timer::after_millis(100).await;
     }

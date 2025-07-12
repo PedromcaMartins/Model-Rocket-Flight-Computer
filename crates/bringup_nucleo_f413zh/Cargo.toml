@@ -5,14 +5,11 @@ name = "bringup_nucleo_f413zh"
 edition = "2021"
 version = "0.0.0"
 
-# [patch.crates-io]
-# embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
-# embassy-executor = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
-# embassy-stm32 = { git = "https://github.com/embassy-rs/embassy", rev = "38f26137fc67beb874aa73c9a7ab2150d9f3d372" }
+[lints.clippy]
+enum_glob_use = "deny"
+pedantic = "deny"
 
 [dependencies]
-# telemetry_messages = { version = "*", path = "../telemetry_messages" }
-# flight_computer = { version = "*", path = "../flight_computer" }
 chrono = { version = "^0.4", default-features = false}
 
 embassy-executor = { version = "0.7.0", features = ["task-arena-size-4096", "arch-cortex-m", "executor-thread"] }
@@ -46,13 +43,6 @@ cortex-m-rt = "0.7.3"
 bmp280-ehal = "0.0.6"
 bno055 = "0.4.0"
 nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
-
-# Application specific dependencies
-# heapless = { version = "0.8", default-features = false }
-# micromath = "2.0.0"
-# static_cell = "2"
-# chrono = { version = "^0.4", default-features = false}
-# critical-section = "1.2"
 
 [[bin]]
 name = "flight-computer"
