@@ -1,7 +1,7 @@
 # This file was automatically generated.
 
 [package]
-name = "flight_computer_nucleo_f413zh"
+name = "flight_computer"
 edition = "2021"
 version = "0.0.0"
 
@@ -62,9 +62,13 @@ nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
 # sequential-storage = "4.0"
 # ekv = "1.0"
 
+[lib]
+name = "flight_computer"
+path = "src/lib.rs"
+
 [[bin]]
-name = "flight-computer"
-path = "src/main.rs"
+name = "nucleo_f413zh"
+path = "src/bin/nucleo_f413zh/main.rs"
 test = false
 bench = false
 
