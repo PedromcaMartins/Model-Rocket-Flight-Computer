@@ -4,8 +4,12 @@
 
 mod io_mapping;
 use io_mapping::IOMapping;
+use postcard_rpc::header::VarHeader;
+use telemetry_messages::UID;
 
-use crate::io_mapping::{Bmp280Port, Bno055Port, DebugUartPort, SdCardDetectPort, SdCardPort, SdCardStatusLedPort, UbloxNeo7mPort};
+mod postcard;
+
+use crate::{io_mapping::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, ErrorLedPort, InitArmLedPort, RecoveryActivatedLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort, WarningLedPort}, postcard::{spawn_postcard_server, Context}};
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -21,66 +25,45 @@ use nmea::{Nmea, SentenceType};
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    let p = embassy_stm32::init(get_config());
-    let io_mapping = IOMapping::init(p);
     let IOMapping {
-        bno055: bno055_port,
-        bmp280: bmp280_port,
-        sd_card: sd_card_port,
-        sd_card_detect: sd_card_detect_port,
-        sd_card_status_led: sd_card_status_led_port,
-        debug_uart: debug_uart_port,
-        ublox_neo_7m: ublox_neo_7m_port,
-    } = io_mapping;
+        bno055,
+        bmp280,
+        sd_card,
+        sd_card_detect,
+        sd_card_status_led,
+        debug_port,
+        ublox_neo_7m,
+        postcard_server_usb_driver,
+        init_arm_led,
+        recovery_activated_led,
+        warning_led,
+        error_led,
+        arm_button,
+    } = IOMapping::init();
 
-    defmt::info!("{:#?}", embassy_stm32::uid::uid());
+    spawner.must_spawn(bno055_task(bno055));
+    // spawner.must_spawn(bmp280_task(bmp280));
+    // spawner.must_spawn(sd_card_task(sd_card, sd_card_detect, sd_card_status_led));
+    spawner.must_spawn(gps_task(ublox_neo_7m));
+    // spawner.must_spawn(debug_uart_task(debug_port));
+    // spawner.must_spawn(leds_buttons_task(
+    //     init_arm_led,
+    //     recovery_activated_led,
+    //     warning_led,
+    //     error_led,
+    //     arm_button,
+    // ));
 
-    spawner.must_spawn(bno055_task(bno055_port));
-    spawner.must_spawn(bmp280_task(bmp280_port));
-    spawner.must_spawn(sd_card_task(sd_card_port, sd_card_detect_port, sd_card_status_led_port));
-    spawner.must_spawn(gps(ublox_neo_7m_port));
-    spawner.must_spawn(debug_uart(debug_uart_port));
-}
-
-#[allow(clippy::wildcard_imports)]
-fn get_config() -> embassy_stm32::Config {
-    use embassy_stm32::rcc::*;
-    use embassy_stm32::rcc::mux::*;
-
-    let mut config = embassy_stm32::Config::default();
-    config.rcc.hsi = true;
-    config.rcc.hse = None;
-    config.rcc.sys = Sysclk::PLL1_P;
-    config.rcc.pll_src = PllSource::HSI;
-    config.rcc.pll = Some(Pll {
-        prediv: PllPreDiv::DIV8,
-        mul: PllMul::MUL100,
-        divp: Some(PllPDiv::DIV2), // 16mhz / 8 * 96 / 2 = 96Mhz.
-        divq: Some(PllQDiv::DIV4), // 16mhz / 8 * 96 / 4 = 48Mhz.
-        divr: None,
-    });
-    config.rcc.plli2s = Some(Pll {
-        prediv: PllPreDiv::DIV16,
-        mul: PllMul::MUL192,
-        divp: None,
-        divq: Some(PllQDiv::DIV2), // 16mhz / 16 * 192 / 2 = 96Mhz.
-        divr: None,
-    });
-    config.rcc.ahb_pre = AHBPrescaler::DIV1;
-    config.rcc.apb1_pre = APBPrescaler::DIV2;
-    config.rcc.apb2_pre = APBPrescaler::DIV1;
-    config.rcc.mux.sdiosel = Sdiosel::CLK48;
-
-    config
+    spawn_postcard_server(spawner, postcard_server_usb_driver).await;
 }
 
 #[embassy_executor::task]
-async fn bno055_task(bno055_port: Bno055Port) {
+async fn bno055_task(bno055: Bno055Port) {
     // The sensor has an initial startup time of 400ms - 650ms during which interaction with it will fail
     Timer::at(Instant::from_millis(650)).await;
 
     let mut delay = Delay;
-    let mut bno055 = Bno055::new(bno055_port).with_alternative_address();
+    let mut bno055 = Bno055::new(bno055).with_alternative_address();
 
     bno055.init(&mut delay).unwrap();
 
@@ -139,8 +122,8 @@ async fn bno055_task(bno055_port: Bno055Port) {
 }
 
 #[embassy_executor::task]
-async fn bmp280_task(bmp280_port: Bmp280Port) {
-    let mut bmp280 = BMP280::new(bmp280_port).unwrap();
+async fn bmp280_task(bmp280: Bmp280Port) {
+    let mut bmp280 = BMP280::new(bmp280).unwrap();
 
     bmp280.set_config(Config {
         filter: Filter::c16, 
@@ -165,13 +148,13 @@ async fn bmp280_task(bmp280_port: Bmp280Port) {
 }
 
 #[embassy_executor::task]
-async fn sd_card_task(mut sd_card_port: SdCardPort, sd_card_detect_port: SdCardDetectPort, mut sd_card_status_led_port: SdCardStatusLedPort) {
+async fn sd_card_task(mut sd_card: SdCardPort, sd_card_detect: SdCardDetectPort, mut sd_card_status_led: SdCardInsertedLedPort) {
     // Should print 400kHz for initialization
-    defmt::info!("Configured clock: {}", sd_card_port.clock().0);
+    defmt::info!("Configured clock: {}", sd_card.clock().0);
 
     let mut err = None;
     loop {
-        match sd_card_port.init_card(Hertz::mhz(25)).await {
+        match sd_card.init_card(Hertz::mhz(24)).await {
             Ok(()) => break,
             Err(e) => {
                 if err != Some(e) {
@@ -182,30 +165,31 @@ async fn sd_card_task(mut sd_card_port: SdCardPort, sd_card_detect_port: SdCardD
         }
     }
 
-    let sd_card = defmt::unwrap!(sd_card_port.card());
+    let sd_card_inner = defmt::unwrap!(sd_card.card());
 
-    defmt::info!("Card: {:#?}", Debug2Format(sd_card));
-    defmt::info!("Clock: {}", sd_card_port.clock());
-    defmt::info!("Sd Card Detect State: {:#?}", sd_card_detect_port.get_level());
+    defmt::info!("Card: {:#?}", Debug2Format(sd_card_inner));
+    defmt::info!("Clock: {}", sd_card.clock());
+    defmt::info!("Sd Card Detect State: {:#?}", sd_card_detect.get_level());
 
     for _ in 1..=4 {
-        sd_card_status_led_port.toggle();
+        sd_card_status_led.toggle();
         Timer::after_secs(1).await;
     }
 }
 
 #[embassy_executor::task]
-async fn gps(mut uart: UbloxNeo7mPort) {
+async fn gps_task(mut uart: UbloxNeo7mPort) {
     let mut buf = [0; nmea::SENTENCE_MAX_LEN];
     let mut nmea = Nmea::create_for_navigation(&[SentenceType::GGA]).unwrap();
 
     loop {
-        let len = uart.read_until_idle(&mut buf).await.unwrap();
-        let message = core::str::from_utf8(&buf[..len]).unwrap();
+        if let Ok(len) = uart.read_until_idle(&mut buf).await {
+            let message = core::str::from_utf8(&buf[..len]).unwrap();
 
-        match nmea.parse(message) {
-            Ok(_) => defmt::info!("GPS: {:?}", nmea),
-            Err(e) => defmt::error!("{:?}", Debug2Format(&e)),
+            match nmea.parse(message) {
+                Ok(_) => defmt::info!("GPS: {:?}", nmea),
+                Err(e) => defmt::error!("{:?}", Debug2Format(&e)),
+            }
         }
 
         Timer::after_millis(100).await;
@@ -213,9 +197,40 @@ async fn gps(mut uart: UbloxNeo7mPort) {
 }
 
 #[embassy_executor::task]
-async fn debug_uart(mut debug_uart: DebugUartPort) {
+async fn debug_uart_task(mut debug_port: DebugPort) {
     loop {
-        debug_uart.write("hello world!".as_bytes()).await.unwrap();
+        debug_port.write("hello world!\r\n".as_bytes()).await.unwrap();
         Timer::after_millis(2000).await;
     }
+}
+
+#[embassy_executor::task]
+async fn leds_buttons_task(
+    mut init_arm_led: InitArmLedPort,
+    mut recovery_activated_led: RecoveryActivatedLedPort,
+    mut warning_led: WarningLedPort,
+    mut error_led: ErrorLedPort,
+    mut arm_button: ArmButtonPort,
+) {
+    for _ in 1..4 {
+        init_arm_led.toggle();
+        recovery_activated_led.toggle();
+        warning_led.toggle();
+        error_led.toggle();
+        Timer::after_secs(1).await;
+    }
+    for _ in 1..4 {
+        arm_button.wait_for_rising_edge().await;
+        Timer::after_secs(1).await;
+    }
+}
+
+fn ping_handler(_context: &mut Context, _header: VarHeader, rqst: u32) -> u32 {
+    defmt::info!("ping");
+    rqst
+}
+
+fn unique_id_handler(_context: &mut Context, _header: VarHeader, _rqst: ()) -> UID {
+    defmt::info!("unique_id");
+    *embassy_stm32::uid::uid()
 }

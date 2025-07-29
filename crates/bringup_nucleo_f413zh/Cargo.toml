@@ -10,14 +10,15 @@ enum_glob_use = "deny"
 pedantic = "deny"
 
 [dependencies]
+telemetry_messages = { version = "*", path = "../telemetry_messages" }
 chrono = { version = "^0.4", default-features = false}
 
-embassy-executor = { version = "0.7.0", features = ["task-arena-size-4096", "arch-cortex-m", "executor-thread"] }
+embassy-executor = { version = "0.7.0", features = ["task-arena-size-81920", "arch-cortex-m", "executor-thread"] }
 # embassy-futures = "0.1"
 embassy-stm32 = { version = "0.2", features = ["stm32f413zh", "memory-x", "exti", "time-driver-any"] } # chrono - not used because rtc not used
-# embassy-sync = "0.7"
+embassy-sync = "0.6.2"
 embassy-time = { version = "0.4", features = ["tick-hz-32_768"] }
-# embassy-usb = { version = "0.4.0" }
+embassy-usb = { version = "0.4.0" }
 # embassy-net = { version = "0.6.0", features = ["tcp", "dhcpv4", "medium-ethernet", ] }
 # embassy-net-wiznet = { version = "0.2.0" }
 
@@ -43,6 +44,12 @@ cortex-m-rt = "0.7.3"
 bmp280-ehal = "0.0.6"
 bno055 = "0.4.0"
 nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
+
+postcard ={ version = "1.1" }
+postcard-rpc = { version = "0.11", features = ["embassy-usb-0_4-server"] }
+postcard-schema = { version = "0.2", features = ["derive", "nalgebra-v0_33", "chrono-v0_4", "uom-v0_37"] }
+uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "si", "serde"] }
+static_cell = "2"
 
 [[bin]]
 name = "flight-computer"
@@ -74,13 +81,13 @@ debug = [
     "defmt-rtt",
     "panic-probe",
     "embassy-executor/defmt",
-    # "embassy-sync/defmt",
+    "embassy-sync/defmt",
     # "embassy-futures/defmt",
     "embassy-time/defmt",
     "embassy-time/defmt-timestamp-uptime",
     "embassy-stm32/defmt",
     "embassy-stm32/low-power-debug-with-sleep",
-    # "embassy-usbd/defmt",
+    "embassy-usb/defmt",
     # "embassy-net/defmt",
     # "embassy-net-wiznet/defmt",
     "bno055/defmt-03",
