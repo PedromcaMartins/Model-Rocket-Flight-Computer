@@ -10,17 +10,36 @@ use nmea::sentences::FixType;
 use uom::si::quantities::{Acceleration, Angle, AngularVelocity, Length, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Time};
 
 use postcard_schema::{Schema, schema};
-use postcard_rpc::{endpoint, topic};
+use postcard_rpc::{endpoints, topics, TopicDirection};
 use serde::{Deserialize, Serialize};
 
 pub type UID = [u8; 12];
 
-endpoint!(PingEndpoint, u32, u32, "ping");
-endpoint!(GetUniqueIdEndpoint, (), UID, "unique_id/get");
+endpoints! {
+    list = ENDPOINT_LIST;
+    omit_std = true;
+    | EndpointTy                | RequestTy     | ResponseTy            | Path              |
+    | ----------                | ---------     | ----------            | ----              |
+    | PingEndpoint              | u32           | u32                   | "ping"            |
+    | GetUniqueIdEndpoint       | ()            | UID                   | "unique_id/get"   |
+}
 
-topic!(AltimeterTopic, AltimeterMessage, "altimeter/data");
-topic!(GpsTopic, GpsMessage, "gps/data");
-topic!(ImuTopic, ImuMessage, "imu/data");
+topics! {
+    list = TOPICS_IN_LIST;
+    direction = TopicDirection::ToServer;
+    | TopicTy                   | MessageTy     | Path              |
+    | -------                   | ---------     | ----              |
+}
+
+topics! {
+    list = TOPICS_OUT_LIST;
+    direction = TopicDirection::ToClient;
+    | TopicTy                   | MessageTy         | Path              | Cfg                           |
+    | -------                   | ---------         | ----              | ---                           |
+    | AltimeterTopic            | AltimeterMessage  | "altimeter/data"  |                               |
+    | GpsTopic                  | GpsMessage        | "gps/data"        |                               |
+    | ImuTopic                  | ImuMessage        | "imu/data"        |                               |
+}
 
 #[derive(Serialize, Deserialize, Schema, Debug)]
 pub struct AltimeterMessage {

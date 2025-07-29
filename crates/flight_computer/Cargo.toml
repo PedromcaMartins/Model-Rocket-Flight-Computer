@@ -18,7 +18,7 @@ unwrap_used = "deny"
 telemetry_messages = { version = "*", path = "../telemetry_messages" }
 chrono = { version = "^0.4", default-features = false}
 
-embassy-executor = { version = "0.7.0", features = ["task-arena-size-4096", "arch-cortex-m", "executor-thread"] }
+embassy-executor = { version = "0.7.0", features = ["executor-thread"] }
 embassy-futures = "0.1"
 embassy-stm32 = { version = "0.2", features = ["stm32f413zh", "memory-x", "exti", "time-driver-any"] } # chrono - not used because rtc not used
 embassy-sync = "0.7"
@@ -57,6 +57,7 @@ nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
 # static_cell = "2"
 # chrono = { version = "^0.4", default-features = false}
 # critical-section = "1.2"
+uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "si", "serde"] }
 
 # Flash Storage
 # sequential-storage = "4.0"

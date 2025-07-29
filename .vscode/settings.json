@@ -3,7 +3,8 @@
         "Cargo.toml",
 
         "crates/bringup_nucleo_f413zh/Cargo.toml",
-        "crates/flight_computer_nucleo_f413zh/Cargo.toml",
+        "crates/flight_computer/Cargo.toml",
+        "crates/groundstation_backend/Cargo.toml",
         "crates/telemetry_messages/Cargo.toml",
     ],
     "rust-analyzer.checkOnSave": false,

@@ -1,0 +1,26 @@
+[package]
+name = "groundstation_backend"
+version = "0.0.0"
+edition = "2024"
+
+[[bin]]
+name = "postcard-hello-world"
+path = "src/bin/postcard_hello_world.rs"
+
+[dependencies.telemetry_messages]
+path = "../telemetry_messages"
+
+[dependencies.postcard-rpc]
+version = "0.11"
+features = [
+    "use-std",
+    "raw-nusb",
+]
+
+[dependencies.tokio]
+version = "1.37.0"
+features = [
+    "rt-multi-thread",
+    "macros",
+    "time",
+]

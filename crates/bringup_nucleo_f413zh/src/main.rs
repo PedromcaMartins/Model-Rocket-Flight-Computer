@@ -7,9 +7,9 @@ use io_mapping::IOMapping;
 use postcard_rpc::header::VarHeader;
 use telemetry_messages::UID;
 
-mod postcard;
+mod postcard_server;
 
-use crate::{io_mapping::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, ErrorLedPort, InitArmLedPort, RecoveryActivatedLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort, WarningLedPort}, postcard::{spawn_postcard_server, Context}};
+use crate::{io_mapping::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, ErrorLedPort, InitArmLedPort, RecoveryActivatedLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort, WarningLedPort}, postcard_server::{spawn_postcard_server, Context}};
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -41,10 +41,10 @@ async fn main(spawner: Spawner) {
         arm_button,
     } = IOMapping::init();
 
-    spawner.must_spawn(bno055_task(bno055));
+    // spawner.must_spawn(bno055_task(bno055));
     // spawner.must_spawn(bmp280_task(bmp280));
     // spawner.must_spawn(sd_card_task(sd_card, sd_card_detect, sd_card_status_led));
-    spawner.must_spawn(gps_task(ublox_neo_7m));
+    // spawner.must_spawn(gps_task(ublox_neo_7m));
     // spawner.must_spawn(debug_uart_task(debug_port));
     // spawner.must_spawn(leds_buttons_task(
     //     init_arm_led,
@@ -63,7 +63,7 @@ async fn bno055_task(bno055: Bno055Port) {
     Timer::at(Instant::from_millis(650)).await;
 
     let mut delay = Delay;
-    let mut bno055 = Bno055::new(bno055).with_alternative_address();
+    let mut bno055 = Bno055::new(bno055);
 
     bno055.init(&mut delay).unwrap();
 
@@ -188,7 +188,7 @@ async fn gps_task(mut uart: UbloxNeo7mPort) {
 
             match nmea.parse(message) {
                 Ok(_) => defmt::info!("GPS: {:?}", nmea),
-                Err(e) => defmt::error!("{:?}", Debug2Format(&e)),
+                Err(e) => defmt::error!("Error: {:?}, Message: {}", Debug2Format(&e), message),
             }
         }
 
