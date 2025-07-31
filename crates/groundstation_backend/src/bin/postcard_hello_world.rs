@@ -7,8 +7,8 @@ use groundstation_backend::postcard_client::PostcardClient;
 pub async fn main() {
     let client = PostcardClient::new();
 
-    let uid = client.get_id().await.unwrap();
-    println!("uid: {:#?}", uid);
+    // let uid = client.get_id().await.unwrap();
+    // println!("uid: {:#?}", uid);
 
     tokio::select! {
         _ = client.wait_closed() => {
