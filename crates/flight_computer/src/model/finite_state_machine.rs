@@ -12,6 +12,6 @@ impl FlightState for Liftoff {}
 struct RecoveryActivated;
 impl FlightState for RecoveryActivated {}
 
-impl<S: FlightState> FlightState<S> {
+impl<S: FlightState> FiniteStateMachine<S> {
     
 }
