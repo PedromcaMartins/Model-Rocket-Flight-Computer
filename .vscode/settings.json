@@ -2,6 +2,7 @@
     "rust-analyzer.linkedProjects": [
         "Cargo.toml",
 
+        "crates/bringup_esp32_s3/Cargo.toml",
         "crates/bringup_nucleo_f413zh/Cargo.toml",
         "crates/flight_computer/Cargo.toml",
         "crates/groundstation_backend/Cargo.toml",

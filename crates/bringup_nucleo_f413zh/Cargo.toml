@@ -2,7 +2,7 @@
 
 [package]
 name = "bringup_nucleo_f413zh"
-edition = "2021"
+edition = "2024"
 version = "0.0.0"
 
 [lints.clippy]

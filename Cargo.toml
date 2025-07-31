@@ -12,8 +12,10 @@ default-members = [
 resolver = "3"
 
 [patch.crates-io]
-postcard-rpc = { path = "../postcard-rpc/source/postcard-rpc" }
-postcard-schema = { path = "../postcard/source/postcard-schema" }
+postcard-rpc     = { path = "../postcard-rpc/source/postcard-rpc" }
+postcard-schema  = { path = "../postcard/source/postcard-schema" }
+bmp280-ehal  = { path = "../bmp280" }
+esp-hal-smartled = { git = "https://github.com/esp-rs/esp-hal-community.git" }
 # embassy-stm32 = { git = "https://github.com/embassy-rs/embassy.git" }
 # embassy-time = { git = "https://github.com/embassy-rs/embassy.git" }
 # embassy-time-driver = { git = "https://github.com/embassy-rs/embassy.git" }
