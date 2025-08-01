@@ -1,24 +1,12 @@
 use embassy_executor::Spawner;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_usb::UsbDevice;
-use postcard_rpc::{define_dispatch, server::{impls::embassy_usb_v0_4::{dispatch_impl::{WireRxBuf, WireRxImpl, WireSpawnImpl, WireStorage, WireTxImpl}, PacketBuffers}, Server, SpawnContext, Dispatch}};
+use flight_computer::tasks::postcard::{ping_handler, Context};
+use postcard_rpc::{define_dispatch, server::{impls::embassy_usb_v0_4::{dispatch_impl::{WireRxBuf, WireRxImpl, WireSpawnImpl, WireStorage, WireTxImpl}, PacketBuffers}, Server, Dispatch}};
 use static_cell::ConstStaticCell;
 use telemetry_messages::{PingEndpoint, ENDPOINT_LIST, TOPICS_IN_LIST, TOPICS_OUT_LIST};
 
 use crate::io_mapping::PostcardServerUsbDriver;
-
-pub struct Context {
-}
-
-pub struct SpawnCtx {
-}
-
-impl SpawnContext for Context {
-    type SpawnCtxt = SpawnCtx;
-    fn spawn_ctxt(&mut self) -> Self::SpawnCtxt {
-        SpawnCtx{  }
-    }
-}
 
 type AppStorage = WireStorage<CriticalSectionRawMutex, PostcardServerUsbDriver, 256, 256, 64, 256>;
 type BufStorage = PacketBuffers<1024, 1024>;
@@ -41,7 +29,7 @@ define_dispatch! {
 
         | EndpointTy                | kind      | handler                       |
         | ----------                | ----      | -------                       |
-        // | PingEndpoint              | blocking  | ping_handler                  |
+        | PingEndpoint              | blocking  | ping_handler                  |
     };
     topics_in: {
         list: TOPICS_IN_LIST;

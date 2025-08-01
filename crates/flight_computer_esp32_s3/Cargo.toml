@@ -9,7 +9,7 @@ pedantic = "deny"
 
 [dependencies]
 telemetry_messages = { version = "*", path = "../telemetry_messages" }
-flight_computer = { version = "*", path = "../flight_computer" }
+flight_computer = { version = "*", path = "../flight_computer", default-features = false, features = ["defmt"] }
 chrono = { version = "^0.4", default-features = false}
 
 embassy-executor = { version = "0.7.0", features = ["defmt", "task-arena-size-20480"] }

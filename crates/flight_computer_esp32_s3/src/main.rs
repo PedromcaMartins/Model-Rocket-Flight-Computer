@@ -14,7 +14,7 @@ use io_mapping::IOMapping;
 
 mod postcard_server;
 
-use crate::io_mapping::{Bmp280Port, Bno055Port, UbloxNeo7mPort};
+use crate::{io_mapping::{Bmp280Port, Bno055Port, UbloxNeo7mPort}, postcard_server::spawn_postcard_server};
 
 use {esp_backtrace as _, esp_println as _};
 
@@ -48,19 +48,19 @@ async fn main(spawner: Spawner) {
     spawner.must_spawn(bmp280_task(bmp280));
     spawner.must_spawn(gps_task(ublox_neo_7m));
 
-    // spawn_postcard_server(spawner, postcard_server_usb_driver).await;
+    spawn_postcard_server(spawner, postcard_server_usb_driver).await;
 }
 
 #[embassy_executor::task]
 async fn bno055_task(bno055: Bno055Port) {
-    let mut bno055 = Bno055::new(bno055);
+    let bno055 = Bno055::new(bno055);
 
     flight_computer::tasks::bno055_task(bno055).await
 }
 
 #[embassy_executor::task]
 async fn bmp280_task(bmp280: Bmp280Port) {
-    let mut bmp280 = BMP280::new(bmp280).unwrap();
+    let bmp280 = BMP280::new(bmp280).unwrap();
 
     flight_computer::tasks::bmp280_task(bmp280).await
 }

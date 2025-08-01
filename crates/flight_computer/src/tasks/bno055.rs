@@ -1,8 +1,8 @@
 use core::fmt::Debug;
 
-use defmt::{info, error};
+use defmt_or_log::{info, error};
 use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
-use defmt::Debug2Format;
+use defmt_or_log::Debug2Format;
 use embassy_time::{Delay, Instant, Timer};
 use embedded_hal::i2c::{I2c, SevenBitAddress};
 

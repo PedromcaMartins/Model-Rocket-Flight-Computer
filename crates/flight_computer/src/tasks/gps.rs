@@ -1,4 +1,4 @@
-use defmt::{error, info, Debug2Format};
+use defmt_or_log::{error, info, Debug2Format};
 use embassy_time::Timer;
 use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
 

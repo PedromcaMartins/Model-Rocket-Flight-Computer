@@ -11,3 +11,5 @@ pub use bmp280::bmp280_task;
 
 mod gps;
 pub use gps::gps_task;
+
+pub mod postcard;
