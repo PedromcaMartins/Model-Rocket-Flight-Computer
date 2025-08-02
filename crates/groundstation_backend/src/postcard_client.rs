@@ -12,6 +12,7 @@ pub struct PostcardClient {
 pub enum PostcardError<E> {
     Comms(HostErr<WireError>),
     Endpoint(E),
+    SubscriptionClosed,
 }
 
 impl<E> From<HostErr<WireError>> for PostcardError<E> {
@@ -23,14 +24,17 @@ impl<E> From<HostErr<WireError>> for PostcardError<E> {
 // ---
 
 impl PostcardClient {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         let client = HostClient::new_raw_nusb(
             |d| d.product_string() == Some("flight_computer"),
             ERROR_PATH,
             8,
             VarSeqKind::Seq2,
         );
-        Self { client }
+
+        Self { 
+            client,
+        }
     }
 
     pub async fn wait_closed(&self) {
@@ -45,11 +49,5 @@ impl PostcardClient {
     pub async fn get_id(&self) -> Result<UID, PostcardError<Infallible>> {
         let id = self.client.send_resp::<GetUniqueIdEndpoint>(&()).await?;
         Ok(id)
-    }
-}
-
-impl Default for PostcardClient {
-    fn default() -> Self {
-        Self::new()
     }
 }

@@ -6,15 +6,17 @@
     reason = "mem::forget is generally not safe to do with esp_hal types, especially those \
     holding buffers for the duration of a data transfer."
 )]
+#![deny(unused_must_use)]
 
 mod io_mapping;
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
 use io_mapping::IOMapping;
+use postcard_rpc::server::Sender;
 
 mod postcard_server;
 
-use crate::{io_mapping::{Bmp280Port, Bno055Port, UbloxNeo7mPort}, postcard_server::spawn_postcard_server};
+use crate::{io_mapping::{Bmp280Port, Bno055Port, UbloxNeo7mPort}, postcard_server::{init_postcard_server, server_task, AppTx}};
 
 use {esp_backtrace as _, esp_println as _};
 
@@ -43,29 +45,30 @@ async fn main(spawner: Spawner) {
         rgb_led,
     } = IOMapping::init();
 
+    let server = init_postcard_server(spawner, postcard_server_usb_driver).await;
 
-    spawner.must_spawn(bno055_task(bno055));
-    spawner.must_spawn(bmp280_task(bmp280));
-    spawner.must_spawn(gps_task(ublox_neo_7m));
+    spawner.must_spawn(bno055_task(bno055, server.sender()));
+    spawner.must_spawn(bmp280_task(bmp280, server.sender()));
+    spawner.must_spawn(gps_task(ublox_neo_7m, server.sender()));
 
-    spawn_postcard_server(spawner, postcard_server_usb_driver).await;
+    spawner.must_spawn(server_task(server));
 }
 
 #[embassy_executor::task]
-async fn bno055_task(bno055: Bno055Port) {
+    async fn bno055_task(bno055: Bno055Port, sender: Sender<AppTx>) {
     let bno055 = Bno055::new(bno055);
 
-    flight_computer::tasks::bno055_task(bno055).await
+    flight_computer::tasks::bno055_task(bno055, sender).await
 }
 
 #[embassy_executor::task]
-async fn bmp280_task(bmp280: Bmp280Port) {
+async fn bmp280_task(bmp280: Bmp280Port, sender: Sender<AppTx>) {
     let bmp280 = BMP280::new(bmp280).unwrap();
 
-    flight_computer::tasks::bmp280_task(bmp280).await
+    flight_computer::tasks::bmp280_task(bmp280, sender).await
 }
 
 #[embassy_executor::task]
-async fn gps_task(gps: UbloxNeo7mPort) {
-    flight_computer::tasks::gps_task(gps).await
+async fn gps_task(gps: UbloxNeo7mPort, sender: Sender<AppTx>) {
+    flight_computer::tasks::gps_task(gps, sender).await
 }

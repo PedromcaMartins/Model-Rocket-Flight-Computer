@@ -4,10 +4,13 @@
 
 use core::ops::Deref;
 
-use chrono::{DateTime, NaiveTime, Utc};
-use nalgebra::{UnitQuaternion, Vector3};
+use nalgebra::{Vector3, Quaternion};
 use nmea::sentences::FixType;
 use uom::si::quantities::{Acceleration, Angle, AngularVelocity, Length, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Time};
+
+pub use nalgebra;
+pub use nmea;
+pub use uom;
 
 use postcard_schema::{Schema, schema};
 use postcard_rpc::{endpoints, topics, TopicDirection};
@@ -46,17 +49,17 @@ pub struct AltimeterMessage {
     /// Pressure in Pascal.
     pub pressure: Pressure<f64>,
     /// Altitude in meters.
-    pub altitude: Length<f32>,
+    pub altitude: Length<f64>,
     /// Temperature in Celsius degrees.
-    pub temperature: ThermodynamicTemperature<f32>,
+    pub temperature: ThermodynamicTemperature<f64>,
     /// Timestamp in microseconds.
-    pub timestamp: Time<f64>,
+    pub timestamp: Time<u64>,
 }
 
 #[derive(Serialize, Deserialize, Schema, Debug)]
 pub struct GpsMessage {
     /// Timestamp
-    pub fix_time: DateTime<Utc>,
+    pub fix_time: Time<u64>,
     /// Type of GPS Fix
     pub fix_type: FixTypeWraper,
     /// Latitude in degrees.
@@ -68,21 +71,28 @@ pub struct GpsMessage {
     /// Number of satellites used for fix.
     pub num_of_fix_satellites: u8,
     /// Timestamp in microseconds.
-    pub timestamp: Time<f64>,
+    pub timestamp: Time<u64>,
+}
+
+#[derive(Serialize, Deserialize, Schema, Debug)]
+pub struct EulerAngles<T> {
+    pub roll:  T,
+    pub pitch: T,
+    pub yaw:   T,
 }
 
 #[derive(Serialize, Deserialize, Schema, Debug)]
 pub struct ImuMessage {
     /// Euler angles representation of heading in degrees.
     /// Euler angles is represented as (`roll`, `pitch`, `yaw/heading`).
-    pub euler_angles: Vector3<Angle<f32>>,
+    pub euler_angles: EulerAngles<Angle<f32>>,
     /// Standard quaternion represented by the scalar and vector parts. Corresponds to a right-handed rotation matrix.
     /// Quaternion is represented as (x, y, z, s).
     ///
     /// where:
     /// x, y, z: Vector part of a quaternion;
     /// s: Scalar part of a quaternion.
-    pub quaternion: UnitQuaternion<f32>,
+    pub quaternion: Quaternion<f32>,
     /// Linear acceleration vector in m/s^2 units.
     pub linear_acceleration: Vector3<Acceleration<f32>>,
     /// Gravity vector in m/s^2 units.
@@ -96,7 +106,7 @@ pub struct ImuMessage {
     /// Temperature of the chip in Celsius degrees.
     pub temperature: ThermodynamicTemperature<f32>,
     /// Timestamp in microseconds.
-    pub timestamp: Time<f64>,
+    pub timestamp: Time<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -148,6 +158,11 @@ impl Schema for FixTypeWraper {
 
 impl FixTypeWraper {
     #[must_use]
+    pub const fn new(fix_type: FixType) -> Self {
+        Self(fix_type)
+    }
+
+    #[must_use]
     pub const fn into_inner(self) -> FixType {
         self.0
     }
@@ -156,6 +171,6 @@ impl FixTypeWraper {
 #[test]
 fn fix_type_wrapping() {
     let x = FixType::DGps;
-    let y = FixTypeWraper(x.clone());
+    let y = FixTypeWraper::new(x.clone());
     assert_eq!(x, y.into_inner());
 }

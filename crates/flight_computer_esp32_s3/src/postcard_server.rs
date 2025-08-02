@@ -10,7 +10,7 @@ use crate::io_mapping::PostcardServerUsbDriver;
 
 type AppStorage = WireStorage<CriticalSectionRawMutex, PostcardServerUsbDriver, 256, 256, 64, 256>;
 type BufStorage = PacketBuffers<1024, 1024>;
-type AppTx = WireTxImpl<CriticalSectionRawMutex, PostcardServerUsbDriver>;
+pub type AppTx = WireTxImpl<CriticalSectionRawMutex, PostcardServerUsbDriver>;
 type AppRx = WireRxImpl<PostcardServerUsbDriver>;
 type AppServer = Server<AppTx, AppRx, WireRxBuf, MyApp>;
 
@@ -42,7 +42,7 @@ define_dispatch! {
     };
 }
 
-pub async fn spawn_postcard_server(spawner: Spawner, driver: PostcardServerUsbDriver) {
+pub async fn init_postcard_server(spawner: Spawner, driver: PostcardServerUsbDriver) -> AppServer {
     let pbufs = PBUFS.take();
     let config = embassy_usb_config();
 
@@ -55,15 +55,21 @@ pub async fn spawn_postcard_server(spawner: Spawner, driver: PostcardServerUsbDr
 
     let dispatcher = MyApp::new(context, spawner.into());
     let vkk = dispatcher.min_key_len();
-    let mut server: AppServer = Server::new(
+
+    spawner.must_spawn(usb_task(device));
+
+    Server::new(
         tx_impl,
         rx_impl,
         pbufs.rx_buf.as_mut_slice(),
         dispatcher,
         vkk,
-    );
-    spawner.must_spawn(usb_task(device));
+    )
+}
 
+/// This handles the server management
+#[embassy_executor::task]
+pub async fn server_task(mut server: AppServer) {
     loop {
         // If the host disconnects, we'll return an error here.
         // If this happens, just wait until the host reconnects

@@ -53,6 +53,8 @@ static_cell = "2"
 uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "si", "serde"] }
 micromath = "2.1.0"
 
+thiserror = {version = "2.0.12", default-features = false }
+
 [dev-dependencies]
 # Support `log` crate only (default).
 test-log = { version = "0.2" }
