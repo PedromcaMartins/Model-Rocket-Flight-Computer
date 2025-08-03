@@ -1,0 +1,35 @@
+[package]
+edition      = "2024"
+name         = "board"
+version      = "0.0.0"
+
+[lints.clippy]
+enum_glob_use = "deny"
+pedantic = "deny"
+
+[dependencies]
+telemetry-messages = { version = "*" }
+
+defmt = "1.0.1"
+static_cell = "2.1.1"
+esp-hal = { version = "=1.0.0-rc.0", features = ["defmt", "esp32s3", "unstable"] }
+esp-hal-embassy = { version = "0.9.0", features = ["defmt", "esp32s3"] }
+esp-hal-smartled = { version = "0.15", features = ["defmt", "esp32s3"] }
+embedded-hal-bus = { version = "0.3", features = ["async", "defmt-03"] }
+embedded-sdmmc = { version = "0.9.0", default-features = false, features = ["defmt-log"] }
+embassy-usb = { version = "0.4.0" }
+
+
+# [profile.dev]
+# # Rust debug is too slow.
+# # For debug builds always builds with some optimization
+# opt-level = "s"
+
+# [profile.release]
+# codegen-units    = 1     # LLVM can perform better optimizations using a single thread
+# debug            = 2
+# debug-assertions = false
+# incremental      = false
+# lto              = 'fat'
+# opt-level        = 's'
+# overflow-checks  = false

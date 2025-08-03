@@ -1,7 +1,8 @@
 [workspace]
 members = [
-    "bringup",
-    "flight-computer"
+    "board",
+    "flight-computer",
+    "self-test",
 ]
 
 resolver = "2"

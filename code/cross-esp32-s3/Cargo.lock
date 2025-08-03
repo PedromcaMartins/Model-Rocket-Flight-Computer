@@ -123,39 +123,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "bringup"
+name = "board"
 version = "0.0.0"
 dependencies = [
- "bmp280-ehal",
- "bno055",
- "chrono",
- "critical-section",
  "defmt 1.0.1",
- "embassy-executor",
- "embassy-sync 0.6.2",
- "embassy-time",
  "embassy-usb",
- "embedded-hal 1.0.0",
- "embedded-hal-async",
  "embedded-hal-bus",
- "embedded-io",
- "embedded-io-async",
  "embedded-sdmmc",
- "embedded-storage",
- "esp-backtrace",
- "esp-bootloader-esp-idf",
  "esp-hal",
  "esp-hal-embassy",
  "esp-hal-smartled",
- "esp-println",
- "nmea",
- "postcard",
- "postcard-rpc",
- "postcard-schema",
- "smart-leds",
  "static_cell",
  "telemetry-messages",
- "uom",
 ]
 
 [[package]]
@@ -1000,7 +979,7 @@ version = "0.0.0"
 dependencies = [
  "bmp280-ehal",
  "bno055",
- "chrono",
+ "board",
  "critical-section",
  "defmt 1.0.1",
  "embassy-executor",
@@ -1638,6 +1617,42 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "self-test"
+version = "0.0.0"
+dependencies = [
+ "bmp280-ehal",
+ "bno055",
+ "board",
+ "critical-section",
+ "defmt 1.0.1",
+ "embassy-executor",
+ "embassy-sync 0.6.2",
+ "embassy-time",
+ "embassy-usb",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "embedded-hal-bus",
+ "embedded-io",
+ "embedded-io-async",
+ "embedded-sdmmc",
+ "embedded-storage",
+ "esp-backtrace",
+ "esp-bootloader-esp-idf",
+ "esp-hal",
+ "esp-hal-embassy",
+ "esp-hal-smartled",
+ "esp-println",
+ "nmea",
+ "postcard",
+ "postcard-rpc",
+ "postcard-schema",
+ "smart-leds",
+ "static_cell",
+ "telemetry-messages",
+ "uom",
+]
 
 [[package]]
 name = "semihosting"

@@ -1,5 +1,4 @@
 #![no_std]
-#![no_main]
 #![deny(unsafe_code)]
 #![deny(
     clippy::mem_forget,
@@ -7,18 +6,9 @@
     holding buffers for the duration of a data transfer."
 )]
 
-mod io_mapping;
 use embedded_sdmmc::{VolumeIdx, VolumeManager};
-use io_mapping::IOMapping;
-use postcard_rpc::header::VarHeader;
 
-mod postcard_server;
-
-use crate::{io_mapping::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, ErrorLedPort, InitArmLedPort, RGBLedPort, RecoveryActivatedLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort, WarningLedPort}, postcard_server::{spawn_postcard_server, Context}};
-
-use {esp_backtrace as _, esp_println as _};
-
-use embassy_executor::Spawner;
+use board::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, ErrorLedPort, InitArmLedPort, RGBLedPort, RecoveryActivatedLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort, WarningLedPort};
 
 use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP280};
 use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
@@ -28,49 +18,8 @@ use embassy_time::{Delay, Instant, Timer};
 use nmea::{Nmea, SentenceType};
 use smart_leds::SmartLedsWriteAsync;
 
-// This creates a default app-descriptor required by the esp-idf bootloader.
-// For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
-esp_bootloader_esp_idf::esp_app_desc!();
-
-#[esp_hal_embassy::main]
-async fn main(spawner: Spawner) {
-    let IOMapping { 
-        bno055, 
-        bmp280, 
-        sd_card, 
-        sd_card_detect, 
-        sd_card_status_led, 
-        debug_port, 
-        ublox_neo_7m, 
-        postcard_server_usb_driver, 
-        init_arm_led, 
-        recovery_activated_led, 
-        warning_led, 
-        error_led, 
-        arm_button,
-        rgb_led,
-    } = IOMapping::init();
-
-
-    // spawner.must_spawn(bno055_task(bno055));
-    // spawner.must_spawn(bmp280_task(bmp280));
-    // spawner.must_spawn(sd_card_task(sd_card, sd_card_detect, sd_card_status_led));
-    // spawner.must_spawn(gps_task(ublox_neo_7m));
-    // spawner.must_spawn(debug_uart_task(debug_port));
-    // spawner.must_spawn(leds_buttons_task(
-    //     init_arm_led,
-    //     recovery_activated_led,
-    //     warning_led,
-    //     error_led,
-    //     arm_button,
-    //     rgb_led,
-    // ));
-
-    // spawn_postcard_server(spawner, postcard_server_usb_driver).await;
-}
-
 #[embassy_executor::task]
-async fn bno055_task(bno055: Bno055Port) {
+pub async fn bno055_task(bno055: Bno055Port) {
     // The sensor has an initial startup time of 400ms - 650ms during which interaction with it will fail
     Timer::at(Instant::from_millis(650)).await;
 
@@ -134,19 +83,19 @@ async fn bno055_task(bno055: Bno055Port) {
 }
 
 #[embassy_executor::task]
-async fn bmp280_task(bmp280: Bmp280Port) {
+pub async fn bmp280_task(bmp280: Bmp280Port) {
     let mut bmp280 = BMP280::new(bmp280).unwrap();
 
     bmp280.set_config(Config {
         filter: Filter::c16, 
         t_sb: Standby::ms0_5
-    });
+    }).unwrap();
 
     bmp280.set_control(Control { 
         osrs_t: Oversampling::x1, 
         osrs_p: Oversampling::x4, 
         mode: PowerMode::Normal
-    });
+    }).unwrap();
 
     loop {
         let pressure = bmp280.pressure().unwrap();
@@ -167,7 +116,7 @@ impl embedded_sdmmc::TimeSource for FakeTimeSource {
 }
 
 #[embassy_executor::task]
-async fn sd_card_task(mut sd_card: SdCardPort, sd_card_detect: SdCardDetectPort, mut sd_card_status_led: SdCardInsertedLedPort) {
+pub async fn sd_card_task(sd_card: SdCardPort, sd_card_detect: SdCardDetectPort, mut sd_card_status_led: SdCardInsertedLedPort) {
     for _ in 1..=4 {
         sd_card_status_led.toggle();
         Timer::after_secs(1).await;
@@ -178,7 +127,7 @@ async fn sd_card_task(mut sd_card: SdCardPort, sd_card_detect: SdCardDetectPort,
     info!("Sd Card type {}", sd_card.get_card_type());
 
     // info!("Card size is {} bytes", sd_card.num_bytes().unwrap());
-    let mut volume_mgr = VolumeManager::new(sd_card, FakeTimeSource);
+    let volume_mgr = VolumeManager::new(sd_card, FakeTimeSource);
     let volume = match volume_mgr.open_volume(VolumeIdx(0)) {
         Ok(v) => v,
         Err(e) => {
@@ -189,7 +138,7 @@ async fn sd_card_task(mut sd_card: SdCardPort, sd_card_detect: SdCardDetectPort,
     info!("Volume: {:?}", volume);
 
     let root_dir = volume.open_root_dir().unwrap();
-    let mut my_file = root_dir.open_file_in_dir("MY_FILE.TXT", embedded_sdmmc::Mode::ReadOnly).unwrap();
+    let my_file = root_dir.open_file_in_dir("MY_FILE.TXT", embedded_sdmmc::Mode::ReadOnly).unwrap();
     while !my_file.is_eof() {
         let mut buffer = [0u8; 32];
         let num_read = my_file.read(&mut buffer).unwrap();
@@ -200,7 +149,7 @@ async fn sd_card_task(mut sd_card: SdCardPort, sd_card_detect: SdCardDetectPort,
 }
 
 #[embassy_executor::task]
-async fn gps_task(mut uart: UbloxNeo7mPort) {
+pub async fn gps_task(mut uart: UbloxNeo7mPort) {
     let mut buf = [0; nmea::SENTENCE_MAX_LEN];
     let mut nmea = Nmea::create_for_navigation(&[SentenceType::GGA]).unwrap();
 
@@ -219,7 +168,7 @@ async fn gps_task(mut uart: UbloxNeo7mPort) {
 }
 
 #[embassy_executor::task]
-async fn debug_uart_task(mut debug_port: DebugPort) {
+pub async fn debug_uart_task(mut debug_port: DebugPort) {
     loop {
         debug_port.write_async(b"hello world!\r\n").await.unwrap();
         Timer::after_millis(2000).await;
@@ -227,11 +176,11 @@ async fn debug_uart_task(mut debug_port: DebugPort) {
 }
 
 #[embassy_executor::task]
-async fn leds_buttons_task(
-    mut init_arm_led: InitArmLedPort,
-    mut recovery_activated_led: RecoveryActivatedLedPort,
-    mut warning_led: WarningLedPort,
-    mut error_led: ErrorLedPort,
+pub async fn leds_buttons_task(
+    mut _init_arm_led: InitArmLedPort,
+    mut _recovery_activated_led: RecoveryActivatedLedPort,
+    mut _warning_led: WarningLedPort,
+    mut _error_led: ErrorLedPort,
     mut arm_button: ArmButtonPort,
     mut rgb_led: RGBLedPort,
 ) {
@@ -254,9 +203,4 @@ async fn leds_buttons_task(
         arm_button.wait_for_rising_edge().await;
         Timer::after_secs(1).await;
     }
-}
-
-fn ping_handler(_context: &mut Context, _header: VarHeader, rqst: u32) -> u32 {
-    info!("ping");
-    rqst
 }

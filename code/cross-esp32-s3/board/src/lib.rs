@@ -1,3 +1,10 @@
+#![no_std]
+#![deny(unsafe_code)]
+#![deny(
+    clippy::mem_forget,
+    reason = "mem::forget is generally not safe to do with esp_hal types, especially those \
+    holding buffers for the duration of a data transfer."
+)]
 
 mod types {
     use embedded_hal_bus::spi::ExclusiveDevice;
@@ -30,7 +37,7 @@ pub use types::*;
 
 static EP_OUT_BUFFER: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0u8; 1024]);
 
-pub struct IOMapping {
+pub struct Board {
     pub bno055: Bno055Port,
     pub bmp280: Bmp280Port,
     pub sd_card: SdCardPort,
@@ -47,7 +54,7 @@ pub struct IOMapping {
     pub rgb_led: RGBLedPort,
 }
 
-impl IOMapping {
+impl Board {
     pub fn init() -> Self {
         let p = esp_hal::init(get_init_config());
         let ep_out_buffer = EP_OUT_BUFFER.take().as_mut_slice();

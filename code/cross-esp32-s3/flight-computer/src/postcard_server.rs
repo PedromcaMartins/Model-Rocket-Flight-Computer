@@ -6,7 +6,7 @@ use postcard_rpc::{define_dispatch, server::{impls::embassy_usb_v0_4::{dispatch_
 use static_cell::ConstStaticCell;
 use telemetry_messages::{PingEndpoint, ENDPOINT_LIST, TOPICS_IN_LIST, TOPICS_OUT_LIST};
 
-use crate::io_mapping::PostcardServerUsbDriver;
+use board::PostcardServerUsbDriver;
 
 type AppStorage = WireStorage<CriticalSectionRawMutex, PostcardServerUsbDriver, 256, 256, 64, 256>;
 type BufStorage = PacketBuffers<1024, 1024>;
@@ -44,7 +44,7 @@ define_dispatch! {
 
 pub async fn init_postcard_server(spawner: Spawner, driver: PostcardServerUsbDriver) -> AppServer {
     let pbufs = PBUFS.take();
-    let config = embassy_usb_config();
+    let config = get_embassy_usb_config();
 
     let context = Context {  };
 
@@ -83,7 +83,7 @@ pub async fn usb_task(mut usb: UsbDevice<'static, PostcardServerUsbDriver>) {
     usb.run().await;
 }
 
-fn embassy_usb_config() -> embassy_usb::Config<'static> {
+fn get_embassy_usb_config() -> embassy_usb::Config<'static> {
     let mut config = embassy_usb::Config::new(0x16c0, 0x27DD);
     config.manufacturer = Some("model_rocket");
     config.product = Some("flight_computer");

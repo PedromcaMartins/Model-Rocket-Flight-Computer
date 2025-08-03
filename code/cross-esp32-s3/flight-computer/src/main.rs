@@ -8,16 +8,17 @@
 )]
 #![deny(unused_must_use)]
 
-mod io_mapping;
-use io_mapping::IOMapping;
-
 mod postcard_server;
 
-use crate::{io_mapping::{Bmp280Port, Bno055Port, UbloxNeo7mPort}, postcard_server::{init_postcard_server, server_task, AppTx}};
+use crate::{postcard_server::{init_postcard_server, server_task, AppTx}};
+use board::{Board, Bmp280Port, Bno055Port, UbloxNeo7mPort};
 
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use postcard_rpc::server::Sender;
+use static_cell::ConstStaticCell;
+use uom::si::f64::Length;
 
 use {esp_backtrace as _, esp_println as _};
 
@@ -27,55 +28,70 @@ use embassy_executor::Spawner;
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
 
+static ARM_BUTTON_SIGNAL: ConstStaticCell<Signal<CriticalSectionRawMutex, ()>>   = ConstStaticCell::new(Signal::new());
+static ALTITUDE_SIGNAL: ConstStaticCell<Signal<CriticalSectionRawMutex, Length>> = ConstStaticCell::new(Signal::new());
+
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
-    let IOMapping { 
+    let Board { 
         bno055, 
         bmp280, 
-        sd_card, 
-        sd_card_detect, 
-        sd_card_status_led, 
-        debug_port, 
+        sd_card: _, 
+        sd_card_detect: _, 
+        sd_card_status_led: _, 
+        debug_port: _, 
         ublox_neo_7m, 
         postcard_server_usb_driver, 
-        init_arm_led, 
-        recovery_activated_led, 
-        warning_led, 
-        error_led, 
-        arm_button,
-        rgb_led,
-    } = IOMapping::init();
+        init_arm_led: _, 
+        recovery_activated_led: _, 
+        warning_led: _, 
+        error_led: _, 
+        arm_button: _,
+        rgb_led: _,
+    } = Board::init();
 
     let server = init_postcard_server(spawner, postcard_server_usb_driver).await;
 
-    // let arm_button_signal = Signal::new();
-    // let altitude_signal = Signal::new();
+    let arm_button_signal = ARM_BUTTON_SIGNAL.take();
+    let altitude_signal = ALTITUDE_SIGNAL.take();
 
-    // spawner.must_spawn(bno055_task(bno055, server.sender()));
-    // spawner.must_spawn(bmp280_task(bmp280, server.sender()));
-    // spawner.must_spawn(gps_task(ublox_neo_7m, server.sender()));
-    // spawner.must_spawn(finite_state_machine_task(
-
-    // ));
+    spawner.must_spawn(bno055_task(bno055, server.sender()));
+    spawner.must_spawn(bmp280_task(bmp280, server.sender()));
+    spawner.must_spawn(gps_task(ublox_neo_7m, server.sender()));
+    spawner.must_spawn(finite_state_machine_task(
+        arm_button_signal,
+        altitude_signal,
+    ));
 
     spawner.must_spawn(server_task(server));
 }
 
 #[embassy_executor::task]
-    async fn bno055_task(bno055: Bno055Port, sender: Sender<AppTx>) {
+    async fn bno055_task(bno055: Bno055Port, sender: Sender<AppTx>) -> ! {
     let bno055 = Bno055::new(bno055);
 
     flight_computer_lib::tasks::bno055_task(bno055, sender).await
 }
 
 #[embassy_executor::task]
-async fn bmp280_task(bmp280: Bmp280Port, sender: Sender<AppTx>) {
+async fn bmp280_task(bmp280: Bmp280Port, sender: Sender<AppTx>) -> ! {
     let bmp280 = BMP280::new(bmp280).unwrap();
 
     flight_computer_lib::tasks::bmp280_task(bmp280, sender).await
 }
 
 #[embassy_executor::task]
-async fn gps_task(gps: UbloxNeo7mPort, sender: Sender<AppTx>) {
+async fn gps_task(gps: UbloxNeo7mPort, sender: Sender<AppTx>) -> ! {
     flight_computer_lib::tasks::gps_task(gps, sender).await
+}
+
+#[embassy_executor::task]
+async fn finite_state_machine_task(
+    arm_button_signal: &'static Signal<CriticalSectionRawMutex, ()>,
+    altitude_signal: &'static Signal<CriticalSectionRawMutex, Length>,
+) {
+    flight_computer_lib::tasks::finite_state_machine_task(
+        arm_button_signal,
+        altitude_signal,
+    ).await
 }

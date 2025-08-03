@@ -1,6 +1,6 @@
 [package]
 edition      = "2024"
-name         = "bringup"
+name         = "self-test"
 version      = "0.0.0"
 
 [lints.clippy]
@@ -9,7 +9,7 @@ pedantic = "deny"
 
 [dependencies]
 telemetry-messages = { version = "*" }
-chrono = { version = "^0.4", default-features = false}
+board = { version = "*", path = "../board" }
 
 embassy-executor = { version = "0.7.0", features = ["defmt", "task-arena-size-20480"] }
 embassy-sync = "0.6.2"
@@ -49,8 +49,8 @@ static_cell = "2.1.1"
 
 
 [[bin]]
-name = "bringup"
-path = "src/main.rs"
+name = "test_board"
+path = "src/test_board.rs"
 
 # [profile.dev]
 # # Rust debug is too slow.

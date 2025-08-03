@@ -15,13 +15,13 @@ async fn client() -> (
 ) {
     let client = PostcardClient::new().await;
 
-    let subscription_altimeter = client.client.subscribe_exclusive::<AltimeterTopic>(100).await
+    let subscription_altimeter = client.subscription_altimeter().await
         .expect("Failed to subscribe to altimeter topic");
 
-    let subscription_imu = client.client.subscribe_exclusive::<ImuTopic>(100).await
+    let subscription_imu = client.subscription_imu().await
         .expect("Failed to subscribe to altimeter topic");
 
-    let subscription_gps = client.client.subscribe_exclusive::<GpsTopic>(100).await
+    let subscription_gps = client.subscription_gps().await
         .expect("Failed to subscribe to altimeter topic");
 
     (client, subscription_altimeter, subscription_imu, subscription_gps)

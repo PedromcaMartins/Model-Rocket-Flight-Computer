@@ -40,18 +40,18 @@ async fn main(spawner: Spawner) {
         arm_button,
     } = IOMapping::init();
 
-    // spawner.must_spawn(bno055_task(bno055));
-    // spawner.must_spawn(bmp280_task(bmp280));
-    // spawner.must_spawn(sd_card_task(sd_card, sd_card_detect, sd_card_status_led));
-    // spawner.must_spawn(gps_task(ublox_neo_7m));
-    // spawner.must_spawn(debug_uart_task(debug_port));
-    // spawner.must_spawn(leds_buttons_task(
-    //     init_arm_led,
-    //     recovery_activated_led,
-    //     warning_led,
-    //     error_led,
-    //     arm_button,
-    // ));
+    spawner.must_spawn(bno055_task(bno055));
+    spawner.must_spawn(bmp280_task(bmp280));
+    spawner.must_spawn(sd_card_task(sd_card, sd_card_detect, sd_card_status_led));
+    spawner.must_spawn(gps_task(ublox_neo_7m));
+    spawner.must_spawn(debug_uart_task(debug_port));
+    spawner.must_spawn(leds_buttons_task(
+        init_arm_led,
+        recovery_activated_led,
+        warning_led,
+        error_led,
+        arm_button,
+    ));
 
     spawn_postcard_server(spawner, postcard_server_usb_driver).await;
 }
