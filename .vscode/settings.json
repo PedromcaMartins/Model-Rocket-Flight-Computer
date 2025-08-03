@@ -1,13 +1,8 @@
 {
     "rust-analyzer.linkedProjects": [
-        "Cargo.toml",
-
-        "crates/bringup_esp32_s3/Cargo.toml",
-        "crates/bringup_nucleo_f413zh/Cargo.toml",
-        "crates/flight_computer_esp32_s3/Cargo.toml",
-        "crates/flight_computer/Cargo.toml",
-        "crates/groundstation_backend/Cargo.toml",
-        "crates/telemetry_messages/Cargo.toml",
+        "code/Cargo.toml",
+        "code/cross-esp32-s3/Cargo.toml",
+        "code/cross-nucleo-f413zh/Cargo.toml",
     ],
     "rust-analyzer.checkOnSave": false,
 }

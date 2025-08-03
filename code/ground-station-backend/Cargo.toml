@@ -1,0 +1,16 @@
+[package]
+name = "ground-station-backend"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+telemetry-messages = { version = "*", path = "../telemetry-messages" }
+
+postcard-rpc = { version = "0.11", features = ["use-std", "raw-nusb"] }
+tokio = { version = "1.37.0", features = ["rt-multi-thread", "macros", "time"] }
+
+[dev-dependencies]
+test-log = { version = "0.2" }
+rstest = "=0.24"
+futures = "0.3.31"
+

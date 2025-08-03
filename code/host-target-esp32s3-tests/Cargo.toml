@@ -1,0 +1,12 @@
+[package]
+name = "host-target-esp32s3-tests"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[dev-dependencies]
+telemetry-messages = { version = "*", path = "../telemetry-messages" }
+ground-station-backend = { version = "*", path = "../ground-station-backend" }
+
+postcard-rpc = { version = "0.11", features = ["use-std", "raw-nusb"] }
+tokio = { version = "1.37.0", features = ["rt-multi-thread", "macros", "time"] }

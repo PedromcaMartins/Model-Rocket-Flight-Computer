@@ -1,0 +1,31 @@
+[workspace]
+members = [
+    "bringup",
+    "flight-computer"
+]
+
+resolver = "2"
+
+[patch.crates-io]
+telemetry-messages = { path = "../telemetry-messages" }
+flight-computer-lib = { path = "../flight-computer-lib" }
+
+postcard-rpc     = { path = "../../../postcard-rpc/source/postcard-rpc" }
+postcard-schema  = { path = "../../../postcard/source/postcard-schema" }
+bmp280-ehal  = { path = "../../../bmp280" }
+
+esp-hal-smartled = { git = "https://github.com/esp-rs/esp-hal-community.git" }
+
+[profile.dev]
+# Rust debug is too slow.
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units    = 1     # LLVM can perform better optimizations using a single thread
+debug            = 2
+debug-assertions = false
+incremental      = false
+lto              = 'fat'
+opt-level        = 's'
+overflow-checks  = false

@@ -1,0 +1,33 @@
+[workspace]
+members = [
+    "bringup"
+]
+
+resolver = "2"
+
+[patch.crates-io]
+telemetry-messages = { path = "../telemetry-messages" }
+
+postcard-rpc     = { path = "../../../postcard-rpc/source/postcard-rpc" }
+postcard-schema  = { path = "../../../postcard/source/postcard-schema" }
+# bmp280-ehal  = { path = "../../../bmp280" }
+
+# embassy-stm32 = { git = "https://github.com/embassy-rs/embassy.git" }
+# embassy-time = { git = "https://github.com/embassy-rs/embassy.git" }
+# embassy-time-driver = { git = "https://github.com/embassy-rs/embassy.git" }
+# embassy-sync = { git = "https://github.com/embassy-rs/embassy.git"}
+
+[profile.dev]
+debug = true
+lto = true
+opt-level = "s"
+overflow-checks = true
+incremental = true
+
+[profile.release]
+debug = false
+lto = true
+opt-level = "s"
+overflow-checks = false
+incremental = false
+debug-assertions = false

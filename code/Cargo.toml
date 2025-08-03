@@ -1,0 +1,29 @@
+[workspace]
+members = [
+    "host-target-esp32s3-tests",
+    "telemetry-messages",
+    "flight-computer-lib",
+    "ground-station-backend",
+    "xtask",
+]
+
+resolver = "2"
+
+[patch.crates-io]
+postcard-rpc     = { path = "../../postcard-rpc/source/postcard-rpc" }
+postcard-schema  = { path = "../../postcard/source/postcard-schema" }
+bmp280-ehal  = { path = "../../bmp280" }
+
+[profile.dev]
+debug = true
+lto = true
+opt-level = "s"
+overflow-checks = true
+incremental = true
+
+[profile.release]
+debug = false
+lto = true
+opt-level = "s"
+overflow-checks = true
+incremental = true
