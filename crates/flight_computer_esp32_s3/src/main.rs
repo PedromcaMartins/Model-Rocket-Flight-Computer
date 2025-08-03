@@ -9,14 +9,15 @@
 #![deny(unused_must_use)]
 
 mod io_mapping;
-use bmp280_ehal::BMP280;
-use bno055::Bno055;
 use io_mapping::IOMapping;
-use postcard_rpc::server::Sender;
 
 mod postcard_server;
 
 use crate::{io_mapping::{Bmp280Port, Bno055Port, UbloxNeo7mPort}, postcard_server::{init_postcard_server, server_task, AppTx}};
+
+use bmp280_ehal::BMP280;
+use bno055::Bno055;
+use postcard_rpc::server::Sender;
 
 use {esp_backtrace as _, esp_println as _};
 

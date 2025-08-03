@@ -16,15 +16,12 @@ use postcard_schema::{Schema, schema};
 use postcard_rpc::{endpoints, topics, TopicDirection};
 use serde::{Deserialize, Serialize};
 
-pub type UID = [u8; 12];
-
 endpoints! {
     list = ENDPOINT_LIST;
     omit_std = true;
     | EndpointTy                | RequestTy     | ResponseTy            | Path              |
     | ----------                | ---------     | ----------            | ----              |
     | PingEndpoint              | u32           | u32                   | "ping"            |
-    | GetUniqueIdEndpoint       | ()            | UID                   | "unique_id/get"   |
 }
 
 topics! {

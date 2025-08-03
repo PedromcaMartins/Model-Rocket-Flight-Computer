@@ -38,13 +38,17 @@ where
     let mut seq = 0_u32;
 
     loop {
-        if let Ok(msg) = parser.parse_new_message().await {
-            info!("GPS Message: {:?}", Debug2Format(&msg));
+        match parser.parse_new_message().await {
+            Ok(msg) => {
+                info!("GPS Message: {:?}", Debug2Format(&msg));
 
-            let _ = sender.publish::<GpsTopic>(VarSeq::Seq4(seq), &msg).await;
-            seq = seq.wrapping_add(1);
-        } else {
-            error!("Failed to read GPS");
+                if sender.publish::<GpsTopic>(VarSeq::Seq4(seq), &msg).await.is_ok() {
+                    seq = seq.wrapping_add(1);
+                } else {
+                    error!("Failed to publish GPS message");
+                }
+            }, 
+            Err(e) => error!("Failed to read GPS: {:?}", Debug2Format(&e)),
         }
 
         Timer::after_millis(100).await;
