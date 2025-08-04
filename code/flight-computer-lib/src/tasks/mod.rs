@@ -12,4 +12,7 @@ pub use bmp280::bmp280_task;
 mod gps;
 pub use gps::gps_task;
 
+mod arm_button;
+pub use arm_button::arm_button_task;
+
 pub mod postcard;

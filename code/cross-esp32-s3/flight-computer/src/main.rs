@@ -11,7 +11,7 @@
 mod postcard_server;
 
 use crate::{postcard_server::{init_postcard_server, server_task, AppTx}};
-use board::{Board, Bmp280Port, Bno055Port, UbloxNeo7mPort};
+use board::{ArmButtonPort, Bmp280Port, Bno055Port, Board, UbloxNeo7mPort};
 
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
@@ -46,7 +46,7 @@ async fn main(spawner: Spawner) {
         recovery_activated_led: _, 
         warning_led: _, 
         error_led: _, 
-        arm_button: _,
+        arm_button,
         rgb_led: _,
     } = Board::init();
 
@@ -56,12 +56,10 @@ async fn main(spawner: Spawner) {
     let altitude_signal = ALTITUDE_SIGNAL.take();
 
     spawner.must_spawn(bno055_task(bno055, server.sender()));
-    spawner.must_spawn(bmp280_task(bmp280, server.sender()));
+    spawner.must_spawn(bmp280_task(bmp280, altitude_signal, server.sender()));
     spawner.must_spawn(gps_task(ublox_neo_7m, server.sender()));
-    spawner.must_spawn(finite_state_machine_task(
-        arm_button_signal,
-        altitude_signal,
-    ));
+    spawner.must_spawn(arm_button_task(arm_button, arm_button_signal));
+    spawner.must_spawn(finite_state_machine_task(arm_button_signal, altitude_signal));
 
     spawner.must_spawn(server_task(server));
 }
@@ -74,10 +72,14 @@ async fn main(spawner: Spawner) {
 }
 
 #[embassy_executor::task]
-async fn bmp280_task(bmp280: Bmp280Port, sender: Sender<AppTx>) -> ! {
+async fn bmp280_task(
+    bmp280: Bmp280Port, 
+    altitude_signal: &'static Signal<CriticalSectionRawMutex, Length>,
+    sender: Sender<AppTx>,
+) -> ! {
     let bmp280 = BMP280::new(bmp280).unwrap();
 
-    flight_computer_lib::tasks::bmp280_task(bmp280, sender).await
+    flight_computer_lib::tasks::bmp280_task(bmp280, altitude_signal, sender).await
 }
 
 #[embassy_executor::task]
@@ -86,12 +88,17 @@ async fn gps_task(gps: UbloxNeo7mPort, sender: Sender<AppTx>) -> ! {
 }
 
 #[embassy_executor::task]
+async fn arm_button_task(
+    arm_button: ArmButtonPort,
+    arm_button_signal: &'static Signal<CriticalSectionRawMutex, ()>,
+) -> ! {
+    flight_computer_lib::tasks::arm_button_task(arm_button, arm_button_signal).await
+}
+
+#[embassy_executor::task]
 async fn finite_state_machine_task(
     arm_button_signal: &'static Signal<CriticalSectionRawMutex, ()>,
     altitude_signal: &'static Signal<CriticalSectionRawMutex, Length>,
 ) {
-    flight_computer_lib::tasks::finite_state_machine_task(
-        arm_button_signal,
-        altitude_signal,
-    ).await
+    flight_computer_lib::tasks::finite_state_machine_task(arm_button_signal, altitude_signal).await
 }

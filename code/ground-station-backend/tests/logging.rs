@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use postcard_rpc::host_client::Subscription;
 use rstest::{fixture, rstest};
-use telemetry_messages::{AltimeterMessage, AltimeterTopic, GpsMessage, GpsTopic, ImuMessage, ImuTopic};
+use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use tokio::time::interval;
 use ground_station_backend::PostcardClient;
 

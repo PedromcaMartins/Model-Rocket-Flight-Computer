@@ -2,20 +2,23 @@ use core::fmt::Debug;
 
 use defmt_or_log::{info, error, Debug2Format};
 use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP280};
+use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
 use embassy_time::{Instant, Timer};
 use embedded_hal::i2c::{I2c, SevenBitAddress};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{AltimeterMessage, AltimeterTopic};
-use uom::si::{length::meter, pressure::pascal, quantities::{Length, Pressure, ThermodynamicTemperature, Time}, thermodynamic_temperature::degree_celsius, time::microsecond};
+use uom::si::{f64, length::meter, pressure::pascal, quantities::{Length, Pressure, ThermodynamicTemperature, Time}, thermodynamic_temperature::degree_celsius, time::microsecond};
 
 #[inline]
-pub async fn bmp280_task<I, E, Tx>(
+pub async fn bmp280_task<I, E, M, Tx>(
     bmp280: BMP280<I>,
+    altitude_signal: &'static Signal<M, f64::Length>,
     sender: PostcardSender<Tx>,
 ) -> !
 where
     I: I2c<SevenBitAddress, Error = E>,
     E: Debug,
+    M: RawMutex + 'static,
     Tx: WireTx,
 {
     let mut parser = Bmp280Parser::init(bmp280).unwrap();
@@ -31,6 +34,8 @@ where
                 } else {
                     error!("Failed to publish Altimeter message");
                 }
+
+                altitude_signal.signal(msg.altitude);
             },
             Err(e) => error!("Failed to read BMP280: {:?}", Debug2Format(&e)),
         }
