@@ -1,48 +1,20 @@
 use std::time::Duration;
 
-use postcard_rpc::host_client::Subscription;
-use rstest::{fixture, rstest};
-use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use tokio::time::interval;
 use ground_station_backend::PostcardClient;
 
-#[fixture]
-async fn client() -> (
-    PostcardClient, 
-    Subscription<AltimeterMessage>, 
-    Subscription<ImuMessage>, 
-    Subscription<GpsMessage>
-) {
-    let client = PostcardClient::new().await;
+#[tokio::main]
+pub async fn main() {
+    let client = PostcardClient::new();
 
-    let subscription_altimeter = client.subscription_altimeter().await
+    let mut subscription_altimeter = client.subscription_altimeter().await
         .expect("Failed to subscribe to altimeter topic");
 
-    let subscription_imu = client.subscription_imu().await
+    let mut subscription_imu = client.subscription_imu().await
         .expect("Failed to subscribe to altimeter topic");
 
-    let subscription_gps = client.subscription_gps().await
+    let mut subscription_gps = client.subscription_gps().await
         .expect("Failed to subscribe to altimeter topic");
-
-    (client, subscription_altimeter, subscription_imu, subscription_gps)
-}
-
-#[rstest]
-#[test_log::test(tokio::test)]
-pub async fn logging(
-    #[future] client: (
-        PostcardClient,
-        Subscription<AltimeterMessage>,
-        Subscription<ImuMessage>,
-        Subscription<GpsMessage>,
-    )
-) {
-    let (
-        client,
-        mut subscription_altimeter,
-        mut subscription_imu,
-        mut subscription_gps,
-    ) = client.await;
 
     tokio::select! {
         _ = client.wait_closed() => {

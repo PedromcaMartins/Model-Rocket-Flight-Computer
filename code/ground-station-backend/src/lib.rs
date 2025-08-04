@@ -5,7 +5,7 @@ use telemetry_messages::{AltimeterMessage, AltimeterTopic, GpsMessage, GpsTopic,
 
 
 pub struct PostcardClient {
-    client: HostClient<WireError>,
+    pub client: HostClient<WireError>,
 }
 
 #[derive(Debug)]
@@ -30,7 +30,7 @@ impl From<SubscribeError> for PostcardError<Infallible> {
 // ---
 
 impl PostcardClient {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         let client = HostClient::new_raw_nusb(
             |d| d.product_string() == Some("flight_computer"),
             ERROR_PATH,

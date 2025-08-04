@@ -3,6 +3,10 @@ name = "ground-station-backend"
 version = "0.0.0"
 edition = "2024"
 
+[[bin]]
+name = "logging"
+path = "src/bin/logging.rs"
+
 [dependencies]
 telemetry-messages = { version = "*", path = "../telemetry-messages" }
 
