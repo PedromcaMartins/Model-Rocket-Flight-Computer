@@ -8,7 +8,7 @@
 
 use embedded_sdmmc::{VolumeIdx, VolumeManager};
 
-use board::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, RGBLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort};
+use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, DebugPeripheral, RGBLedPeripheral, SdCardDetectPeripheral, SdCardInsertedLedPeripheral, SdCardPeripheral, UbloxNeo7mPeripheral};
 
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
@@ -19,7 +19,7 @@ use flight_computer_lib::device::{bmp280::Bmp280Device, bno055::Bno055Device, gp
 use smart_leds::SmartLedsWriteAsync;
 use switch_hal::WaitSwitch;
 
-pub async fn bno055_task(bno055: Bno055Port) {
+pub async fn bno055_task(bno055: Bno055Peripheral) {
     let bno055 = Bno055::new(bno055);
     let mut device = Bno055Device::init(bno055).await.unwrap();
 
@@ -29,7 +29,7 @@ pub async fn bno055_task(bno055: Bno055Port) {
     }
 }
 
-pub async fn bmp280_task(bmp280: Bmp280Port) {
+pub async fn bmp280_task(bmp280: Bmp280Peripheral) {
     let bmp280 = BMP280::new(bmp280).unwrap();
     let mut device = Bmp280Device::init(bmp280).unwrap();
 
@@ -46,7 +46,7 @@ impl embedded_sdmmc::TimeSource for FakeTimeSource {
     }
 }
 
-pub async fn sd_card_task(sd_card: SdCardPort, sd_card_detect: SdCardDetectPort, mut sd_card_status_led: SdCardInsertedLedPort) {
+pub async fn sd_card_task(sd_card: SdCardPeripheral, sd_card_detect: SdCardDetectPeripheral, mut sd_card_status_led: SdCardInsertedLedPeripheral) {
     for _ in 1..=4 {
         sd_card_status_led.toggle();
         Timer::after_secs(1).await;
@@ -78,7 +78,7 @@ pub async fn sd_card_task(sd_card: SdCardPort, sd_card_detect: SdCardDetectPort,
     }
 }
 
-pub async fn gps_task(uart: UbloxNeo7mPort) {
+pub async fn gps_task(uart: UbloxNeo7mPeripheral) {
     let mut device = GpsDevice::init(uart).unwrap();
 
     for _ in 1..4 {
@@ -87,7 +87,7 @@ pub async fn gps_task(uart: UbloxNeo7mPort) {
     }
 }
 
-pub async fn debug_uart_task(mut debug_port: DebugPort) {
+pub async fn debug_uart_task(mut debug_port: DebugPeripheral) {
     loop {
         debug_port.write_async(b"hello world!\r\n").await.unwrap();
         Timer::after_millis(2000).await;
@@ -95,8 +95,8 @@ pub async fn debug_uart_task(mut debug_port: DebugPort) {
 }
 
 pub async fn leds_buttons_task(
-    mut arm_button: ArmButtonPort,
-    mut rgb_led: RGBLedPort,
+    mut arm_button: ArmButtonPeripheral,
+    mut rgb_led: RGBLedPeripheral,
 ) {
     {
         use smart_leds::colors::*;

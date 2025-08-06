@@ -8,7 +8,7 @@ use postcard_rpc::header::VarHeader;
 
 mod postcard_server;
 
-use crate::{io_mapping::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, ErrorLedPort, InitArmLedPort, RecoveryActivatedLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort, WarningLedPort}, postcard_server::{spawn_postcard_server, Context}};
+use crate::{io_mapping::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, DebugPeripheral, ErrorLedPeripheral, InitArmLedPeripheral, RecoveryActivatedLedPeripheral, SdCardDetectPeripheral, SdCardInsertedLedPeripheral, SdCardPeripheral, UbloxNeo7mPeripheral, WarningLedPeripheral}, postcard_server::{spawn_postcard_server, Context}};
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -57,7 +57,7 @@ async fn main(spawner: Spawner) {
 }
 
 #[embassy_executor::task]
-async fn bno055_task(bno055: Bno055Port) {
+async fn bno055_task(bno055: Bno055Peripheral) {
     // The sensor has an initial startup time of 400ms - 650ms during which interaction with it will fail
     Timer::at(Instant::from_millis(650)).await;
 
@@ -121,7 +121,7 @@ async fn bno055_task(bno055: Bno055Port) {
 }
 
 #[embassy_executor::task]
-async fn bmp280_task(bmp280: Bmp280Port) {
+async fn bmp280_task(bmp280: Bmp280Peripheral) {
     let mut bmp280 = BMP280::new(bmp280).unwrap();
 
     bmp280.set_config(Config {
@@ -147,7 +147,7 @@ async fn bmp280_task(bmp280: Bmp280Port) {
 }
 
 #[embassy_executor::task]
-async fn sd_card_task(mut sd_card: SdCardPort, sd_card_detect: SdCardDetectPort, mut sd_card_status_led: SdCardInsertedLedPort) {
+async fn sd_card_task(mut sd_card: SdCardPeripheral, sd_card_detect: SdCardDetectPeripheral, mut sd_card_status_led: SdCardInsertedLedPeripheral) {
     // Should print 400kHz for initialization
     defmt::info!("Configured clock: {}", sd_card.clock().0);
 
@@ -177,7 +177,7 @@ async fn sd_card_task(mut sd_card: SdCardPort, sd_card_detect: SdCardDetectPort,
 }
 
 #[embassy_executor::task]
-async fn gps_task(mut uart: UbloxNeo7mPort) {
+async fn gps_task(mut uart: UbloxNeo7mPeripheral) {
     let mut buf = [0; nmea::SENTENCE_MAX_LEN];
     let mut nmea = Nmea::create_for_navigation(&[SentenceType::GGA]).unwrap();
 
@@ -196,7 +196,7 @@ async fn gps_task(mut uart: UbloxNeo7mPort) {
 }
 
 #[embassy_executor::task]
-async fn debug_uart_task(mut debug_port: DebugPort) {
+async fn debug_uart_task(mut debug_port: DebugPeripheral) {
     loop {
         debug_port.write("hello world!\r\n".as_bytes()).await.unwrap();
         Timer::after_millis(2000).await;
@@ -205,11 +205,11 @@ async fn debug_uart_task(mut debug_port: DebugPort) {
 
 #[embassy_executor::task]
 async fn leds_buttons_task(
-    mut init_arm_led: InitArmLedPort,
-    mut recovery_activated_led: RecoveryActivatedLedPort,
-    mut warning_led: WarningLedPort,
-    mut error_led: ErrorLedPort,
-    mut arm_button: ArmButtonPort,
+    mut init_arm_led: InitArmLedPeripheral,
+    mut recovery_activated_led: RecoveryActivatedLedPeripheral,
+    mut warning_led: WarningLedPeripheral,
+    mut error_led: ErrorLedPeripheral,
+    mut arm_button: ArmButtonPeripheral,
 ) {
     for _ in 1..4 {
         init_arm_led.toggle();

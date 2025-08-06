@@ -13,16 +13,16 @@ mod types {
     use esp_hal_smartled::SmartLedsAdapterAsync;
     use switch_hal::{Switch, ActiveHigh};
 
-    pub type Bno055Port = I2c<'static, Blocking>;
-    pub type Bmp280Port = I2c<'static, Blocking>;
-    pub type SdCardPort = SdCard<ExclusiveDevice<Spi<'static, Blocking>, Output<'static>, Delay>, Delay>;
-    pub type SdCardDetectPort = Input<'static>;
-    pub type SdCardInsertedLedPort = Output<'static>;
-    pub type DebugPort = Uart<'static, Async>;
-    pub type UbloxNeo7mPort = Uart<'static, Async>;
+    pub type Bno055Peripheral = I2c<'static, Blocking>;
+    pub type Bmp280Peripheral = I2c<'static, Blocking>;
+    pub type SdCardPeripheral = SdCard<ExclusiveDevice<Spi<'static, Blocking>, Output<'static>, Delay>, Delay>;
+    pub type SdCardDetectPeripheral = Input<'static>;
+    pub type SdCardInsertedLedPeripheral = Output<'static>;
+    pub type DebugPeripheral = Uart<'static, Async>;
+    pub type UbloxNeo7mPeripheral = Uart<'static, Async>;
     pub type PostcardServerUsbDriver = Driver<'static>;
-    pub type ArmButtonPort = Switch<Input<'static>, ActiveHigh>;
-    pub type RGBLedPort = SmartLedsAdapterAsync<esp_hal::rmt::ConstChannelAccess<esp_hal::rmt::Tx, 0>, 25>;
+    pub type ArmButtonPeripheral = Switch<Input<'static>, ActiveHigh>;
+    pub type RGBLedPeripheral = SmartLedsAdapterAsync<esp_hal::rmt::ConstChannelAccess<esp_hal::rmt::Tx, 0>, 25>;
 }
 use defmt::info;
 use embedded_hal_bus::spi::ExclusiveDevice;
@@ -36,16 +36,16 @@ pub use types::*;
 static EP_OUT_BUFFER: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0u8; 1024]);
 
 pub struct Board {
-    pub bno055: Bno055Port,
-    pub bmp280: Bmp280Port,
-    pub sd_card: SdCardPort,
-    pub sd_card_detect: SdCardDetectPort,
-    pub sd_card_status_led: SdCardInsertedLedPort,
-    pub debug_port: DebugPort,
-    pub ublox_neo_7m: UbloxNeo7mPort,
+    pub bno055: Bno055Peripheral,
+    pub bmp280: Bmp280Peripheral,
+    pub sd_card: SdCardPeripheral,
+    pub sd_card_detect: SdCardDetectPeripheral,
+    pub sd_card_status_led: SdCardInsertedLedPeripheral,
+    pub debug_port: DebugPeripheral,
+    pub ublox_neo_7m: UbloxNeo7mPeripheral,
     pub postcard_server_usb_driver: PostcardServerUsbDriver,
-    pub arm_button: ArmButtonPort,
-    pub rgb_led: RGBLedPort,
+    pub arm_button: ArmButtonPeripheral,
+    pub rgb_led: RGBLedPeripheral,
 }
 
 impl Board {

@@ -2,19 +2,19 @@
 mod types {
     use embassy_stm32::{exti::ExtiInput, gpio::Output, i2c::I2c, mode, peripherals::{DMA2_CH3, SDIO, USB_OTG_FS}, sdmmc::Sdmmc, usart::Uart, usb::Driver};
 
-    pub type Bno055Port = I2c<'static, mode::Blocking>;
-    pub type Bmp280Port = I2c<'static, mode::Blocking>;
-    pub type SdCardPort = Sdmmc<'static, SDIO, DMA2_CH3>;
-    pub type SdCardDetectPort = ExtiInput<'static>;
-    pub type SdCardInsertedLedPort = Output<'static>;
-    pub type DebugPort = Uart<'static, mode::Async>;
-    pub type UbloxNeo7mPort = Uart<'static, mode::Async>;
+    pub type Bno055Peripheral = I2c<'static, mode::Blocking>;
+    pub type Bmp280Peripheral = I2c<'static, mode::Blocking>;
+    pub type SdCardPeripheral = Sdmmc<'static, SDIO, DMA2_CH3>;
+    pub type SdCardDetectPeripheral = ExtiInput<'static>;
+    pub type SdCardInsertedLedPeripheral = Output<'static>;
+    pub type DebugPeripheral = Uart<'static, mode::Async>;
+    pub type UbloxNeo7mPeripheral = Uart<'static, mode::Async>;
     pub type PostcardServerUsbDriver = Driver<'static, USB_OTG_FS>;
-    pub type InitArmLedPort = Output<'static>;
-    pub type RecoveryActivatedLedPort = Output<'static>;
-    pub type WarningLedPort = Output<'static>;
-    pub type ErrorLedPort = Output<'static>;
-    pub type ArmButtonPort = ExtiInput<'static>;
+    pub type InitArmLedPeripheral = Output<'static>;
+    pub type RecoveryActivatedLedPeripheral = Output<'static>;
+    pub type WarningLedPeripheral = Output<'static>;
+    pub type ErrorLedPeripheral = Output<'static>;
+    pub type ArmButtonPeripheral = ExtiInput<'static>;
 }
 use static_cell::ConstStaticCell;
 pub use types::*;
@@ -31,19 +31,19 @@ bind_interrupts!(struct Irqs {
 });
 
 pub struct IOMapping {
-    pub bno055: Bno055Port,
-    pub bmp280: Bmp280Port,
-    pub sd_card: SdCardPort,
-    pub sd_card_detect: SdCardDetectPort,
-    pub sd_card_status_led: SdCardInsertedLedPort,
-    pub debug_port: DebugPort,
-    pub ublox_neo_7m: UbloxNeo7mPort,
+    pub bno055: Bno055Peripheral,
+    pub bmp280: Bmp280Peripheral,
+    pub sd_card: SdCardPeripheral,
+    pub sd_card_detect: SdCardDetectPeripheral,
+    pub sd_card_status_led: SdCardInsertedLedPeripheral,
+    pub debug_port: DebugPeripheral,
+    pub ublox_neo_7m: UbloxNeo7mPeripheral,
     pub postcard_server_usb_driver: PostcardServerUsbDriver,
-    pub init_arm_led: InitArmLedPort,
-    pub recovery_activated_led: RecoveryActivatedLedPort,
-    pub warning_led: WarningLedPort,
-    pub error_led: ErrorLedPort,
-    pub arm_button: ArmButtonPort,
+    pub init_arm_led: InitArmLedPeripheral,
+    pub recovery_activated_led: RecoveryActivatedLedPeripheral,
+    pub warning_led: WarningLedPeripheral,
+    pub error_led: ErrorLedPeripheral,
+    pub arm_button: ArmButtonPeripheral,
 }
 
 impl IOMapping {

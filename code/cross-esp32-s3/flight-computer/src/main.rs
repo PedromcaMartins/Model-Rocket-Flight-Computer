@@ -11,7 +11,7 @@
 mod postcard_server;
 
 use crate::{postcard_server::{init_postcard_server, server_task, AppTx}};
-use board::{ArmButtonPort, Bmp280Port, Bno055Port, Board, UbloxNeo7mPort};
+use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, Board, UbloxNeo7mPeripheral};
 
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
@@ -61,7 +61,7 @@ async fn main(spawner: Spawner) {
 }
 
 #[embassy_executor::task]
-    async fn bno055_task(bno055: Bno055Port, sender: Sender<AppTx>) -> ! {
+    async fn bno055_task(bno055: Bno055Peripheral, sender: Sender<AppTx>) -> ! {
     let bno055 = Bno055::new(bno055);
 
     flight_computer_lib::tasks::bno055_task(bno055, sender).await
@@ -69,7 +69,7 @@ async fn main(spawner: Spawner) {
 
 #[embassy_executor::task]
 async fn bmp280_task(
-    bmp280: Bmp280Port, 
+    bmp280: Bmp280Peripheral, 
     altitude_signal: &'static Signal<CriticalSectionRawMutex, Length>,
     sender: Sender<AppTx>,
 ) -> ! {
@@ -79,13 +79,13 @@ async fn bmp280_task(
 }
 
 #[embassy_executor::task]
-async fn gps_task(gps: UbloxNeo7mPort, sender: Sender<AppTx>) -> ! {
+async fn gps_task(gps: UbloxNeo7mPeripheral, sender: Sender<AppTx>) -> ! {
     flight_computer_lib::tasks::gps_task(gps, sender).await
 }
 
 #[embassy_executor::task]
 async fn arm_button_task(
-    arm_button: ArmButtonPort,
+    arm_button: ArmButtonPeripheral,
     arm_button_signal: &'static Signal<CriticalSectionRawMutex, ()>,
 ) -> ! {
     flight_computer_lib::tasks::arm_button_task(arm_button, arm_button_signal).await
