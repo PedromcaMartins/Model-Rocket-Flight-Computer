@@ -134,6 +134,7 @@ dependencies = [
  "esp-hal-embassy",
  "esp-hal-smartled",
  "static_cell",
+ "switch-hal",
  "telemetry-messages",
 ]
 

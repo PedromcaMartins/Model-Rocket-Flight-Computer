@@ -18,7 +18,6 @@ use bno055::Bno055;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use postcard_rpc::server::Sender;
 use static_cell::ConstStaticCell;
-use switch_hal::IntoSwitch;
 use uom::si::f64::Length;
 
 use {esp_backtrace as _, esp_println as _};
@@ -93,7 +92,6 @@ async fn arm_button_task(
     arm_button: ArmButtonPort,
     arm_button_signal: &'static Signal<CriticalSectionRawMutex, ()>,
 ) -> ! {
-    let arm_button = arm_button.into_active_high_switch();
     flight_computer_lib::tasks::arm_button_task(arm_button, arm_button_signal).await
 }
 

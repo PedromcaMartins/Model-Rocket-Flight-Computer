@@ -11,6 +11,7 @@ mod types {
     use embedded_sdmmc::SdCard;
     use esp_hal::{delay::Delay, gpio::{Input, Output}, i2c::master::I2c, otg_fs::asynch::Driver, spi::master::Spi, uart::Uart, Async, Blocking};
     use esp_hal_smartled::SmartLedsAdapterAsync;
+    use switch_hal::{Switch, ActiveHigh};
 
     pub type Bno055Port = I2c<'static, Blocking>;
     pub type Bmp280Port = I2c<'static, Blocking>;
@@ -24,7 +25,7 @@ mod types {
     pub type RecoveryActivatedLedPort = ();
     pub type WarningLedPort = ();
     pub type ErrorLedPort = ();
-    pub type ArmButtonPort = Input<'static>;
+    pub type ArmButtonPort = Switch<Input<'static>, ActiveHigh>;
     pub type RGBLedPort = SmartLedsAdapterAsync<esp_hal::rmt::ConstChannelAccess<esp_hal::rmt::Tx, 0>, 25>;
 }
 use defmt::info;
@@ -33,6 +34,7 @@ use embedded_sdmmc::SdCard;
 use esp_hal::{delay::Delay, gpio::{self, Input, Output}, i2c::{self, master::I2c}, otg_fs::{self, asynch::Driver, Usb}, rmt::Rmt, spi::{self, master::Spi}, time::Rate, timer::systimer::SystemTimer, uart::{self, Uart}};
 use esp_hal_smartled::{smart_led_buffer, SmartLedsAdapterAsync};
 use static_cell::ConstStaticCell;
+use switch_hal::IntoSwitch;
 pub use types::*;
 
 static EP_OUT_BUFFER: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0u8; 1024]);
@@ -112,7 +114,7 @@ impl Board {
             recovery_activated_led: (),
             warning_led: (),
             error_led: (),
-            arm_button: Input::new(p.GPIO21, gpio::InputConfig::default()),
+            arm_button: Input::new(p.GPIO21, gpio::InputConfig::default()).into_active_high_switch(),
             rgb_led: SmartLedsAdapterAsync::new(rmt.channel0, p.GPIO48, rmt_buffer),
         }
     }

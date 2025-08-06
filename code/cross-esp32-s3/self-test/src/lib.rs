@@ -17,7 +17,7 @@ use defmt::{Debug2Format, info, error};
 use embassy_time::Timer;
 use flight_computer_lib::device::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice};
 use smart_leds::SmartLedsWriteAsync;
-use switch_hal::{IntoSwitch, WaitSwitch};
+use switch_hal::WaitSwitch;
 
 pub async fn bno055_task(bno055: Bno055Port) {
     let bno055 = Bno055::new(bno055);
@@ -95,7 +95,7 @@ pub async fn debug_uart_task(mut debug_port: DebugPort) {
 }
 
 pub async fn leds_buttons_task(
-    arm_button: ArmButtonPort,
+    mut arm_button: ArmButtonPort,
     mut rgb_led: RGBLedPort,
 ) {
     {
@@ -108,7 +108,6 @@ pub async fn leds_buttons_task(
     }
 
     // Wait for arm button presses todo!
-    let mut arm_button = arm_button.into_active_high_switch();
     for _ in 1..4 {
         arm_button.wait_active().await.unwrap();
         Timer::after_secs(1).await;
