@@ -8,103 +8,33 @@
 
 use embedded_sdmmc::{VolumeIdx, VolumeManager};
 
-use board::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, ErrorLedPort, InitArmLedPort, RGBLedPort, RecoveryActivatedLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort, WarningLedPort};
+use board::{ArmButtonPort, Bmp280Port, Bno055Port, DebugPort, RGBLedPort, SdCardDetectPort, SdCardInsertedLedPort, SdCardPort, UbloxNeo7mPort};
 
-use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP280};
-use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
+use bmp280_ehal::BMP280;
+use bno055::Bno055;
 
 use defmt::{Debug2Format, info, error};
-use embassy_time::{Delay, Instant, Timer};
-use nmea::{Nmea, SentenceType};
+use embassy_time::Timer;
+use flight_computer_lib::device::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice};
 use smart_leds::SmartLedsWriteAsync;
 
-#[embassy_executor::task]
 pub async fn bno055_task(bno055: Bno055Port) {
-    // The sensor has an initial startup time of 400ms - 650ms during which interaction with it will fail
-    Timer::at(Instant::from_millis(650)).await;
+    let bno055 = Bno055::new(bno055);
+    let mut device = Bno055Device::init(bno055).await.unwrap();
 
-    let mut delay = Delay;
-    let mut bno055 = Bno055::new(bno055);
-
-    bno055.init(&mut delay).unwrap();
-
-    // Enable 9-degrees-of-freedom sensor fusion mode with fast magnetometer calibration
-    bno055.set_mode(BNO055OperationMode::NDOF, &mut delay).unwrap();
-
-    // Set power mode to normal
-    bno055.set_power_mode(BNO055PowerMode::NORMAL).unwrap();
-
-    // Enable usage of external crystal
-    bno055.set_external_crystal(true, &mut delay).unwrap();
-
-    loop {
-        match bno055.euler_angles() {
-            Ok(val) => info!("bno055 angles: {:?}", Debug2Format(&val)),
-            Err(e) => error!("{:?}", Debug2Format(&e)),
-        }
-
-        match bno055.quaternion() {
-            Ok(val) => info!("bno055 quaternion: {:?}", Debug2Format(&val)),
-            Err(e) => error!("{:?}", Debug2Format(&e)),
-        }
-
-        match bno055.linear_acceleration() {
-            Ok(val) => info!("bno055 linear acceleration: {:?}", Debug2Format(&val)),
-            Err(e) => error!("{:?}", Debug2Format(&e)),
-        }
-
-        match bno055.gravity() {
-            Ok(val) => info!("bno055 gravity: {:?}", Debug2Format(&val)),
-            Err(e) => error!("{:?}", Debug2Format(&e)),
-        }
-
-        match bno055.accel_data() {
-            Ok(val) => info!("bno055 acceleration: {:?}", Debug2Format(&val)),
-            Err(e) => error!("{:?}", Debug2Format(&e)),
-        }
-
-        match bno055.gyro_data() {
-            Ok(val) => info!("bno055 gyro: {:?}", Debug2Format(&val)),
-            Err(e) => error!("{:?}", Debug2Format(&e)),
-        }
-
-        match bno055.mag_data() {
-            Ok(val) => info!("bno055 mag: {:?}", Debug2Format(&val)),
-            Err(e) => error!("{:?}", Debug2Format(&e)),
-        }
-
-        match bno055.temperature() {
-            Ok(val) => info!("bno055 temperature: {:?}", val),
-            Err(e) => error!("{:?}", Debug2Format(&e)),
-        }
-
-        Timer::after_millis(100).await;
+    for _ in 1..4 {
+        let msg = device.parse_new_message().unwrap();
+        info!("Bno055 Message: {:?}", Debug2Format(&msg));
     }
 }
 
-#[embassy_executor::task]
 pub async fn bmp280_task(bmp280: Bmp280Port) {
-    let mut bmp280 = BMP280::new(bmp280).unwrap();
+    let bmp280 = BMP280::new(bmp280).unwrap();
+    let mut device = Bmp280Device::init(bmp280).unwrap();
 
-    bmp280.set_config(Config {
-        filter: Filter::c16, 
-        t_sb: Standby::ms0_5
-    }).unwrap();
-
-    bmp280.set_control(Control { 
-        osrs_t: Oversampling::x1, 
-        osrs_p: Oversampling::x4, 
-        mode: PowerMode::Normal
-    }).unwrap();
-
-    loop {
-        let pressure = bmp280.pressure().unwrap();
-        #[allow(clippy::cast_possible_truncation)]
-        let temperature = bmp280.temp().unwrap() as f32;
-
-        info!("Pressure: {:?} Pa, Temperature: {:?} °C", pressure, temperature);
-
-        Timer::after_millis(100).await;
+    for _ in 1..4 {
+        let msg = device.parse_new_message().unwrap();
+        info!("Bmp280 Message: {:?}", Debug2Format(&msg));
     }
 }
 
@@ -115,7 +45,6 @@ impl embedded_sdmmc::TimeSource for FakeTimeSource {
     }
 }
 
-#[embassy_executor::task]
 pub async fn sd_card_task(sd_card: SdCardPort, sd_card_detect: SdCardDetectPort, mut sd_card_status_led: SdCardInsertedLedPort) {
     for _ in 1..=4 {
         sd_card_status_led.toggle();
@@ -148,26 +77,15 @@ pub async fn sd_card_task(sd_card: SdCardPort, sd_card_detect: SdCardDetectPort,
     }
 }
 
-#[embassy_executor::task]
-pub async fn gps_task(mut uart: UbloxNeo7mPort) {
-    let mut buf = [0; nmea::SENTENCE_MAX_LEN];
-    let mut nmea = Nmea::create_for_navigation(&[SentenceType::GGA]).unwrap();
+pub async fn gps_task(uart: UbloxNeo7mPort) {
+    let mut device = GpsDevice::init(uart).unwrap();
 
-    loop {
-        if let Ok(len) = uart.read_async(&mut buf).await {
-            if let Ok(message) = core::str::from_utf8(&buf[..len]) {
-                match nmea.parse(message) {
-                    Ok(_) => info!("GPS: {:?}", Debug2Format(&nmea)),
-                    Err(e) => error!("ErroDebug2Format(&r): {:?}, Message: {}", Debug2Format(&e), message),
-                }
-            }
-        }
-
-        Timer::after_millis(100).await;
+    for _ in 1..4 {
+        let msg = device.parse_new_message().await.unwrap();
+        info!("Gps Message: {:?}", Debug2Format(&msg));
     }
 }
 
-#[embassy_executor::task]
 pub async fn debug_uart_task(mut debug_port: DebugPort) {
     loop {
         debug_port.write_async(b"hello world!\r\n").await.unwrap();
@@ -175,22 +93,10 @@ pub async fn debug_uart_task(mut debug_port: DebugPort) {
     }
 }
 
-#[embassy_executor::task]
 pub async fn leds_buttons_task(
-    mut _init_arm_led: InitArmLedPort,
-    mut _recovery_activated_led: RecoveryActivatedLedPort,
-    mut _warning_led: WarningLedPort,
-    mut _error_led: ErrorLedPort,
     mut arm_button: ArmButtonPort,
     mut rgb_led: RGBLedPort,
 ) {
-    // for _ in 1..4 {
-    //     init_arm_led.toggle();
-    //     recovery_activated_led.toggle();
-    //     warning_led.toggle();
-    //     error_led.toggle();
-    //     Timer::after_secs(1).await;
-    // }
     {
         use smart_leds::colors::*;
 
@@ -199,6 +105,8 @@ pub async fn leds_buttons_task(
             Timer::after_secs(1).await;
         }
     }
+
+    // Wait for arm button presses todo!
     for _ in 1..4 {
         arm_button.wait_for_rising_edge().await;
         Timer::after_secs(1).await;

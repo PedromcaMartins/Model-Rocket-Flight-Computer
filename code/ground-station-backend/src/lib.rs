@@ -29,6 +29,7 @@ impl From<SubscribeError> for PostcardError<Infallible> {
 
 // ---
 
+#[allow(clippy::new_without_default)]
 impl PostcardClient {
     pub fn new() -> Self {
         let client = HostClient::new_raw_nusb(

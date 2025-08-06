@@ -7,3 +7,4 @@
 
 pub(crate) mod model;
 pub mod tasks;
+pub mod device;

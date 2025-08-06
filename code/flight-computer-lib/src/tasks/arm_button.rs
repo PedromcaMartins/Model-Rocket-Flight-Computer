@@ -1,23 +1,26 @@
+use defmt_or_log::{info, error, Debug2Format};
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
-use embedded_hal_async::digital::Wait;
+use switch_hal::WaitSwitch;
 
 #[inline]
-pub async fn arm_button_task<M, P>(
-    mut arm_button: P,
+pub async fn arm_button_task<S, M>(
+    mut arm_button: S,
     arm_button_signal: &'static Signal<M, ()>,
 ) -> !
 where
+    S: WaitSwitch + 'static,
+    <S as WaitSwitch>::Error: core::fmt::Debug,
     M: RawMutex + 'static,
-    P: Wait + 'static,
 {
     loop {
         // Wait for the button to be pressed
-        arm_button.wait_for_high().await.unwrap();
-
-        // Notify the finite state machine that the arm button was pressed
-        arm_button_signal.signal(());
-
-        // Wait for the button to be released
-        arm_button.wait_for_low().await.unwrap();
+        match arm_button.wait_active().await {
+            Ok(()) => {
+                // Notify the finite state machine that the arm button was pressed
+                arm_button_signal.signal(());
+                info!("Arm button pressed");
+            },
+            Err(e) => error!("Failed to read arm button: {:?}", Debug2Format(&e)),
+        }
     }
 }

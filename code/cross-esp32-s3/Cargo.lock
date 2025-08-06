@@ -968,6 +968,7 @@ dependencies = [
  "nmea",
  "postcard-rpc",
  "static_cell",
+ "switch-hal",
  "telemetry-messages",
  "thiserror",
  "uom",
@@ -1006,6 +1007,7 @@ dependencies = [
  "postcard-schema",
  "smart-leds",
  "static_cell",
+ "switch-hal",
  "telemetry-messages",
  "uom",
 ]
@@ -1644,6 +1646,7 @@ dependencies = [
  "esp-hal-embassy",
  "esp-hal-smartled",
  "esp-println",
+ "flight-computer-lib",
  "nmea",
  "postcard",
  "postcard-rpc",
@@ -1812,6 +1815,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.104",
+]
+
+[[package]]
+name = "switch-hal"
+version = "0.5.0"
+dependencies = [
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
 ]
 
 [[package]]

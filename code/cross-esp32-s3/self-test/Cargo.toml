@@ -9,6 +9,7 @@ pedantic = "deny"
 
 [dependencies]
 telemetry-messages = { version = "*" }
+flight-computer-lib = { version = "*", default-features = false, features = ["defmt"] }
 board = { version = "*", path = "../board" }
 
 embassy-executor = { version = "0.7.0", features = ["defmt", "task-arena-size-20480"] }

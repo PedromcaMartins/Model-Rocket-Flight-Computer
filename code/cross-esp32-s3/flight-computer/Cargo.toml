@@ -44,6 +44,7 @@ postcard-schema = { version = "0.2", features = ["derive", "nalgebra-v0_33", "ch
 uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "si", "serde"] }
 esp-hal-smartled = { version = "0.15", features = ["defmt", "esp32s3"] }
 smart-leds = "0.4"
+switch-hal ={ version = "*" }
 
 critical-section = "1.2.0"
 static_cell = "2.1.1"

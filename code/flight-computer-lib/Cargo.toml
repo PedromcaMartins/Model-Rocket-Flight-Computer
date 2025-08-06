@@ -45,15 +45,15 @@ embedded-sdmmc = { version = "0.9.0", default-features = false, features = ["def
 bmp280-ehal = "0.0.6"
 bno055 = "0.4.0"
 nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
+switch-hal ={ version = "*" }
 
 postcard-rpc = { version = "0.11" }
 
 static_cell = "2"
-
 uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "si", "serde"] }
 micromath = "2.1.0"
-
 thiserror = {version = "2.0.12", default-features = false }
+# fugit = "0.3.7"
 
 [dev-dependencies]
 # Support `log` crate only (default).
@@ -64,6 +64,14 @@ futures = "0.3.31"
 
 embassy-time = { version = "0.4", features = ["mock-driver", "generic-queue-64"] }
 critical-section = { version = "1.1", features = ["std"] }
+
+# Testing
+# proptest = "1.7.0"
+# quickcheck = "1.0.3"
+# mockall = "0.13.1"
+# serial_test = "*"
+# float-cmp = "0.10.0"
+# afl = "0.15.20"
 
 [features]
 default = ["log"]

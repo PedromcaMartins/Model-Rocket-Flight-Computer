@@ -13,6 +13,7 @@ resolver = "2"
 postcard-rpc     = { path = "../../postcard-rpc/source/postcard-rpc" }
 postcard-schema  = { path = "../../postcard/source/postcard-schema" }
 bmp280-ehal  = { path = "../../bmp280" }
+switch-hal  = { path = "../../switch-hal" }
 
 [profile.dev]
 debug = true

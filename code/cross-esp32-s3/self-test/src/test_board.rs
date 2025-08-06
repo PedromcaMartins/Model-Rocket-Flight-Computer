@@ -19,7 +19,7 @@ use embassy_executor::Spawner;
 esp_bootloader_esp_idf::esp_app_desc!();
 
 #[esp_hal_embassy::main]
-async fn main(spawner: Spawner) {
+async fn main(_spawner: Spawner) {
     let Board { 
         bno055, 
         bmp280, 
@@ -29,26 +29,22 @@ async fn main(spawner: Spawner) {
         debug_port, 
         ublox_neo_7m, 
         postcard_server_usb_driver: _, 
-        init_arm_led, 
-        recovery_activated_led, 
-        warning_led, 
-        error_led, 
+        init_arm_led: _, 
+        recovery_activated_led: _, 
+        warning_led: _, 
+        error_led: _, 
         arm_button,
         rgb_led,
     } = Board::init();
 
 
-    spawner.must_spawn(bno055_task(bno055));
-    spawner.must_spawn(bmp280_task(bmp280));
-    spawner.must_spawn(sd_card_task(sd_card, sd_card_detect, sd_card_status_led));
-    spawner.must_spawn(gps_task(ublox_neo_7m));
-    spawner.must_spawn(debug_uart_task(debug_port));
-    spawner.must_spawn(leds_buttons_task(
-        init_arm_led,
-        recovery_activated_led,
-        warning_led,
-        error_led,
+    bno055_task(bno055).await;
+    bmp280_task(bmp280).await;
+    sd_card_task(sd_card, sd_card_detect, sd_card_status_led).await;
+    gps_task(ublox_neo_7m).await;
+    debug_uart_task(debug_port).await;
+    leds_buttons_task(
         arm_button,
         rgb_led,
-    ));
+    ).await;
 }
