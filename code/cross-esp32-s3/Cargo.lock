@@ -1653,6 +1653,7 @@ dependencies = [
  "postcard-schema",
  "smart-leds",
  "static_cell",
+ "switch-hal",
  "telemetry-messages",
  "uom",
 ]
