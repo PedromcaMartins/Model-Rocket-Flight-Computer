@@ -42,10 +42,6 @@ async fn main(spawner: Spawner) {
         debug_port: _, 
         ublox_neo_7m, 
         postcard_server_usb_driver, 
-        init_arm_led: _, 
-        recovery_activated_led: _, 
-        warning_led: _, 
-        error_led: _, 
         arm_button,
         rgb_led: _,
     } = Board::init();

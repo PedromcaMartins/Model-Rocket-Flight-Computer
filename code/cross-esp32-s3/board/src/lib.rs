@@ -21,10 +21,6 @@ mod types {
     pub type DebugPort = Uart<'static, Async>;
     pub type UbloxNeo7mPort = Uart<'static, Async>;
     pub type PostcardServerUsbDriver = Driver<'static>;
-    pub type InitArmLedPort = ();
-    pub type RecoveryActivatedLedPort = ();
-    pub type WarningLedPort = ();
-    pub type ErrorLedPort = ();
     pub type ArmButtonPort = Switch<Input<'static>, ActiveHigh>;
     pub type RGBLedPort = SmartLedsAdapterAsync<esp_hal::rmt::ConstChannelAccess<esp_hal::rmt::Tx, 0>, 25>;
 }
@@ -48,10 +44,6 @@ pub struct Board {
     pub debug_port: DebugPort,
     pub ublox_neo_7m: UbloxNeo7mPort,
     pub postcard_server_usb_driver: PostcardServerUsbDriver,
-    pub init_arm_led: (),
-    pub recovery_activated_led: (),
-    pub warning_led: (),
-    pub error_led: (),
     pub arm_button: ArmButtonPort,
     pub rgb_led: RGBLedPort,
 }
@@ -110,10 +102,6 @@ impl Board {
                 ep_out_buffer, 
                 otg_fs::asynch::Config::default()
             ),
-            init_arm_led: (),
-            recovery_activated_led: (),
-            warning_led: (),
-            error_led: (),
             arm_button: Input::new(p.GPIO21, gpio::InputConfig::default()).into_active_high_switch(),
             rgb_led: SmartLedsAdapterAsync::new(rmt.channel0, p.GPIO48, rmt_buffer),
         }
