@@ -20,7 +20,8 @@ where
                 arm_button_signal.signal(());
                 info!("Arm button pressed");
             },
-            Err(e) => error!("Failed to read arm button: {:?}", Debug2Format(&e)),
+            // Err(e) => error!("Failed to read arm button: {:?}", Debug2Format(&e)),
+            Err(_) => (),
         }
     }
 }

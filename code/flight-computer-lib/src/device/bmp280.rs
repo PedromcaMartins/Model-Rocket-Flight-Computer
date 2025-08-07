@@ -50,7 +50,7 @@ where
             altitude,
             pressure,
             temperature, 
-            timestamp: Time::new::<microsecond>(Instant::now().as_micros()),
+            timestamp: Time::new::<microsecond>(Instant::now().as_micros() as f64),
         })
     }
 }

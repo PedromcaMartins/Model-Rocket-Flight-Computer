@@ -4,6 +4,7 @@
 // Crate used for single-threaded
 #![allow(clippy::future_not_send)]
 #![deny(unused_must_use)]
+#![allow(clippy::cast_precision_loss)]
 
 pub(crate) mod model;
 pub mod tasks;

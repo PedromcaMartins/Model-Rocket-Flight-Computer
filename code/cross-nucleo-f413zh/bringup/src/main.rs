@@ -30,7 +30,7 @@ async fn main(spawner: Spawner) {
         sd_card,
         sd_card_detect,
         sd_card_status_led,
-        debug_port,
+        debug_peripheral,
         ublox_neo_7m,
         postcard_server_usb_driver,
         init_arm_led,
@@ -44,7 +44,7 @@ async fn main(spawner: Spawner) {
     spawner.must_spawn(bmp280_task(bmp280));
     spawner.must_spawn(sd_card_task(sd_card, sd_card_detect, sd_card_status_led));
     spawner.must_spawn(gps_task(ublox_neo_7m));
-    spawner.must_spawn(debug_uart_task(debug_port));
+    spawner.must_spawn(debug_uart_task(debug_peripheral));
     spawner.must_spawn(leds_buttons_task(
         init_arm_led,
         recovery_activated_led,
@@ -196,9 +196,9 @@ async fn gps_task(mut uart: UbloxNeo7mPeripheral) {
 }
 
 #[embassy_executor::task]
-async fn debug_uart_task(mut debug_port: DebugPeripheral) {
+async fn debug_uart_task(mut debug_peripheral: DebugPeripheral) {
     loop {
-        debug_port.write("hello world!\r\n".as_bytes()).await.unwrap();
+        debug_peripheral.write("hello world!\r\n".as_bytes()).await.unwrap();
         Timer::after_millis(2000).await;
     }
 }

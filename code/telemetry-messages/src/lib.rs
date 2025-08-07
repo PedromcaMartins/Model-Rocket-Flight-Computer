@@ -50,7 +50,7 @@ pub struct AltimeterMessage {
     /// Temperature in Celsius degrees.
     pub temperature: ThermodynamicTemperature<f64>,
     /// Timestamp in microseconds.
-    pub timestamp: Time<u64>,
+    pub timestamp: Time<f64>,
 }
 
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
@@ -60,15 +60,15 @@ pub struct GpsMessage {
     /// Type of GPS Fix
     pub fix_type: FixTypeWraper,
     /// Latitude in degrees.
-    pub latitude: Angle<f64>,
+    pub latitude: f64,
     /// Longitude in degrees.
-    pub longitude: Angle<f64>,
+    pub longitude: f64,
     /// MSL Altitude in meters
     pub altitude: Length<f32>,
     /// Number of satellites used for fix.
     pub num_of_fix_satellites: u8,
     /// Timestamp in microseconds.
-    pub timestamp: Time<u64>,
+    pub timestamp: Time<f64>,
 }
 
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq, Eq)]
@@ -103,7 +103,7 @@ pub struct ImuMessage {
     /// Temperature of the chip in Celsius degrees.
     pub temperature: ThermodynamicTemperature<f32>,
     /// Timestamp in microseconds.
-    pub timestamp: Time<u64>,
+    pub timestamp: Time<f64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]

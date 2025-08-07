@@ -8,7 +8,7 @@
 )]
 
 use board::Board;
-use self_test::{bmp280_task, bno055_task, debug_uart_task, gps_task, leds_buttons_task, sd_card_task};
+use self_test::{bmp280_test, bno055_test, debug_uart_test, gps_test, leds_buttons_test, sd_card_test};
 
 use {esp_backtrace as _, esp_println as _};
 
@@ -26,7 +26,7 @@ async fn main(_spawner: Spawner) {
         sd_card, 
         sd_card_detect, 
         sd_card_status_led, 
-        debug_port, 
+        debug_peripheral, 
         ublox_neo_7m, 
         postcard_server_usb_driver: _, 
         arm_button,
@@ -34,12 +34,12 @@ async fn main(_spawner: Spawner) {
     } = Board::init();
 
 
-    bno055_task(bno055).await;
-    bmp280_task(bmp280).await;
-    sd_card_task(sd_card, sd_card_detect, sd_card_status_led).await;
-    gps_task(ublox_neo_7m).await;
-    debug_uart_task(debug_port).await;
-    leds_buttons_task(
+    bno055_test(bno055).await;
+    bmp280_test(bmp280).await;
+    sd_card_test(sd_card, sd_card_detect, sd_card_status_led).await;
+    gps_test(ublox_neo_7m).await;
+    debug_uart_test(debug_peripheral).await;
+    leds_buttons_test(
         arm_button,
         rgb_led,
     ).await;

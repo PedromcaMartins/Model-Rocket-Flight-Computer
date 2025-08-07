@@ -26,6 +26,7 @@ chrono = { version = "^0.4", default-features = false}
 embassy-sync = "0.6.2"
 embassy-time = { version = "0.4" }
 embassy-usb = { version = "0.4.0" }
+embassy-futures = "0.1.1"
 # embassy-net = { version = "0.6.0", features = ["tcp", "dhcpv4", "medium-ethernet", ] }
 # embassy-net-wiznet = { version = "0.2.0" }
 
@@ -53,7 +54,9 @@ static_cell = "2"
 uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "si", "serde"] }
 micromath = "2.1.0"
 thiserror = {version = "2.0.12", default-features = false }
+heapless = { version = "0.8.0", default-features = false }
 # fugit = "0.3.7"
+futures = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 # Support `log` crate only (default).

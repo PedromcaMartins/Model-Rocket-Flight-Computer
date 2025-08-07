@@ -11,13 +11,13 @@ mod types {
     use embedded_sdmmc::SdCard;
     use esp_hal::{delay::Delay, gpio::{Input, Output}, i2c::master::I2c, otg_fs::asynch::Driver, spi::master::Spi, uart::Uart, Async, Blocking};
     use esp_hal_smartled::SmartLedsAdapterAsync;
-    use switch_hal::{Switch, ActiveHigh};
+    use switch_hal::{ActiveHigh, ActiveLow, Switch};
 
     pub type Bno055Peripheral = I2c<'static, Blocking>;
     pub type Bmp280Peripheral = I2c<'static, Blocking>;
     pub type SdCardPeripheral = SdCard<ExclusiveDevice<Spi<'static, Blocking>, Output<'static>, Delay>, Delay>;
-    pub type SdCardDetectPeripheral = Input<'static>;
-    pub type SdCardInsertedLedPeripheral = Output<'static>;
+    pub type SdCardDetectPeripheral = Switch<Input<'static>, ActiveLow>;
+    pub type SdCardInsertedLedPeripheral = Switch<Output<'static>, ActiveHigh>;
     pub type DebugPeripheral = Uart<'static, Async>;
     pub type UbloxNeo7mPeripheral = Uart<'static, Async>;
     pub type PostcardServerUsbDriver = Driver<'static>;
@@ -41,7 +41,7 @@ pub struct Board {
     pub sd_card: SdCardPeripheral,
     pub sd_card_detect: SdCardDetectPeripheral,
     pub sd_card_status_led: SdCardInsertedLedPeripheral,
-    pub debug_port: DebugPeripheral,
+    pub debug_peripheral: DebugPeripheral,
     pub ublox_neo_7m: UbloxNeo7mPeripheral,
     pub postcard_server_usb_driver: PostcardServerUsbDriver,
     pub arm_button: ArmButtonPeripheral,
@@ -64,9 +64,9 @@ impl Board {
 
         Self {
             bno055: I2c::new(
-                p.I2C0, 
-                i2c::master::Config::default()
-                    .with_timeout(i2c::master::BusTimeout::Maximum)
+                    p.I2C0, 
+                    i2c::master::Config::default()
+                        .with_timeout(i2c::master::BusTimeout::Maximum)
                 ).unwrap()
                 .with_scl(p.GPIO4)
                 .with_sda(p.GPIO5),
@@ -85,15 +85,21 @@ impl Board {
                 ).unwrap(), 
                 Delay::new(),
             ),
-            sd_card_detect: Input::new(p.GPIO9, gpio::InputConfig::default()),
-            sd_card_status_led: Output::new(p.GPIO14, gpio::Level::Low, gpio::OutputConfig::default()),
-            debug_port: Uart::new(p.UART0, uart::Config::default())
+            sd_card_detect: Input::new(p.GPIO9, gpio::InputConfig::default()).into_active_low_switch(),
+            sd_card_status_led: Output::new(p.GPIO14, gpio::Level::Low, gpio::OutputConfig::default()).into_active_high_switch(),
+            debug_peripheral: Uart::new(p.UART0, uart::Config::default())
                 .unwrap()
                 .with_rx(p.GPIO44)
                 .with_tx(p.GPIO43)
                 .into_async(),
-            ublox_neo_7m: Uart::new(p.UART2, uart::Config::default())
-                .unwrap()
+            ublox_neo_7m: Uart::new(
+                    p.UART2, 
+                    uart::Config::default()
+                        .with_baudrate(57_600)
+                        .with_data_bits(uart::DataBits::_8)
+                        .with_parity(uart::Parity::None)
+                        .with_stop_bits(uart::StopBits::_1)
+                ).unwrap()
                 .with_rx(p.GPIO15)
                 .with_tx(p.GPIO16)
                 .into_async(),
