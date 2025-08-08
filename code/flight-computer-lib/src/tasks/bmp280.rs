@@ -1,6 +1,5 @@
-use core::fmt::Debug;
+use core::{convert::Infallible, fmt::Debug};
 
-use defmt_or_log::{info, error, Debug2Format};
 use bmp280_ehal::BMP280;
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
 use embassy_time::Timer;
@@ -11,6 +10,15 @@ use uom::si::f64;
 
 use crate::device::bmp280::Bmp280Device;
 
+#[derive(Debug, Clone, Default)]
+pub struct AltimeterSystemStatus {
+    pub message_parsed: u64,
+    pub failed_to_initialize_device: bool,
+    pub failed_to_parse_message: u64,
+    pub failed_to_publish_to_postcard: u64,
+    pub failed_to_publish_to_sd_card: u64,
+}
+
 #[inline]
 pub async fn bmp280_task<
     I, E, M, Tx, 
@@ -20,35 +28,39 @@ pub async fn bmp280_task<
     altitude_signal: &'static Signal<M, f64::Length>,
     sd_card_sender: embassy_sync::channel::Sender<'static, M, AltimeterMessage, DEPTH>,
     postcard_sender: PostcardSender<Tx>,
-) -> !
+) -> Result<Infallible, ()>
 where
     I: I2c<SevenBitAddress, Error = E>,
     E: Debug,
     M: RawMutex + 'static,
     Tx: WireTx,
 {
-    let mut device = Bmp280Device::init(bmp280).unwrap();
+    let mut status = AltimeterSystemStatus::default();
+
+    let Ok(mut device) = Bmp280Device::init(bmp280) else {
+        status.failed_to_initialize_device = true;
+        return Err(());
+    };
     let mut seq = 0_u32;
 
     loop {
         match device.parse_new_message() {
+            Err(_) => status.failed_to_parse_message += 1,
             Ok(msg) => {
-                // info!("Altimeter Message {:#?}", Debug2Format(&msg));
+                status.message_parsed += 1;
 
                 if postcard_sender.publish::<AltimeterTopic>(VarSeq::Seq4(seq), &msg).await.is_ok() {
                     seq = seq.wrapping_add(1);
                 } else {
-                    // error!("Failed to publish Altimeter message to postcard client");
+                    status.failed_to_publish_to_postcard += 1;
                 }
 
                 altitude_signal.signal(msg.altitude);
 
                 if sd_card_sender.try_send(msg).is_err() {
-                    // error!("Failed to send Altimeter message to SD card task");
+                    status.failed_to_publish_to_sd_card += 1;
                 }
             },
-            // Err(e) => error!("Failed to read BMP280: {:?}", Debug2Format(&e)),
-            Err(_) => (),
         }
 
         Timer::after_millis(50).await;

@@ -1,6 +1,12 @@
-use defmt_or_log::{info, error, Debug2Format};
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
+use embassy_time::Timer;
 use switch_hal::WaitSwitch;
+
+#[derive(Debug, Clone, Default)]
+pub struct SystemStatus {
+    pub arm_button_pressed: u64,
+    pub failed_to_read_arm_button: u64,
+}
 
 #[inline]
 pub async fn arm_button_task<S, M>(
@@ -12,16 +18,18 @@ where
     <S as WaitSwitch>::Error: core::fmt::Debug,
     M: RawMutex + 'static,
 {
+    let mut status = SystemStatus::default();
+
     loop {
         // Wait for the button to be pressed
-        match arm_button.wait_active().await {
-            Ok(()) => {
-                // Notify the finite state machine that the arm button was pressed
-                arm_button_signal.signal(());
-                info!("Arm button pressed");
-            },
-            // Err(e) => error!("Failed to read arm button: {:?}", Debug2Format(&e)),
-            Err(_) => (),
+        if arm_button.wait_active().await.is_err() {
+            status.failed_to_read_arm_button += 1;
+            Timer::after_millis(1_000).await;
+            continue;
         }
+
+        // Notify the finite state machine that the arm button was pressed
+        arm_button_signal.signal(());
+        status.arm_button_pressed += 1;
     }
 }

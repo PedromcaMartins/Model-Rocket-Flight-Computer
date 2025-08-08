@@ -199,7 +199,7 @@ async fn gps_task(mut uart: UbloxNeo7mPeripheral) {
 async fn debug_uart_task(mut debug_peripheral: DebugPeripheral) {
     loop {
         debug_peripheral.write("hello world!\r\n".as_bytes()).await.unwrap();
-        Timer::after_millis(2000).await;
+        Timer::after_millis(2_000).await;
     }
 }
 

@@ -88,10 +88,10 @@ async fn bno055_task(
     bno055: Bno055Peripheral, 
     imu_sd_card_sender: Sender<'static, EmbassySyncRawMutex, ImuMessage, IMU_CHANNEL_DEPTH>,
     postcard_sender: PostcardSender<AppTx>,
-) -> ! {
+) {
     let bno055 = Bno055::new(bno055);
 
-    flight_computer_lib::tasks::bno055_task(bno055, imu_sd_card_sender, postcard_sender).await
+    let _ = flight_computer_lib::tasks::bno055_task(bno055, imu_sd_card_sender, postcard_sender).await;
 }
 
 #[embassy_executor::task]
@@ -100,10 +100,10 @@ async fn bmp280_task(
     altitude_signal: &'static Signal<EmbassySyncRawMutex, Length>,
     altimeter_sd_card_sender: Sender<'static, EmbassySyncRawMutex, AltimeterMessage, ALTIMETER_CHANNEL_DEPTH>,
     postcard_sender: PostcardSender<AppTx>,
-) -> ! {
+) {
     let bmp280 = BMP280::new(bmp280).unwrap();
 
-    flight_computer_lib::tasks::bmp280_task(bmp280, altitude_signal, altimeter_sd_card_sender, postcard_sender).await
+    let _ = flight_computer_lib::tasks::bmp280_task(bmp280, altitude_signal, altimeter_sd_card_sender, postcard_sender).await;
 }
 
 #[embassy_executor::task]
@@ -111,8 +111,8 @@ async fn gps_task(
     gps: UbloxNeo7mPeripheral, 
     gps_sd_card_sender: Sender<'static, EmbassySyncRawMutex, GpsMessage, GPS_CHANNEL_DEPTH>,
     postcard_sender: PostcardSender<AppTx>,
-) -> ! {
-    flight_computer_lib::tasks::gps_task(gps, gps_sd_card_sender, postcard_sender).await
+) {
+    let _ = flight_computer_lib::tasks::gps_task(gps, gps_sd_card_sender, postcard_sender).await;
 }
 
 #[embassy_executor::task]
