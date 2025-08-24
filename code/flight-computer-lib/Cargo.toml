@@ -57,6 +57,7 @@ thiserror = {version = "2.0.12", default-features = false }
 heapless = { version = "0.8.0", default-features = false }
 # fugit = "0.3.7"
 futures = { version = "0.3", default-features = false }
+serde-json-core = { version = "0.6", features = ["custom-error-messages"] }
 
 [dev-dependencies]
 # Support `log` crate only (default).
@@ -94,4 +95,5 @@ defmt = [
     # "embassy-net-wiznet/defmt",
     "bno055/defmt-03",
     "nmea/defmt-03",
+    "serde-json-core/defmt"
 ]

@@ -971,6 +971,7 @@ dependencies = [
  "micromath",
  "nmea",
  "postcard-rpc",
+ "serde-json-core",
  "static_cell",
  "switch-hal",
  "telemetry-messages",
@@ -1712,6 +1713,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-json-core"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b81787e655bd59cecadc91f7b6b8651330b2be6c33246039a65e5cd6f4e0828"
+dependencies = [
+ "defmt 0.3.100",
+ "heapless 0.8.0",
+ "ryu",
+ "serde",
 ]
 
 [[package]]

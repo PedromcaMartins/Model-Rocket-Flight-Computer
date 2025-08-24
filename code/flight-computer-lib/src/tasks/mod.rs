@@ -21,4 +21,7 @@ pub use arm_button::arm_button_task;
 mod sd_card;
 pub use sd_card::sd_card_task;
 
+mod system_status;
+pub use system_status::system_status_task;
+
 pub mod postcard;

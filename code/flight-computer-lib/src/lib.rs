@@ -6,6 +6,6 @@
 #![deny(unused_must_use)]
 #![allow(clippy::cast_precision_loss)]
 
-pub(crate) mod model;
+pub mod model;
 pub mod tasks;
 pub mod device;
