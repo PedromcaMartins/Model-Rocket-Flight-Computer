@@ -21,6 +21,7 @@ use postcard_rpc::server::Sender as PostcardSender;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use uom::si::f64::Length;
+use defmt::error;
 
 use {esp_backtrace as _, esp_println as _};
 
@@ -119,7 +120,9 @@ async fn bno055_task(
 ) {
     let bno055 = Bno055::new(bno055);
 
-    let _ = flight_computer_lib::tasks::bno055_task(bno055, imu_status_signal, imu_sd_card_sender, postcard_sender).await;
+    if let Err(()) = flight_computer_lib::tasks::bno055_task(bno055, imu_status_signal, imu_sd_card_sender, postcard_sender).await {
+        error!("bno055 task failed")
+    }
 }
 
 #[embassy_executor::task]
@@ -132,7 +135,9 @@ async fn bmp280_task(
 ) {
     let bmp280 = BMP280::new(bmp280).unwrap();
 
-    let _ = flight_computer_lib::tasks::bmp280_task(bmp280, altitude_signal, altitude_status_signal, altimeter_sd_card_sender, postcard_sender).await;
+    if let Err(()) = flight_computer_lib::tasks::bmp280_task(bmp280, altitude_signal, altitude_status_signal, altimeter_sd_card_sender, postcard_sender).await {
+        error!("bmp280 task failed")
+    }
 }
 
 #[embassy_executor::task]
@@ -142,7 +147,9 @@ async fn gps_task(
     gps_sd_card_sender: Sender<'static, EmbassySyncRawMutex, GpsMessage, GPS_CHANNEL_DEPTH>,
     postcard_sender: PostcardSender<AppTx>,
 ) {
-    let _ = flight_computer_lib::tasks::gps_task(gps, gps_status_signal, gps_sd_card_sender, postcard_sender).await;
+    if let Err(()) = flight_computer_lib::tasks::gps_task(gps, gps_status_signal, gps_sd_card_sender, postcard_sender).await {
+        error!("gps task failed")
+    }
 }
 
 #[embassy_executor::task]
