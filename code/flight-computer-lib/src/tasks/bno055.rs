@@ -1,37 +1,30 @@
-use core::{convert::Infallible, fmt::Debug, num::Wrapping};
+use core::num::Wrapping;
 
-use bno055::Bno055;
 use embassy_futures::select::{select, Either};
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
 use embassy_time::{Duration, Instant, Timer};
-use embedded_hal::i2c::{I2c, SevenBitAddress};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{ImuMessage, ImuTopic};
 
-use crate::{device::bno055::Bno055Device, model::system_status::ImuSystemStatus};
+use crate::{device::sensor::SensorDevice, model::system_status::ImuSystemStatus};
 
 #[inline]
 pub async fn bno055_task<
-    I, E, M, Tx,
+    S, M, Tx,
     const DEPTH: usize,
 > (
-    bno055: Bno055<I>,
+    mut bno055: S,
     status_signal: &'static Signal<M, ImuSystemStatus>,
     sd_card_sender: embassy_sync::channel::Sender<'static, M, ImuMessage, DEPTH>,
     postcard_sender: PostcardSender<Tx>,
-) -> Result<Infallible, ()>
+) -> !
 where
-    I: I2c<SevenBitAddress, Error = E>,
-    E: Debug,
+    S: SensorDevice<DataMessage = ImuMessage>,
     M: RawMutex + 'static,
     Tx: WireTx,
 {
     let mut status = ImuSystemStatus::default();
 
-    let Ok(mut device) = Bno055Device::init(bno055).await else {
-        status.failed_to_initialize_device += 1;
-        return Err(());
-    };
     let mut seq: Wrapping<u32> = Wrapping::default();
 
     let mut sensor_timeout = Instant::now();
@@ -43,7 +36,7 @@ where
             Timer::at(status_timeout),
         ).await {
             Either::First(()) => {
-                match device.parse_new_message() {
+                match bno055.parse_new_message().await {
                     Err(_) => status.failed_to_parse_message += 1,
                     Ok(msg) => {
                         status.message_parsed += 1;

@@ -6,6 +6,8 @@ use embedded_hal::i2c::{I2c, SevenBitAddress};
 use telemetry_messages::{nalgebra::{Quaternion, Vector3, Vector4}, EulerAngles, ImuMessage};
 use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, quantities::{Acceleration, Angle, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature, Time}, thermodynamic_temperature::degree_celsius, time::microsecond};
 
+use crate::device::sensor::SensorDevice;
+
 pub struct Bno055Device<I, E>
 where
     I: I2c<SevenBitAddress, Error = E>,
@@ -41,8 +43,17 @@ where
             _error: core::marker::PhantomData,
         })
     }
+}
 
-    pub fn parse_new_message(&mut self) -> Result<ImuMessage, bno055::Error<E>> {
+impl<I, E> SensorDevice for Bno055Device<I, E>
+where
+    I: I2c<SevenBitAddress, Error = E>,
+    E: Debug,
+{
+    type DataMessage = ImuMessage;
+    type DeviceError = bno055::Error<E>;
+
+    async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
         let euler_angles = self.bno055.euler_angles()?;
         let quaternion = self.bno055.quaternion()?;
         let linear_acceleration = self.bno055.linear_acceleration()?;

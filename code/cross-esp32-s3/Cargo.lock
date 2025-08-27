@@ -976,6 +976,7 @@ dependencies = [
  "chrono",
  "defmt 1.0.1",
  "defmt-or-log",
+ "defmt-or-log-macros",
  "embassy-futures",
  "embassy-sync 0.6.2",
  "embassy-time",

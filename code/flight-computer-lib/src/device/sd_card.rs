@@ -1,7 +1,9 @@
 use core::fmt::Debug;
 
 use embedded_sdmmc::{filesystem::ToShortFileName, Mode, RawDirectory, RawFile, RawVolume, VolumeManager};
-use enum_map::{enum_map, Enum, EnumMap};
+use enum_map::{enum_map, EnumMap};
+
+use crate::model::filesystem::{FileSystem, LogDataType};
 
 pub struct DummyTimeSource;
 impl embedded_sdmmc::TimeSource for DummyTimeSource {
@@ -10,6 +12,7 @@ impl embedded_sdmmc::TimeSource for DummyTimeSource {
     }
 }
 
+#[defmt_or_log::maybe_derive_format]
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum SdCardError<E: Debug> {
     #[error("Init: Sd Card not recognized")]
@@ -20,13 +23,6 @@ pub enum SdCardError<E: Debug> {
     Serialize(#[from] serde_json_core::ser::Error),
     #[error("SD Card Status LED set error")]
     SetStatusLed,
-}
-
-#[derive(Enum)]
-pub enum LogFileData {
-    Altimeter,
-    Gps,
-    Imu,
 }
 
 pub struct LogFile<N: ToShortFileName + Clone> {
@@ -53,7 +49,7 @@ where
     raw_volume: RawVolume,
     raw_directory: RawDirectory,
 
-    files: EnumMap<LogFileData, LogFile<N>>,
+    files: EnumMap<LogDataType, LogFile<N>>,
 }
 
 impl<
@@ -86,9 +82,9 @@ where
         let imu_file = volume_manager.open_file_in_dir(raw_directory, imu_filename.clone(), Mode::ReadWriteAppend)?;
 
         let files = enum_map! {
-            LogFileData::Altimeter => LogFile { filename: altimeter_filename.clone(), file: altimeter_file },
-            LogFileData::Gps => LogFile { filename: gps_filename.clone(), file: gps_file },
-            LogFileData::Imu => LogFile { filename: imu_filename.clone(), file: imu_file },
+            LogDataType::Altimeter => LogFile { filename: altimeter_filename.clone(), file: altimeter_file },
+            LogDataType::Gps => LogFile { filename: gps_filename.clone(), file: gps_file },
+            LogDataType::Imu => LogFile { filename: imu_filename.clone(), file: imu_file },
         };
 
         Ok(Self {
@@ -103,12 +99,36 @@ where
         })
     }
 
-    pub fn append_message<T: telemetry_messages::Serialize>(
+    pub fn destroy(self) -> Result<(D, W, O), SdCardError<D::Error>> {
+        for entry in self.files.values() {
+            self.volume_manager.close_file(entry.file)?;
+        }
+        self.volume_manager.close_dir(self.raw_directory)?;
+        self.volume_manager.close_volume(self.raw_volume)?;
+        Ok((self.volume_manager.free().0, self.sd_card_detect, self.sd_card_status_led))
+    }
+}
+
+impl<
+    W, O, D, N, 
+    const MAX_DIRS: usize, 
+    const MAX_FILES: usize, 
+    const MAX_VOLUMES: usize, 
+> FileSystem for SdCardDevice<W, O, D, N, MAX_DIRS, MAX_FILES, MAX_VOLUMES>
+where
+    W: switch_hal::WaitSwitch<Error: Debug>,
+    O: switch_hal::OutputSwitch<Error: Debug>,
+    D: embedded_sdmmc::BlockDevice,
+    N: embedded_sdmmc::filesystem::ToShortFileName + Clone,
+{
+    type Error = SdCardError<D::Error>;
+
+    fn append_message<T: telemetry_messages::Serialize>(
         &mut self,
-        file_data: LogFileData,
+        file_data: LogDataType,
         message: &T,
         buffer: &mut [u8],
-    ) -> Result<(), SdCardError<D::Error>> {
+    ) -> Result<(), Self::Error> {
         self.sd_card_status_led.on().map_err(|_| SdCardError::SetStatusLed)?;
 
         let file = self.files[file_data].file;
@@ -119,7 +139,7 @@ where
         Ok(())
     }
 
-    pub fn flush_all_files(&mut self) -> Result<(), SdCardError<D::Error>> {
+    fn flush_all_files(&mut self) -> Result<(), Self::Error> {
         self.sd_card_status_led.on().map_err(|_| SdCardError::SetStatusLed)?;
 
         for entry in self.files.values() {
@@ -130,7 +150,7 @@ where
         Ok(())
     }
 
-    pub fn reopen_all_files(&mut self) -> Result<(), SdCardError<D::Error>> {
+    fn reopen_all_files(&mut self) -> Result<(), Self::Error> {
         self.sd_card_status_led.on().map_err(|_| SdCardError::SetStatusLed)?;
 
         for entry in self.files.values_mut() {
@@ -141,14 +161,5 @@ where
 
         self.sd_card_status_led.off().map_err(|_| SdCardError::SetStatusLed)?;
         Ok(())
-    }
-
-    pub fn destroy(self) -> Result<(D, W, O), SdCardError<D::Error>> {
-        for entry in self.files.values() {
-            self.volume_manager.close_file(entry.file)?;
-        }
-        self.volume_manager.close_dir(self.raw_directory)?;
-        self.volume_manager.close_volume(self.raw_volume)?;
-        Ok((self.volume_manager.free().0, self.sd_card_detect, self.sd_card_status_led))
     }
 }

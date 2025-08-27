@@ -16,12 +16,11 @@ use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, Board, SdCa
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::{Channel, Receiver, Sender}, signal::Signal, watch::{self, Watch}};
-use flight_computer_lib::model::system_status::{AltimeterSystemStatus, ArmButtonSystemStatus, FiniteStateMachineStatus, GpsSystemStatus, ImuSystemStatus, SdCardSystemStatus};
+use flight_computer_lib::{device::{sd_card::SdCardDevice, sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}}, model::system_status::{AltimeterSystemStatus, ArmButtonSystemStatus, FiniteStateMachineStatus, GpsSystemStatus, ImuSystemStatus, SdCardSystemStatus}};
 use postcard_rpc::server::Sender as PostcardSender;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use uom::si::f64::Length;
-use defmt::error;
 
 use {esp_backtrace as _, esp_println as _};
 
@@ -119,10 +118,9 @@ async fn bno055_task(
     postcard_sender: PostcardSender<AppTx>,
 ) {
     let bno055 = Bno055::new(bno055);
+    let bno055 = Bno055Device::init(bno055).await.unwrap();
 
-    if let Err(()) = flight_computer_lib::tasks::bno055_task(bno055, imu_status_signal, imu_sd_card_sender, postcard_sender).await {
-        error!("bno055 task failed")
-    }
+    flight_computer_lib::tasks::bno055_task(bno055, imu_status_signal, imu_sd_card_sender, postcard_sender).await
 }
 
 #[embassy_executor::task]
@@ -134,10 +132,9 @@ async fn bmp280_task(
     postcard_sender: PostcardSender<AppTx>,
 ) {
     let bmp280 = BMP280::new(bmp280).unwrap();
+    let bmp280 = Bmp280Device::init(bmp280).unwrap();
 
-    if let Err(()) = flight_computer_lib::tasks::bmp280_task(bmp280, altitude_signal, altitude_status_signal, altimeter_sd_card_sender, postcard_sender).await {
-        error!("bmp280 task failed")
-    }
+    flight_computer_lib::tasks::bmp280_task(bmp280, altitude_signal, altitude_status_signal, altimeter_sd_card_sender, postcard_sender).await
 }
 
 #[embassy_executor::task]
@@ -147,9 +144,9 @@ async fn gps_task(
     gps_sd_card_sender: Sender<'static, EmbassySyncRawMutex, GpsMessage, GPS_CHANNEL_DEPTH>,
     postcard_sender: PostcardSender<AppTx>,
 ) {
-    if let Err(()) = flight_computer_lib::tasks::gps_task(gps, gps_status_signal, gps_sd_card_sender, postcard_sender).await {
-        error!("gps task failed")
-    }
+    let gps = GpsDevice::init(gps).unwrap();
+
+    flight_computer_lib::tasks::gps_task(gps, gps_status_signal, gps_sd_card_sender, postcard_sender).await
 }
 
 #[embassy_executor::task]
@@ -180,10 +177,32 @@ async fn sd_card_task(
     gps_receiver: Receiver<'static, EmbassySyncRawMutex, GpsMessage, GPS_CHANNEL_DEPTH>,
     imu_receiver: Receiver<'static, EmbassySyncRawMutex, ImuMessage, IMU_CHANNEL_DEPTH>,
 ) -> ! {
-    flight_computer_lib::tasks::sd_card_task(
+    const ID_OFFSET: u32 = 0x1000; // Offset for the ID partition
+
+    const MAX_DIRS: usize = 1;
+    const MAX_FILES: usize = 3;
+    const MAX_VOLUMES: usize = 1;
+
+    static ALTIMETER_FILENAME: &str = "ALT.TXT";
+    static GPS_FILENAME: &str = "GPS.TXT";
+    static IMU_FILENAME: &str = "IMU.TXT";
+
+    let sd_card: SdCardDevice<
+        _, _, _, _, 
+        MAX_DIRS, 
+        MAX_FILES, 
+        MAX_VOLUMES,
+    > = SdCardDevice::init::<ID_OFFSET>(
         sd_card, 
         sd_card_detect, 
         sd_card_status_led, 
+        &ALTIMETER_FILENAME, 
+        &GPS_FILENAME, 
+        &IMU_FILENAME, 
+    ).unwrap();
+
+    flight_computer_lib::tasks::sd_card_task(
+        sd_card, 
         sd_card_status_signal,
         altimeter_receiver, 
         gps_receiver, 

@@ -4,6 +4,9 @@ use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
 use telemetry_messages::{FixTypeWraper, GpsMessage};
 use uom::si::{length::meter, quantities::{Length, Time}, time::{hour, microsecond, minute, second}};
 
+use crate::device::sensor::SensorDevice;
+
+#[defmt_or_log::maybe_derive_format]
 #[derive(thiserror::Error, Debug, PartialEq, Eq, Clone)]
 pub enum GpsError {
     #[error("NMEA parser initialization error")]
@@ -45,8 +48,16 @@ where
             nmea,
         })
     }
+}
 
-    pub async fn parse_new_message(&mut self) -> Result<GpsMessage, GpsError> {
+impl<U> SensorDevice for GpsDevice<U>
+where
+    U: embedded_io_async::Read,
+{
+    type DataMessage = GpsMessage;
+    type DeviceError = GpsError;
+
+    async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
         self.buf.fill(0);
 
         let len = self.uart

@@ -1,4 +1,4 @@
-use core::{convert::Infallible, num::Wrapping};
+use core::num::Wrapping;
 
 use embassy_futures::select::{select, Either};
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
@@ -6,29 +6,25 @@ use embassy_time::{Duration, Instant, Timer};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{GpsMessage, GpsTopic};
 
-use crate::{device::gps::GpsDevice, model::system_status::GpsSystemStatus};
+use crate::{device::sensor::SensorDevice, model::system_status::GpsSystemStatus};
 
 #[inline]
 pub async fn gps_task<
-    U, M, Tx,
+    S, M, Tx,
     const DEPTH: usize,
 > (
-    uart: U,
+    mut gps: S,
     status_signal: &'static Signal<M, GpsSystemStatus>,
     sd_card_sender: embassy_sync::channel::Sender<'static, M, GpsMessage, DEPTH>,
     postcard_sender: PostcardSender<Tx>,
-) -> Result<Infallible, ()>
+) -> !
 where
-    U: embedded_io_async::Read,
+    S: SensorDevice<DataMessage = GpsMessage>,
     M: RawMutex + 'static,
     Tx: WireTx,
 {
     let mut status = GpsSystemStatus::default();
 
-    let Ok(mut device) = GpsDevice::init(uart) else {
-        status.failed_to_initialize_device += 1;
-        return Err(());
-    };
     let mut seq: Wrapping<u32> = Wrapping::default();
 
     let mut sensor_timeout = Instant::now();
@@ -40,7 +36,7 @@ where
             Timer::at(status_timeout),
         ).await {
             Either::First(()) => {
-                match device.parse_new_message().await {
+                match gps.parse_new_message().await {
                     Err(_) => status.failed_to_parse_message += 1,
                     Ok(msg) => {
                         status.message_parsed += 1;
