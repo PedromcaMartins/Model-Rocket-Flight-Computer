@@ -11,10 +11,10 @@ use uom::si::quantities::{Acceleration, Angle, AngularVelocity, Length, Magnetic
 pub use nalgebra;
 pub use nmea;
 pub use uom;
+pub use serde::{Deserialize, Serialize};
 
 use postcard_schema::{Schema, schema};
 use postcard_rpc::{endpoints, topics, TopicDirection};
-use serde::{Deserialize, Serialize};
 
 endpoints! {
     list = ENDPOINT_LIST;

@@ -24,7 +24,7 @@ mod types {
     pub type ArmButtonPeripheral = Switch<Input<'static>, ActiveHigh>;
     pub type RGBLedPeripheral = SmartLedsAdapterAsync<esp_hal::rmt::ConstChannelAccess<esp_hal::rmt::Tx, 0>, 25>;
 }
-use defmt::info;
+use defmt::{info, error};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use embedded_sdmmc::SdCard;
 use esp_hal::{delay::Delay, gpio::{self, Input, Output}, i2c::{self, master::I2c}, otg_fs::{self, asynch::Driver, Usb}, rmt::Rmt, spi::{self, master::Spi}, time::Rate, timer::systimer::SystemTimer, uart::{self, Uart}};
@@ -62,6 +62,20 @@ impl Board {
             .into_async();
         let rmt_buffer = smart_led_buffer!(1);
 
+        let sd_card = SdCard::new(
+            ExclusiveDevice::new(
+                Spi::new(p.SPI3, spi::master::Config::default()).unwrap()
+                    .with_miso(p.GPIO10)
+                    .with_sck(p.GPIO11)
+                    .with_mosi(p.GPIO12),
+                Output::new(p.GPIO13, gpio::Level::Low, gpio::OutputConfig::default()), 
+                Delay::new(),
+            ).unwrap(), 
+            Delay::new(),
+        );
+
+        configure_sd_card(&sd_card);
+
         Self {
             bno055: I2c::new(
                     p.I2C0, 
@@ -74,17 +88,7 @@ impl Board {
                 .unwrap()
                 .with_scl(p.GPIO6)
                 .with_sda(p.GPIO7),
-            sd_card: SdCard::new(
-                ExclusiveDevice::new(
-                    Spi::new(p.SPI3, spi::master::Config::default()).unwrap()
-                        .with_miso(p.GPIO10)
-                        .with_sck(p.GPIO11)
-                        .with_mosi(p.GPIO12),
-                    Output::new(p.GPIO13, gpio::Level::Low, gpio::OutputConfig::default()), 
-                    Delay::new(),
-                ).unwrap(), 
-                Delay::new(),
-            ),
+            sd_card,
             sd_card_detect: Input::new(p.GPIO9, gpio::InputConfig::default()).into_active_low_switch(),
             sd_card_status_led: Output::new(p.GPIO14, gpio::Level::Low, gpio::OutputConfig::default()).into_active_high_switch(),
             debug_peripheral: Uart::new(p.UART0, uart::Config::default())
@@ -121,4 +125,24 @@ fn get_init_config() -> esp_hal::Config {
         .with_cpu_clock(
             CpuClock::max()
         )
+}
+
+fn configure_sd_card<S, D>(sd_card: &SdCard<S, D>)
+where
+    S: embedded_hal::spi::SpiDevice<u8>,
+    D: embedded_hal::delay::DelayNs,
+{
+    if sd_card.get_card_type().is_none() {
+        sd_card.mark_card_uninit();
+        error!("SD Card not recognized: {:?}", sd_card.get_card_type());
+    }
+
+    info!("Sd Card type: {:?}", sd_card.get_card_type());
+    if let Ok(bytes) = sd_card.num_bytes() {
+        info!("Card size is {} GB", bytes >> 30);
+    }
+
+    // if sd_card_detect.wait_active().await.is_err() { 
+    //     status.failed_to_sd_card_switch = true;
+    // }
 }

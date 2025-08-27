@@ -16,6 +16,7 @@ esp-hal = { version = "=1.0.0-rc.0", features = ["defmt", "esp32s3", "unstable",
 esp-hal-embassy = { version = "0.9.0", features = ["defmt", "esp32s3"] }
 esp-hal-smartled = { version = "0.15", features = ["defmt", "esp32s3"] }
 switch-hal = { version = "*" }
+embedded-hal = { version = "1.0.0", features = ["defmt-03"] }
 embedded-hal-bus = { version = "0.3", features = ["async", "defmt-03"] }
 embedded-sdmmc = { version = "0.9.0", default-features = false, features = ["defmt-log"] }
 embassy-usb = { version = "0.4.0" }

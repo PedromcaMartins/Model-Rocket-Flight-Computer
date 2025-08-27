@@ -5,6 +5,7 @@
 #![allow(clippy::future_not_send)]
 #![deny(unused_must_use)]
 #![allow(clippy::cast_precision_loss)]
+#![allow(clippy::missing_errors_doc)]
 
 pub mod model;
 pub mod tasks;

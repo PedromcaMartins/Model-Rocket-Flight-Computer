@@ -1,6 +1,5 @@
 #![allow(clippy::unused_async)]
 #![allow(clippy::missing_panics_doc)]
-#![allow(clippy::missing_errors_doc)]
 #![allow(clippy::unwrap_used)]
 
 mod finite_state_machine;

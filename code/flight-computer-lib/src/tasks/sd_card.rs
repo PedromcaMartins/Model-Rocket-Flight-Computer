@@ -1,25 +1,32 @@
 use core::fmt::Debug;
 
-use defmt_or_log::info;
+use defmt_or_log::error;
 use embassy_futures::select::{select4, Either4};
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
 use embassy_time::{Duration, Instant, Timer};
-use embedded_sdmmc::{SdCard, VolumeIdx, VolumeManager};
+use embedded_sdmmc::SdCard;
+use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 
 use crate::model::system_status::SdCardSystemStatus;
+use crate::device::sd_card::{LogFileData, SdCardDevice};
 
 const ID_OFFSET: u32 = 0x1000; // Offset for the ID partition
 const MAX_DIRS: usize = 1;
 const MAX_FILES: usize = 3;
 const MAX_VOLUMES: usize = 1;
 
-pub struct DummyTimeSource;
-impl embedded_sdmmc::TimeSource for DummyTimeSource {
-    fn get_timestamp(&self) -> embedded_sdmmc::Timestamp {
-        embedded_sdmmc::Timestamp::from_calendar(2025, 3, 7, 13, 23, 0).unwrap()
-    }
-}
+static ALTIMETER_FILENAME: &str = "ALT.TXT";
+static GPS_FILENAME: &str = "GPS.TXT";
+static IMU_FILENAME: &str = "IMU.TXT";
+
+const ALTIMETER_TMP_BUF_SIZE: usize = 1 << 7;
+const GPS_TMP_BUF_SIZE: usize = 1 << 7;
+const IMU_TMP_BUF_SIZE: usize = 1 << 10;
+
+static ALTIMETER_TMP_BUF: ConstStaticCell<[u8; ALTIMETER_TMP_BUF_SIZE]> = ConstStaticCell::new([0u8; ALTIMETER_TMP_BUF_SIZE]);
+static GPS_TMP_BUF: ConstStaticCell<[u8; GPS_TMP_BUF_SIZE]> = ConstStaticCell::new([0u8; GPS_TMP_BUF_SIZE]);
+static IMU_TMP_BUF: ConstStaticCell<[u8; IMU_TMP_BUF_SIZE]> = ConstStaticCell::new([0u8; IMU_TMP_BUF_SIZE]);
 
 #[inline]
 pub async fn sd_card_task<
@@ -29,9 +36,9 @@ pub async fn sd_card_task<
     const DEPTH_IMU: usize,
 > (
     sd_card: SdCard<S, D>,
-    _sd_card_detect: W,
-    _sd_card_status_led: O,
-    status_signal: &'static Signal<M, SdCardSystemStatus>,
+    sd_card_detect: W,
+    sd_card_status_led: O,
+    _status_signal: &'static Signal<M, SdCardSystemStatus>,
     altimeter_receiver: embassy_sync::channel::Receiver<'static, M, AltimeterMessage, DEPTH_ALTIMETER>,
     gps_receiver: embassy_sync::channel::Receiver<'static, M, GpsMessage, DEPTH_GPS>,
     imu_receiver: embassy_sync::channel::Receiver<'static, M, ImuMessage, DEPTH_IMU>,
@@ -43,102 +50,66 @@ where
     O: switch_hal::OutputSwitch<Error: Debug>,
     M: RawMutex + 'static,
 {
-    let mut status = SdCardSystemStatus::default();
+    let mut _status = SdCardSystemStatus::default();
 
-    let mut altimeter_msg_buf = [0u8; 1 << 7];
-    let mut gps_msg_buf = [0u8; 1 << 7];
-    let mut imu_msg_buf = [0u8; 1 << 10];
+    let mut device: SdCardDevice<W, O, SdCard<S, D>, &'static str, MAX_DIRS, MAX_FILES, MAX_VOLUMES> 
+        = SdCardDevice::init::<ID_OFFSET>(
+        sd_card, 
+        sd_card_detect, 
+        sd_card_status_led, 
+        &ALTIMETER_FILENAME, 
+        &GPS_FILENAME, 
+        &IMU_FILENAME, 
+    ).unwrap();
+    // ) {
+    //     Ok(device) => device,
+    //     Err(_err) => {
+    //         error!("Failed to initialize SD Card. Retrying in 1 second...");
+    //         Timer::after(Duration::from_secs(1)).await;
+    //     }
+    // };
 
-    while sd_card.get_card_type().is_none() {
-        sd_card.mark_card_uninit();
-        status.sd_card_not_recognized += 1;
-        status_signal.signal(status.clone());
-        Timer::after_millis(1_000).await;
-    }
+    let altimeter_tmp_buf = ALTIMETER_TMP_BUF.take();
+    let gps_tmp_buf = GPS_TMP_BUF.take();
+    let imu_tmp_buf = IMU_TMP_BUF.take();
+    
+    let mut flush_files_timeout = Instant::now() + Duration::from_millis(500);
 
-    info!("Sd Card type: {:?}", sd_card.get_card_type());
-    if let Ok(bytes) = sd_card.num_bytes() {
-        info!("Card size is {} GB", bytes >> 30);
-    }
+    loop {
+        let result = select4 (
+            altimeter_receiver.receive(), 
+            gps_receiver.receive(), 
+            imu_receiver.receive(), 
+            Timer::at(flush_files_timeout),
+        ).await;
 
-    // if sd_card_detect.wait_active().await.is_err() { 
-    //     status.failed_to_sd_card_switch = true;
-    // }
+        // if sd_card_status_led.on().is_err() { status.failed_to_switch_led += 1 }
 
-    let volume_mgr: VolumeManager<SdCard<S, D>, _, MAX_DIRS, MAX_FILES, MAX_VOLUMES> = VolumeManager::new_with_limits(sd_card, DummyTimeSource, ID_OFFSET);
-
-    'setup: loop {
-        status_signal.signal(status.clone());
-        Timer::after_millis(1_000).await;
-
-        let Ok(volume) = volume_mgr.open_volume(VolumeIdx(0)) else {
-            status.failed_to_open_volume += 1;
-            continue 'setup;
-        };
-        let Ok(root_dir) = volume.open_root_dir() else {
-            status.failed_to_open_root_dir += 1;
-            continue 'setup;
-        };
-
-        'open_file: loop {
-            status_signal.signal(status.clone());
-            Timer::after_millis(1_000).await;
-
-            let Ok(altimeter_file) = root_dir.open_file_in_dir("alt.txt", embedded_sdmmc::Mode::ReadWriteCreateOrTruncate) else {
-                status.failed_to_open_altimeter_file += 1;
-                continue 'open_file;
-            };
-            let Ok(gps_file) = root_dir.open_file_in_dir("gps.txt", embedded_sdmmc::Mode::ReadWriteCreateOrTruncate) else {
-                status.failed_to_open_gps_file += 1;
-                continue 'open_file;
-            };
-            let Ok(imu_file) = root_dir.open_file_in_dir("imu.txt", embedded_sdmmc::Mode::ReadWriteCreateOrTruncate) else {
-                status.failed_to_open_imu_file += 1;
-                continue 'open_file;
-            };
-
-            let flush_files_timeout = Instant::now() + Duration::from_millis(500);
-
-            'run: loop {
-                match select4 (
-                    altimeter_receiver.receive(), 
-                    gps_receiver.receive(), 
-                    imu_receiver.receive(), 
-                    Timer::at(flush_files_timeout),
-                ).await {
-                    Either4::First(altimeter_message) => {
-                        // if sd_card_status_led.on().is_err() { status.failed_to_switch_led += 1 }
-                        let Ok(len) = serde_json_core::to_slice(&altimeter_message, &mut altimeter_msg_buf) else { status.failed_to_serialize_altimeter_msg += 1; continue 'run; };
-                        if altimeter_file.write(&altimeter_msg_buf[..len]).is_err() { status.failed_to_write_altimeter_msg += 1 }
-                        // if sd_card_status_led.off().is_err() { status.failed_to_switch_led += 1 }
-                        status.altimeter_message_written += 1;
-                    },
-                    Either4::Second(gps_message) => {
-                        // if sd_card_status_led.on().is_err() { status.failed_to_switch_led += 1 }
-                        let Ok(len) = serde_json_core::to_slice(&gps_message, &mut gps_msg_buf) else { status.failed_to_serialize_gps_msg += 1; continue 'run; };
-                        if gps_file.write(&gps_msg_buf[..len]).is_err() { status.failed_to_write_gps_msg += 1 }
-                        // if sd_card_status_led.off().is_err() { status.failed_to_switch_led += 1 }
-                        status.gps_message_written += 1;
-                    },
-                    Either4::Third(imu_message) => {
-                        // if sd_card_status_led.on().is_err() { status.failed_to_switch_led += 1 }
-                        let Ok(len) = serde_json_core::to_slice(&imu_message, &mut imu_msg_buf) else { status.failed_to_serialize_imu_msg += 1; continue 'run; };
-                        if imu_file.write(&imu_msg_buf[..len]).is_err() { status.failed_to_write_imu_msg += 1 }
-                        // if sd_card_status_led.off().is_err() { status.failed_to_switch_led += 1 }
-                        status.imu_message_written += 1;
-                    },
-                    Either4::Fourth(()) => {
-                        if altimeter_file.flush().is_err() { status.failed_to_flush_altimeter_file += 1 }
-                        if gps_file.flush().is_err() { status.failed_to_flush_gps_file += 1 }
-                        if imu_file.flush().is_err() { status.failed_to_flush_imu_file += 1 }
-
-                        // flush_files_timeout = Instant::now() + Duration::from_millis(500);
-                        status.files_flushed += 1;
-
-                        status_signal.signal(status.clone());
-                    },
+        match result {
+            Either4::First(altimeter_message) => {
+                if let Err(err) = device.append_message(LogFileData::Altimeter, &altimeter_message, altimeter_tmp_buf) {
+                    error!("Failed to append altimeter message to SD Card: {:?}", err);
                 }
-            }
+            },
+            Either4::Second(gps_message) => {
+                if let Err(err) = device.append_message(LogFileData::Gps, &gps_message, gps_tmp_buf) {
+                    error!("Failed to append GPS message to SD Card: {:?}", err);
+                }
+            },
+            Either4::Third(imu_message) => {
+                if let Err(err) = device.append_message(LogFileData::Imu, &imu_message, imu_tmp_buf) {
+                    error!("Failed to append IMU message to SD Card: {:?}", err);
+                }
+            },
+            Either4::Fourth(()) => {
+                if let Err(err) = device.flush_all_files() {
+                    error!("Failed to flush SD Card files: {:?}", err);
+                }
+
+                flush_files_timeout = Instant::now() + Duration::from_millis(500);
+            },
         }
+
+        // if sd_card_status_led.off().is_err() { status.failed_to_switch_led += 1 }
     }
 }
