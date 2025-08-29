@@ -60,7 +60,7 @@ async fn wait(time_driver: &MockDriver) {
 #[rstest]
 #[timeout(Duration::from_secs(5).into())]
 #[test_log::test(async_std::test)]
-async fn test_fsm(
+async fn test_fsm_full_trajectory(
     arm_button_pushed_signal: &'static Signal<CriticalSectionRawMutex, ()>,
     latest_altitude_signal: &'static Signal<CriticalSectionRawMutex, Length>,
     flight_state_watch: &'static Watch<CriticalSectionRawMutex, FlightState, 1>,
