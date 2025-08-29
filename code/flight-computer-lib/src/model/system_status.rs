@@ -1,70 +1,132 @@
 use core::num::Saturating;
 
-#[derive(Debug, Clone, Default)]
-pub struct ArmButtonSystemStatus {
-    pub arm_button_pressed: Saturating<usize>,
-    pub failed_to_read_arm_button: Saturating<usize>,
+use embassy_time::Instant;
+use enum_map::EnumMap;
+
+use crate::model::filesystem::{FileSystemEvent, LogDataType};
+
+#[macro_export]
+macro_rules! send_to_system_status {
+    ($channel:expr, $err_counter:expr, $expr:expr) => {
+        if $channel.try_send(Ok($expr)).is_err() {
+            $err_counter += 1;
+        }
+    };
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct AltimeterSystemStatus {
-    pub message_parsed: Saturating<usize>,
-    pub failed_to_initialize_device: bool,
-    pub failed_to_parse_message: Saturating<usize>,
-    pub failed_to_publish_to_postcard: Saturating<usize>,
-    pub failed_to_publish_to_sd_card: Saturating<usize>,
+#[macro_export]
+macro_rules! error_sending_to_system_status {
+    ($channel:expr, $err_counter:expr) => {
+        if $channel.try_send(Err($err_counter.0)).is_err() {
+            $err_counter += 1;
+        }
+    };
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct ImuSystemStatus {
-    pub message_parsed: Saturating<usize>,
-    pub failed_to_initialize_device: Saturating<usize>,
-    pub failed_to_parse_message: Saturating<usize>,
-    pub failed_to_publish_to_postcard: Saturating<usize>,
-    pub failed_to_publish_to_sd_card: Saturating<usize>,
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Debug, Clone, Copy, enum_map::Enum)]
+pub enum ArmButtonSystemStatus {
+    ArmButtonPressed,
+    FailedToReadArmButton,
+    FailedToSendChannel,
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct GpsSystemStatus {
-    pub message_parsed: Saturating<usize>,
-    pub failed_to_initialize_device: Saturating<usize>,
-    pub failed_to_parse_message: Saturating<usize>,
-    pub failed_to_publish_to_postcard: Saturating<usize>,
-    pub failed_to_publish_to_sd_card: Saturating<usize>,
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Debug, Clone, Copy, enum_map::Enum)]
+pub enum AltimeterSystemStatus {
+    MessageParsed,
+    FailedToInitializeDevice,
+    FailedToParseMessage,
+    FailedToPublishToPostcard,
+    FailedToPublishToSdCard,
+    FailedToSendChannel,
 }
 
-#[derive(Debug, Clone)]
-pub enum FiniteStateMachineStatus {
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Debug, Clone, Copy, enum_map::Enum)]
+pub enum ImuSystemStatus {
+    MessageParsed,
+    FailedToInitializeDevice,
+    FailedToParseMessage,
+    FailedToPublishToPostcard,
+    FailedToPublishToSdCard,
+    FailedToSendChannel,
+}
+
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Debug, Clone, Copy, enum_map::Enum)]
+pub enum GpsSystemStatus {
+    MessageParsed,
+    FailedToInitializeDevice,
+    FailedToParseMessage,
+    FailedToPublishToPostcard,
+    FailedToPublishToSdCard,
+    FailedToSendChannel,
+}
+
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Debug, Clone, enum_map::Enum)]
+pub enum SdCardSystemStatus {
+    FileSystemEvent(LogDataType, FileSystemEvent),
+    FailedToSendChannel,
+}
+
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
+pub enum FlightState {
     PreArmed,
     Armed,
     RecoveryActivated,
     Touchdown,
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct SdCardSystemStatus {
-    pub altimeter_message_written: Saturating<usize>,
-    pub gps_message_written: Saturating<usize>,
-    pub imu_message_written: Saturating<usize>,
-    pub files_flushed: Saturating<usize>,
+#[derive(Debug, Default)]
+pub struct SystemStatus {
+    arm_button: EnumMap<ArmButtonSystemStatus, Saturating<usize>>,
+    altimeter: EnumMap<AltimeterSystemStatus, Saturating<usize>>,
+    imu: EnumMap<ImuSystemStatus, Saturating<usize>>,
+    gps: EnumMap<GpsSystemStatus, Saturating<usize>>,
+    sd_card: EnumMap<SdCardSystemStatus, Saturating<usize>>,
+    finite_state_machine: EnumMap<FlightState, Option<Instant>>,
+}
 
-    pub sd_card_not_recognized: Saturating<usize>,
-    pub failed_to_open_volume: Saturating<usize>,
-    pub failed_to_open_root_dir: Saturating<usize>,
+impl SystemStatus {
+    pub fn update_arm_button_status(&mut self, status: Result<ArmButtonSystemStatus, usize>) {
+        match status {
+            Ok(status) => self.arm_button[status] += 1,
+            Err(attempts) => self.arm_button[ArmButtonSystemStatus::FailedToSendChannel] += attempts,
+        }
+    }
 
-    pub failed_to_open_altimeter_file: Saturating<usize>,
-    pub failed_to_open_gps_file: Saturating<usize>,
-    pub failed_to_open_imu_file: Saturating<usize>,
+    pub fn update_altimeter_status(&mut self, status: Result<AltimeterSystemStatus, usize>) {
+        match status {
+            Ok(status) => self.altimeter[status] += 1,
+            Err(attempts) => self.altimeter[AltimeterSystemStatus::FailedToSendChannel] += attempts,
+        }
+    }
 
-    pub failed_to_serialize_altimeter_msg: Saturating<usize>,
-    pub failed_to_serialize_gps_msg: Saturating<usize>,
-    pub failed_to_serialize_imu_msg: Saturating<usize>,
+    pub fn update_imu_status(&mut self, status: Result<ImuSystemStatus, usize>) {
+        match status {
+            Ok(status) => self.imu[status] += 1,
+            Err(attempts) => self.imu[ImuSystemStatus::FailedToSendChannel] += attempts,
+        }
+    }
 
-    pub failed_to_write_altimeter_msg: Saturating<usize>,
-    pub failed_to_write_gps_msg: Saturating<usize>,
-    pub failed_to_write_imu_msg: Saturating<usize>,
+    pub fn update_gps_status(&mut self, status: Result<GpsSystemStatus, usize>) {
+        match status {
+            Ok(status) => self.gps[status] += 1,
+            Err(attempts) => self.gps[GpsSystemStatus::FailedToSendChannel] += attempts,
+        }
+    }
 
-    pub failed_to_flush_altimeter_file: Saturating<usize>,
-    pub failed_to_flush_gps_file: Saturating<usize>,
-    pub failed_to_flush_imu_file: Saturating<usize>,
+    pub fn update_sd_card_status(&mut self, status: Result<SdCardSystemStatus, usize>) {
+        match status {
+            Ok(status) => self.sd_card[status] += 1,
+            Err(attempts) => self.sd_card[SdCardSystemStatus::FailedToSendChannel] += attempts,
+        }
+    }
+
+    pub fn update_finite_state_machine_status(&mut self, status: FlightState) {
+        self.finite_state_machine[status] = Some(Instant::now());
+    }
 }

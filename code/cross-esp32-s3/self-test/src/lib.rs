@@ -15,7 +15,7 @@ use bno055::Bno055;
 
 use defmt::{Debug2Format, info, error};
 use embassy_time::Timer;
-use flight_computer_lib::device::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice};
+use flight_computer_lib::device::sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice, SensorDevice};
 use smart_leds::SmartLedsWriteAsync;
 use switch_hal::{InputSwitch, StatefulOutputSwitch, WaitSwitch};
 
@@ -26,7 +26,7 @@ pub async fn bno055_test(bno055: Bno055Peripheral) {
     let mut device = Bno055Device::init(bno055).await.unwrap();
 
     for _ in 1..4 {
-        let msg = device.parse_new_message().unwrap();
+        let msg = device.parse_new_message().await.unwrap();
         info!("Bno055 Message: {:?}", Debug2Format(&msg));
     }
 
@@ -40,7 +40,7 @@ pub async fn bmp280_test(bmp280: Bmp280Peripheral) {
     let mut device = Bmp280Device::init(bmp280).unwrap();
 
     for _ in 1..4 {
-        let msg = device.parse_new_message().unwrap();
+        let msg = device.parse_new_message().await.unwrap();
         info!("Bmp280 Message: {:?}", Debug2Format(&msg));
     }
 
