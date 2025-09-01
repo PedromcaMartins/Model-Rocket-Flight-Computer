@@ -107,7 +107,7 @@ impl<M: RawMutex> FiniteStateMachine<RecoveryActivated<M>>
 
             let min_altitude_deployment = Length::new::<meter>(2.0);
 
-            if altitude <= min_altitude_deployment && altitude <= launchpad_altitude {
+            if altitude <= min_altitude_deployment {
                 break;
             }
         }
