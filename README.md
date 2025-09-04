@@ -14,14 +14,22 @@ I also want to take this opportunity to learn more about designing model rocket 
 .vscode/
 .zed/
 
-# Rust Crates (libraries + binaries)
+# Rust Crates: flight computer hardware-agnostic no_std library, telemetry messages, ground-station, and target-host testing (HITL)
 crates/*
-./Cargo.lock
-./Cargo.toml
+
+# Rust Crates for Embedded Targets (Firmware + Board Testing)
+# Contains bring-up code for initial testing and diagnosis, IO configuration, and flight computer binary code
+crates/cross-esp32-s3/*
+crates/cross-nucleo-f413zh/*
 
 # Documentation (Architecture, Requirements, ...)
 docs/
 ./README.md
+
+# Miscelaneous
+datasheet/
+gps_configuration/
+
 ```
 
 
