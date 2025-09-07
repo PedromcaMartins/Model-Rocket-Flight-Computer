@@ -4,7 +4,7 @@ use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
 use embassy_time::{Delay, Instant, Timer};
 use embedded_hal::i2c::{I2c, SevenBitAddress};
 use telemetry_messages::{nalgebra::{Quaternion, Vector3, Vector4}, EulerAngles, ImuMessage};
-use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, quantities::{Acceleration, Angle, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature, Time}, thermodynamic_temperature::degree_celsius, time::microsecond};
+use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, quantities::{Acceleration, Angle, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature}, thermodynamic_temperature::degree_celsius};
 
 use crate::device::sensor::SensorDevice;
 
@@ -61,8 +61,7 @@ where
         let acceleration = self.bno055.accel_data()?;
         let gyro = self.bno055.gyro_data()?;
         let mag = self.bno055.mag_data()?;
-        let temperature = self.bno055.temperature()
-            .map(|t| ThermodynamicTemperature::new::<degree_celsius>(t.into()))?;
+        let temperature = self.bno055.temperature()?;
 
         let euler_angles = EulerAngles {
             roll: Angle::new::<degree>(euler_angles.c),
@@ -104,6 +103,8 @@ where
             MagneticFluxDensity::new::<microtesla>(mag.y),
             MagneticFluxDensity::new::<microtesla>(mag.z) 
         );
+        let temperature = 
+            ThermodynamicTemperature::new::<degree_celsius>(temperature.into());
 
         Ok(ImuMessage {
             euler_angles,
@@ -114,7 +115,7 @@ where
             gyro,
             mag,
             temperature,
-            timestamp: Time::new::<microsecond>(Instant::now().as_micros() as f64),
+            timestamp: Instant::now().as_micros(),
         })
     }
 }

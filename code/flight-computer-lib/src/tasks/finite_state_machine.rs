@@ -1,6 +1,6 @@
 use defmt_or_log::info;
 use embassy_sync::{blocking_mutex::raw::RawMutex, watch::Sender, signal::Signal};
-use uom::si::f64::Length;
+use uom::si::f32::Length;
 
 use crate::model::{finite_state_machine::FiniteStateMachine, system_status::FlightState};
 

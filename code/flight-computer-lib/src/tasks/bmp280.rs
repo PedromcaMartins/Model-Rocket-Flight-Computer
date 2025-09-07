@@ -5,7 +5,7 @@ use embassy_sync::{blocking_mutex::raw::RawMutex, channel::Sender, signal::Signa
 use embassy_time::{Duration, Instant, Timer};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{AltimeterMessage, AltimeterTopic};
-use uom::si::f64;
+use uom::si::f32::Length;
 
 use crate::{device::sensor::SensorDevice, error_sending_to_system_status, send_to_system_status};
 use crate::model::system_status::AltimeterSystemStatus;
@@ -17,7 +17,7 @@ pub async fn bmp280_task<
     const DEPTH_DATA: usize,
 > (
     mut bmp280: S,
-    latest_altitude_signal: &'static Signal<M, f64::Length>,
+    latest_altitude_signal: &'static Signal<M, Length>,
     status_sender: Sender<'static, M, Result<AltimeterSystemStatus, usize>, DEPTH_STATUS>,
     sd_card_sender: Sender<'static, M, AltimeterMessage, DEPTH_DATA>,
     postcard_sender: PostcardSender<Tx>,

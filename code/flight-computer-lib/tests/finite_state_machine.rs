@@ -3,7 +3,7 @@ use std::time::Duration;
 use embassy_futures::select::{select, Either};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal, watch::Watch};
 use flight_computer_lib::{model::system_status::FlightState, tasks::finite_state_machine_task};
-use uom::si::{f64::Length, length::meter};
+use uom::si::{f32::Length, length::meter};
 use log::info;
 use rstest::{fixture, rstest};
 use futures::join;

@@ -44,13 +44,13 @@ topics! {
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct AltimeterMessage {
     /// Pressure in Pascal.
-    pub pressure: Pressure<f64>,
+    pub pressure: Pressure<f32>,
     /// Altitude in meters.
-    pub altitude: Length<f64>,
+    pub altitude: Length<f32>,
     /// Temperature in Celsius degrees.
-    pub temperature: ThermodynamicTemperature<f64>,
+    pub temperature: ThermodynamicTemperature<f32>,
     /// Timestamp in microseconds.
-    pub timestamp: Time<f64>,
+    pub timestamp: u64,
 }
 
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
@@ -60,15 +60,15 @@ pub struct GpsMessage {
     /// Type of GPS Fix
     pub fix_type: FixTypeWraper,
     /// Latitude in degrees.
-    pub latitude: f64,
+    pub latitude: f32,
     /// Longitude in degrees.
-    pub longitude: f64,
+    pub longitude: f32,
     /// MSL Altitude in meters
     pub altitude: Length<f32>,
     /// Number of satellites used for fix.
     pub num_of_fix_satellites: u8,
     /// Timestamp in microseconds.
-    pub timestamp: Time<f64>,
+    pub timestamp: u64,
 }
 
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq, Eq)]
@@ -103,7 +103,7 @@ pub struct ImuMessage {
     /// Temperature of the chip in Celsius degrees.
     pub temperature: ThermodynamicTemperature<f32>,
     /// Timestamp in microseconds.
-    pub timestamp: Time<f64>,
+    pub timestamp: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]

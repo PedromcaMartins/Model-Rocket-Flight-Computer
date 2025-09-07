@@ -20,7 +20,7 @@ use flight_computer_lib::{device::{sd_card::SdCardDevice, sensor::{bmp280::Bmp28
 use postcard_rpc::server::Sender as PostcardSender;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
-use uom::si::f64::Length;
+use uom::si::f32::Length;
 
 use {esp_backtrace as _, esp_println as _};
 

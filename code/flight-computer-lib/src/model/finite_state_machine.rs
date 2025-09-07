@@ -1,6 +1,6 @@
 use defmt_or_log::info;
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
-use uom::si::{f64::Length, length::meter};
+use uom::si::{f32::Length, length::meter};
 
 pub struct PreArmed<M>
 where

@@ -2,7 +2,7 @@ use chrono::Timelike;
 use embassy_time::Instant;
 use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
 use telemetry_messages::{FixTypeWraper, GpsMessage};
-use uom::si::{length::meter, quantities::{Length, Time}, time::{hour, microsecond, minute, second}};
+use uom::si::{length::meter, quantities::{Length, Time}, time::{hour, minute, second}};
 
 use crate::device::sensor::SensorDevice;
 
@@ -86,12 +86,15 @@ where
                 + Time::new::<second>(t.second().into())
         })?;
 
+        #[allow(clippy::cast_possible_truncation)]
         Ok(GpsMessage {
             latitude: self.nmea
                 .latitude()
+                .map(|l| l as f32)
                 .ok_or(GpsError::MissingFields)?,
             longitude: self.nmea
                 .longitude()
+                .map(|l| l as f32)
                 .ok_or(GpsError::MissingFields)?,
             altitude: self.nmea
                 .altitude()
@@ -106,7 +109,7 @@ where
             num_of_fix_satellites: self.nmea
                 .fix_satellites()
                 .ok_or(GpsError::MissingFields)? as u8,
-            timestamp: Time::new::<microsecond>(Instant::now().as_micros() as f64),
+            timestamp: Instant::now().as_micros(),
         })
     }
 }

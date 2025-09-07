@@ -4,7 +4,7 @@ use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP
 use embassy_time::Instant;
 use embedded_hal::i2c::{I2c, SevenBitAddress};
 use telemetry_messages::AltimeterMessage;
-use uom::si::{pressure::pascal, quantities::{Pressure, ThermodynamicTemperature, Time}, thermodynamic_temperature::degree_celsius, time::microsecond};
+use uom::si::{pressure::pascal, quantities::{Pressure, ThermodynamicTemperature}, thermodynamic_temperature::degree_celsius};
 
 use crate::{device::sensor::SensorDevice, model::altimeter::altitude_from_pressure};
 
@@ -49,10 +49,13 @@ where
     type DataMessage = AltimeterMessage;
     type DeviceError = E;
 
+    #[allow(clippy::cast_possible_truncation)]
     async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
         let pressure = self.bmp280.pressure()
+            .map(|p| p as f32)
             .map(Pressure::new::<pascal>)?;
         let temperature = self.bmp280.temp()
+            .map(|t| t as f32)
             .map(ThermodynamicTemperature::new::<degree_celsius>)?;
 
         let altitude = altitude_from_pressure(pressure);
@@ -61,7 +64,7 @@ where
             altitude,
             pressure,
             temperature, 
-            timestamp: Time::new::<microsecond>(Instant::now().as_micros() as f64),
+            timestamp: Instant::now().as_micros(),
         })
     }
 }
