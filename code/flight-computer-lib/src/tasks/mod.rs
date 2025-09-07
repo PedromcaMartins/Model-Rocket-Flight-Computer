@@ -5,11 +5,11 @@
 mod finite_state_machine;
 pub use finite_state_machine::finite_state_machine_task;
 
-mod bno055;
-pub use bno055::bno055_task;
+mod imu;
+pub use imu::imu_task;
 
-mod bmp280;
-pub use bmp280::bmp280_task;
+mod altimeter;
+pub use altimeter::altimeter_task;
 
 mod gps;
 pub use gps::gps_task;

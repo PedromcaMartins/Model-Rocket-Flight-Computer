@@ -10,12 +10,12 @@ use crate::{model::sensor_device::SensorDevice, error_sending_to_system_status, 
 use crate::model::system_status::ImuSystemStatus;
 
 #[inline]
-pub async fn bno055_task<
+pub async fn imu_task<
     S, M, Tx,
     const DEPTH_STATUS: usize,
     const DEPTH_DATA: usize,
 > (
-    mut bno055: S,
+    mut imu: S,
     status_sender: Sender<'static, M, Result<ImuSystemStatus, usize>, DEPTH_STATUS>,
     sd_card_sender: Sender<'static, M, ImuMessage, DEPTH_DATA>,
     postcard_sender: PostcardSender<Tx>,
@@ -37,7 +37,7 @@ where
             Timer::at(status_timeout),
         ).await {
             Either::First(()) => {
-                match bno055.parse_new_message().await {
+                match imu.parse_new_message().await {
                     Ok(msg) => {
                         send_to_system_status!(status_sender, error_sending_status, ImuSystemStatus::MessageParsed);
 

@@ -40,8 +40,8 @@ async fn main(spawner: Spawner) {
         arm_button,
     } = IOMapping::init();
 
-    spawner.must_spawn(bno055_task(bno055));
-    spawner.must_spawn(bmp280_task(bmp280));
+    spawner.must_spawn(imu_task(bno055));
+    spawner.must_spawn(altimeter_task(bmp280));
     spawner.must_spawn(sd_card_task(sd_card, sd_card_detect, sd_card_status_led));
     spawner.must_spawn(gps_task(ublox_neo_7m));
     spawner.must_spawn(debug_uart_task(debug_peripheral));
@@ -57,7 +57,7 @@ async fn main(spawner: Spawner) {
 }
 
 #[embassy_executor::task]
-async fn bno055_task(bno055: Bno055Peripheral) {
+async fn imu_task(bno055: Bno055Peripheral) {
     // The sensor has an initial startup time of 400ms - 650ms during which interaction with it will fail
     Timer::at(Instant::from_millis(650)).await;
 
@@ -121,7 +121,7 @@ async fn bno055_task(bno055: Bno055Peripheral) {
 }
 
 #[embassy_executor::task]
-async fn bmp280_task(bmp280: Bmp280Peripheral) {
+async fn altimeter_task(bmp280: Bmp280Peripheral) {
     let mut bmp280 = BMP280::new(bmp280).unwrap();
 
     bmp280.set_config(Config {

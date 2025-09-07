@@ -11,12 +11,12 @@ use crate::{model::sensor_device::SensorDevice, error_sending_to_system_status, 
 use crate::model::system_status::AltimeterSystemStatus;
 
 #[inline]
-pub async fn bmp280_task<
+pub async fn altimeter_task<
     S, M, Tx, 
     const DEPTH_STATUS: usize,
     const DEPTH_DATA: usize,
 > (
-    mut bmp280: S,
+    mut altimeter: S,
     latest_altitude_signal: &'static Signal<M, Length>,
     status_sender: Sender<'static, M, Result<AltimeterSystemStatus, usize>, DEPTH_STATUS>,
     sd_card_sender: Sender<'static, M, AltimeterMessage, DEPTH_DATA>,
@@ -39,7 +39,7 @@ where
             Timer::at(status_timeout),
         ).await {
             Either::First(()) => {
-                match bmp280.parse_new_message().await {
+                match altimeter.parse_new_message().await {
                     Ok(msg) => {
                         send_to_system_status!(status_sender, error_sending_status, AltimeterSystemStatus::MessageParsed);
 

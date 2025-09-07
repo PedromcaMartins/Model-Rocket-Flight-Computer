@@ -96,8 +96,8 @@ async fn main(spawner: Spawner) {
     let gps_status_channel = GPS_STATUS_CHANNEL.take();
     let sd_card_status_channel = SD_CARD_STATUS_CHANNEL.take();
 
-    spawner.must_spawn(bno055_task(bno055, imu_status_channel.sender(), imu_sd_card_channel.sender(), server.sender()));
-    spawner.must_spawn(bmp280_task(bmp280, latest_altitude_signal, altitude_status_channel.sender(), altimeter_sd_card_channel.sender(), server.sender()));
+    spawner.must_spawn(imu_task(bno055, imu_status_channel.sender(), imu_sd_card_channel.sender(), server.sender()));
+    spawner.must_spawn(altimeter_task(bmp280, latest_altitude_signal, altitude_status_channel.sender(), altimeter_sd_card_channel.sender(), server.sender()));
     spawner.must_spawn(gps_task(ublox_neo_7m, gps_status_channel.sender(), gps_sd_card_channel.sender(), server.sender()));
     spawner.must_spawn(sd_card_task(
         sd_card, 
@@ -123,7 +123,7 @@ async fn main(spawner: Spawner) {
 }
 
 #[embassy_executor::task]
-async fn bno055_task(
+async fn imu_task(
     bno055: Bno055Peripheral, 
     status_sender: channel::Sender<'static, EmbassySyncRawMutex, Result<ImuSystemStatus, usize>, IMU_STATUS_CHANNEL_DEPTH>,
     sd_card_sender: channel::Sender<'static, EmbassySyncRawMutex, ImuMessage, IMU_SD_CARD_CHANNEL_DEPTH>,
@@ -132,11 +132,11 @@ async fn bno055_task(
     let bno055 = Bno055::new(bno055);
     let bno055 = Bno055Device::init(bno055).await.unwrap();
 
-    flight_computer_lib::tasks::bno055_task(bno055, status_sender, sd_card_sender, postcard_sender).await
+    flight_computer_lib::tasks::imu_task(bno055, status_sender, sd_card_sender, postcard_sender).await
 }
 
 #[embassy_executor::task]
-async fn bmp280_task(
+async fn altimeter_task(
     bmp280: Bmp280Peripheral, 
     latest_altitude_signal: &'static Signal<EmbassySyncRawMutex, Length>,
     status_sender: channel::Sender<'static, EmbassySyncRawMutex, Result<AltimeterSystemStatus, usize>, ALTITUDE_STATUS_CHANNEL_DEPTH>,
@@ -146,7 +146,7 @@ async fn bmp280_task(
     let bmp280 = BMP280::new(bmp280).unwrap();
     let bmp280 = Bmp280Device::init(bmp280).unwrap();
 
-    flight_computer_lib::tasks::bmp280_task(bmp280, latest_altitude_signal, status_sender, sd_card_sender, postcard_sender).await
+    flight_computer_lib::tasks::altimeter_task(bmp280, latest_altitude_signal, status_sender, sd_card_sender, postcard_sender).await
 }
 
 #[embassy_executor::task]
