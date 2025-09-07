@@ -7,7 +7,7 @@ use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{AltimeterMessage, AltimeterTopic};
 use uom::si::f32::Length;
 
-use crate::{device::sensor::SensorDevice, error_sending_to_system_status, send_to_system_status};
+use crate::{model::sensor_device::SensorDevice, error_sending_to_system_status, send_to_system_status};
 use crate::model::system_status::AltimeterSystemStatus;
 
 #[inline]

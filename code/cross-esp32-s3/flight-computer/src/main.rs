@@ -16,7 +16,7 @@ use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, Board, SdCa
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::{self, Channel}, signal::Signal, watch::{self, Watch}};
-use flight_computer_lib::{device::{sd_card::SdCardDevice, sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}}, model::system_status::{AltimeterSystemStatus, ArmButtonSystemStatus, FlightState, GpsSystemStatus, ImuSystemStatus, SdCardSystemStatus}};
+use flight_computer_lib::{embedded_hal_device::{sd_card::SdCardDevice, sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}}, model::system_status::{AltimeterSystemStatus, ArmButtonSystemStatus, FlightState, GpsSystemStatus, ImuSystemStatus, SdCardSystemStatus}};
 use postcard_rpc::server::Sender as PostcardSender;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};

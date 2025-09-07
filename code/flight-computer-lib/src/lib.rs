@@ -9,4 +9,4 @@
 
 pub mod model;
 pub mod tasks;
-pub mod device;
+pub mod embedded_hal_device;

@@ -1,6 +1,3 @@
-pub mod gps;
-pub mod bno055;
-pub mod bmp280;
 
 #[allow(async_fn_in_trait)]
 pub trait SensorDevice {

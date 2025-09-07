@@ -6,7 +6,7 @@ use embassy_time::{Duration, Instant, Timer};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{GpsMessage, GpsTopic};
 
-use crate::{device::sensor::SensorDevice, error_sending_to_system_status, send_to_system_status};
+use crate::{model::sensor_device::SensorDevice, error_sending_to_system_status, send_to_system_status};
 use crate::model::system_status::GpsSystemStatus;
 
 #[inline]

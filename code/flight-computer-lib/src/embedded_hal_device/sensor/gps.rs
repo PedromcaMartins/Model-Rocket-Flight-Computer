@@ -4,7 +4,7 @@ use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
 use telemetry_messages::{FixTypeWraper, GpsMessage};
 use uom::si::{length::meter, quantities::{Length, Time}, time::{hour, minute, second}};
 
-use crate::device::sensor::SensorDevice;
+use crate::model::sensor_device::SensorDevice;
 
 #[defmt_or_log::maybe_derive_format]
 #[derive(thiserror::Error, Debug, PartialEq, Eq, Clone)]

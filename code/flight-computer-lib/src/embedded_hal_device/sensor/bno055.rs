@@ -6,7 +6,7 @@ use embedded_hal::i2c::{I2c, SevenBitAddress};
 use telemetry_messages::{nalgebra::{Quaternion, Vector3, Vector4}, EulerAngles, ImuMessage};
 use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, quantities::{Acceleration, Angle, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature}, thermodynamic_temperature::degree_celsius};
 
-use crate::device::sensor::SensorDevice;
+use crate::model::sensor_device::SensorDevice;
 
 pub struct Bno055Device<I, E>
 where
