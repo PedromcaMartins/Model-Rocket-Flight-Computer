@@ -10,10 +10,10 @@ members = [
 resolver = "2"
 
 [patch.crates-io]
-postcard-rpc     = { path = "../../postcard-rpc/source/postcard-rpc" }
-postcard-schema  = { path = "../../postcard/source/postcard-schema" }
-bmp280-ehal  = { path = "../../bmp280" }
-switch-hal  = { path = "../../switch-hal" }
+postcard-rpc     = { path = "../../postcard-rpc/source/postcard-rpc", version = "*" }
+postcard-schema  = { path = "../../postcard/source/postcard-schema", version = "*" }
+bmp280-ehal  = { path = "../../bmp280", version = "*" }
+switch-hal  = { path = "../../switch-hal", version = "*" }
 
 [profile.dev]
 debug = true

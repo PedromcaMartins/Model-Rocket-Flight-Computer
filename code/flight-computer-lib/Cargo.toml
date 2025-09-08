@@ -57,7 +57,7 @@ micromath = "2.1.0"
 thiserror = {version = "2.0.12", default-features = false }
 heapless = { version = "0.8.0", default-features = false }
 # fugit = "0.3.7"
-futures = { version = "0.3", default-features = false }
+futures = { version = "0.3", default-features = false, features = ["async-await"] }
 enum-map = "2.7.3"
 serde-json-core = { version = "0.6", features = ["custom-error-messages"] }
 

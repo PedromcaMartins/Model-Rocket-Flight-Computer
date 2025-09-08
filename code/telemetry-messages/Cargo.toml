@@ -13,7 +13,6 @@ nursery = "deny"
 unwrap_used = "deny"
 
 [dependencies]
-chrono = { version = "^0.4", default-features = false, features = ["serde"] }
 nmea = { version = "0.7.0", default-features = false, features = ["GGA", "serde"] }
 serde ={ version = "1.0", default-features = false, features = ["derive"] }
 uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "u64", "si", "serde"] }

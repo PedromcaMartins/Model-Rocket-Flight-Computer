@@ -2092,7 +2092,6 @@ dependencies = [
 name = "telemetry-messages"
 version = "0.0.0"
 dependencies = [
- "chrono",
  "nalgebra",
  "nmea",
  "postcard-rpc",

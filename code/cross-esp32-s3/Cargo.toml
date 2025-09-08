@@ -8,13 +8,13 @@ members = [
 resolver = "2"
 
 [patch.crates-io]
-telemetry-messages = { path = "../telemetry-messages" }
-flight-computer-lib = { path = "../flight-computer-lib" }
+telemetry-messages = { path = "../telemetry-messages", version = "*" }
+flight-computer-lib = { path = "../flight-computer-lib", version = "*" }
 
-postcard-rpc     = { path = "../../../postcard-rpc/source/postcard-rpc" }
-postcard-schema  = { path = "../../../postcard/source/postcard-schema" }
-bmp280-ehal  = { path = "../../../bmp280" }
-switch-hal  = { path = "../../../switch-hal" }
+postcard-rpc     = { path = "../../../postcard-rpc/source/postcard-rpc", version = "*" }
+postcard-schema  = { path = "../../../postcard/source/postcard-schema", version = "*" }
+bmp280-ehal  = { path = "../../../bmp280", version = "*" }
+switch-hal  = { path = "../../../switch-hal", version = "*" }
 
 esp-hal-smartled = { git = "https://github.com/esp-rs/esp-hal-community.git" }
 
