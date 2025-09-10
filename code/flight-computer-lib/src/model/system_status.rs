@@ -69,6 +69,7 @@ pub enum GpsSystemStatus {
 pub enum SdCardSystemStatus {
     FileSystemEvent(LogDataType, FileSystemEvent),
     FailedToSendChannel,
+    Other,
 }
 
 #[defmt_or_log_macros::maybe_derive_format]
