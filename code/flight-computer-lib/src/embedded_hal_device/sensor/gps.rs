@@ -1,6 +1,7 @@
 use chrono::Timelike;
 use embassy_time::Instant;
 use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
+use static_cell::ConstStaticCell;
 use telemetry_messages::{FixTypeWraper, GpsMessage};
 use uom::si::{length::meter, quantities::{Length, Time}, time::{hour, minute, second}};
 
@@ -30,7 +31,7 @@ where
     U: embedded_io_async::Read,
 {
     uart: U,
-    buf: [u8; SENTENCE_MAX_LEN],
+    buf: &'static mut [u8],
     nmea: Nmea,
 }
 
@@ -39,12 +40,15 @@ where
     U: embedded_io_async::Read,
 {
     pub fn init(uart: U) -> Result<Self, GpsError> {
+        static BUFFER: ConstStaticCell<[u8; SENTENCE_MAX_LEN]> = ConstStaticCell::new([0_u8; SENTENCE_MAX_LEN]);
+        let buf = BUFFER.take();
+
         let nmea = Nmea::create_for_navigation(&[SentenceType::GGA])
             .map_err(|_| GpsError::NmeaParserInit)?;
-    
+
         Ok(Self { 
             uart,
-            buf: [0; SENTENCE_MAX_LEN],
+            buf,
             nmea,
         })
     }
@@ -61,7 +65,7 @@ where
         self.buf.fill(0);
 
         let len = self.uart
-            .read(&mut self.buf)
+            .read(self.buf)
             .await
             .map_err(|_| GpsError::UartRead)?;
 
