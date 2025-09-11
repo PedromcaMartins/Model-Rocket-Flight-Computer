@@ -1,121 +1,151 @@
-use defmt_or_log::info;
+use core::marker::PhantomData;
+
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
+use embassy_time::Timer;
+use switch_hal::WaitSwitch;
 use uom::si::{f32::Length, length::meter};
+use defmt_or_log::{error, info};
 
-pub struct PreArmed<M>
-where
-    M: RawMutex + 'static,
-{
-    arm_button_pushed_signal: &'static Signal<M, ()>,
-}
-
-pub struct Armed<M>
-where
-    M: RawMutex + 'static,
-{
-    launchpad_altitude: Length,
-    latest_altitude_signal: &'static Signal<M, Length>,
-}
-
-pub struct RecoveryActivated<M>
-where
-    M: RawMutex + 'static,
-{
-    launchpad_altitude: Length,
-    latest_altitude_signal: &'static Signal<M, Length>,
-}
+pub struct PreArmed;
+pub struct Armed;
+pub struct RecoveryActivated;
 pub struct Touchdown;
 
-pub struct FiniteStateMachine<S: FlightState> {
-    flight_state: S,
+pub struct FiniteStateMachine<WS, M, S> 
+where
+    WS: WaitSwitch + 'static,
+    <WS as WaitSwitch>::Error: core::fmt::Debug,
+    M: RawMutex + 'static,
+    S: FlightState,
+{
+    arm_button: WS,
+    latest_altitude_signal: &'static Signal<M, Length>,
+    phantom_data: PhantomData<S>,
+
+    launchpad_altitude: Option<Length>,
+    recovery_activated_altitude: Option<Length>,
+    #[allow(dead_code)]
+    touchdown_altitude: Option<Length>,
 }
 
 pub trait FlightState {}
-impl<M: RawMutex> FlightState for PreArmed<M> {}
-impl<M: RawMutex> FlightState for Armed<M> {}
-impl<M: RawMutex> FlightState for RecoveryActivated<M> {}
+impl FlightState for PreArmed {}
+impl FlightState for Armed {}
+impl FlightState for RecoveryActivated {}
 impl FlightState for Touchdown {}
 
-impl<M: RawMutex> FiniteStateMachine<PreArmed<M>> {
-    pub const fn new(arm_button_pushed_signal: &'static Signal<M, ()>) -> Self {
+impl<WS, M> FiniteStateMachine<WS, M, PreArmed>
+where
+    WS: WaitSwitch + 'static,
+    <WS as WaitSwitch>::Error: core::fmt::Debug,
+    M: RawMutex + 'static
+{
+    pub const fn new(
+        arm_button: WS,
+        latest_altitude_signal: &'static Signal<M, Length>,
+    ) -> Self {
         Self {
-            flight_state: PreArmed {
-                arm_button_pushed_signal,
-            },
+            latest_altitude_signal,
+            arm_button,
+            phantom_data: PhantomData,
+
+            launchpad_altitude: None,
+            recovery_activated_altitude: None,
+            touchdown_altitude: None,
         }
     }
-}
 
-impl<M: RawMutex> FiniteStateMachine<PreArmed<M>>
-{
-    pub async fn wait_arm(self, latest_altitude_signal: &'static Signal<M, Length>) -> FiniteStateMachine<Armed<M>> {
-        self.flight_state.arm_button_pushed_signal.wait().await;
+    async fn wait_for_arm_button(&mut self) {
+        loop {
+            if self.arm_button.wait_active().await.is_ok() {
+                info!("Arm button pressed");
+                return;
+            }
+            error!("Arm button: Failed to wait for button press");
+            Timer::after_secs(1).await;
+        }
+    }
 
+    pub async fn wait_arm(mut self) -> FiniteStateMachine<WS, M, Armed> {
+        self.wait_for_arm_button().await;
         info!("Flight Computer Armed");
 
-        let launchpad_altitude = latest_altitude_signal.wait().await;
-
+        let launchpad_altitude = self.latest_altitude_signal.wait().await;
         info!("Launchpad Altitude: {} m", launchpad_altitude.get::<meter>());
 
         FiniteStateMachine {
-            flight_state: Armed {
-                launchpad_altitude,
-                latest_altitude_signal,
-            },
+            latest_altitude_signal: self.latest_altitude_signal,
+            arm_button: self.arm_button,
+            phantom_data: PhantomData,
+
+            launchpad_altitude: Some(launchpad_altitude),
+            recovery_activated_altitude: None,
+            touchdown_altitude: None,
         }
     }
 }
 
-impl<M: RawMutex> FiniteStateMachine<Armed<M>>
+impl<WS, M> FiniteStateMachine<WS, M, Armed>
+where
+    WS: WaitSwitch + 'static,
+    <WS as WaitSwitch>::Error: core::fmt::Debug,
+    M: RawMutex + 'static
 {
-    pub async fn wait_activate_recovery(self) -> FiniteStateMachine<RecoveryActivated<M>> {
-        use uom::si::length::meter;
-
+    pub async fn wait_activate_recovery(self) -> FiniteStateMachine<WS, M, RecoveryActivated> {
         loop {
-            let altitude = self.flight_state.latest_altitude_signal.wait().await;
-            let launchpad_altitude = self.flight_state.launchpad_altitude;
-            let altitude = altitude - launchpad_altitude;
+            let altitude = self.latest_altitude_signal.wait().await;
+            let launchpad_altitude = self.launchpad_altitude.expect("Launchpad altitude should be set in Armed state");
+            let altitude_above_launchpad = altitude - launchpad_altitude;
 
             let min_altitude_deployment = Length::new::<meter>(2.0);
 
-            if altitude > min_altitude_deployment {
-                info!("Apogee of {} m Reached!", altitude.get::<meter>());
-                break;
+            if altitude_above_launchpad > min_altitude_deployment {
+                info!("Apogee of {} m Reached!", altitude_above_launchpad.get::<meter>());
+                info!("Recovery Activated");
+
+                return FiniteStateMachine {
+                    latest_altitude_signal: self.latest_altitude_signal,
+                    arm_button: self.arm_button,
+                    phantom_data: PhantomData,
+
+                    launchpad_altitude: self.launchpad_altitude,
+                    recovery_activated_altitude: Some(altitude),
+                    touchdown_altitude: None,
+                }
             }
-        }
-
-        info!("Recovery Activated");
-
-        FiniteStateMachine {
-            flight_state: RecoveryActivated {
-                launchpad_altitude: self.flight_state.launchpad_altitude,
-                latest_altitude_signal: self.flight_state.latest_altitude_signal,
-            },
         }
     }
 }
 
-impl<M: RawMutex> FiniteStateMachine<RecoveryActivated<M>>
+impl<WS, M> FiniteStateMachine<WS, M, RecoveryActivated>
+where
+    WS: WaitSwitch + 'static,
+    <WS as WaitSwitch>::Error: core::fmt::Debug,
+    M: RawMutex + 'static
 {
-    pub async fn wait_touchdown(self) -> FiniteStateMachine<Touchdown> {
+    pub async fn wait_touchdown(self) -> FiniteStateMachine<WS, M, Touchdown> {
         use uom::si::length::meter;
 
         loop {
-            let altitude = self.flight_state.latest_altitude_signal.wait().await;
-            let launchpad_altitude = self.flight_state.launchpad_altitude;
-            let altitude = altitude - launchpad_altitude;
+            let altitude = self.latest_altitude_signal.wait().await;
+            let launchpad_altitude = self.launchpad_altitude.expect("Launchpad altitude should be set in Armed state");
+            let altitude_above_launchpad = altitude - launchpad_altitude;
 
-            let min_altitude_deployment = Length::new::<meter>(2.0);
+            let max_altitude_touchdown = Length::new::<meter>(2.0);
 
-            if altitude <= min_altitude_deployment {
-                break;
+            if altitude_above_launchpad <= max_altitude_touchdown {
+                info!("Touchdown!");
+
+                return FiniteStateMachine {
+                    latest_altitude_signal: self.latest_altitude_signal,
+                    arm_button: self.arm_button,
+                    phantom_data: PhantomData,
+
+                    launchpad_altitude: self.launchpad_altitude,
+                    recovery_activated_altitude: self.recovery_activated_altitude,
+                    touchdown_altitude: Some(altitude),
+                }
             }
-        }
-
-        info!("Touchdown!");
-
-        FiniteStateMachine {
-            flight_state: Touchdown,
         }
     }
 }

@@ -10,9 +10,6 @@ pub use altimeter::altimeter_task;
 mod gps;
 pub use gps::gps_task;
 
-mod arm_button;
-pub use arm_button::arm_button_task;
-
 mod sd_card;
 pub use sd_card::sd_card_task;
 
