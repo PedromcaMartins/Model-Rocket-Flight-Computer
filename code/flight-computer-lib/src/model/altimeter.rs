@@ -2,10 +2,8 @@ use uom::si::{length::meter, pressure::pascal, quantities::{Length, Pressure}};
 
 #[must_use]
 pub fn altitude_from_pressure(pressure: Pressure<f32>) -> Length<f32> {
-    #[allow(unused_imports)]
     use uom::num_traits::Float;
 
-    #[allow(clippy::cast_possible_truncation)]
     let pressure = pressure.get::<pascal>();
     let p0 = 101_325.0; // ISA sea level standard pressure in pascal
     let exponent = 0.190_284;

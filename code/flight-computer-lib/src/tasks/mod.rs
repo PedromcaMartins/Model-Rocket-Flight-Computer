@@ -1,7 +1,3 @@
-#![allow(clippy::unused_async)]
-#![allow(clippy::missing_panics_doc)]
-#![allow(clippy::unwrap_used)]
-
 mod finite_state_machine;
 pub use finite_state_machine::finite_state_machine_task;
 

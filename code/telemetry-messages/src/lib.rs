@@ -1,8 +1,6 @@
 #![no_std]
-#![allow(unused_imports)]
 #![deny(unsafe_code)]
-
-use core::ops::Deref;
+#![deny(unused_must_use)]
 
 use nalgebra::{Vector3, Quaternion};
 use nmea::sentences::FixType;

@@ -1,5 +1,3 @@
-
-#[allow(async_fn_in_trait)]
 pub trait SensorDevice {
     type DataMessage: core::fmt::Debug + telemetry_messages::Serialize;
     type DeviceError: core::fmt::Debug;

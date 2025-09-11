@@ -29,9 +29,8 @@ impl From<SubscribeError> for PostcardError<Infallible> {
 
 // ---
 
-#[allow(clippy::new_without_default)]
-impl PostcardClient {
-    pub fn new() -> Self {
+impl Default for PostcardClient {
+    fn default() -> Self {
         let client = HostClient::new_raw_nusb(
             |d| d.product_string() == Some("flight_computer"),
             ERROR_PATH,
@@ -43,7 +42,9 @@ impl PostcardClient {
             client,
         }
     }
+}
 
+impl PostcardClient {
     pub async fn wait_closed(&self) {
         self.client.wait_closed().await;
     }

@@ -61,6 +61,7 @@ where
     type DataMessage = GpsMessage;
     type DeviceError = GpsError;
 
+    #[allow(clippy::cast_possible_truncation)]
     async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
         self.buf.fill(0);
 
@@ -90,7 +91,6 @@ where
                 + Time::new::<second>(t.second().into())
         })?;
 
-        #[allow(clippy::cast_possible_truncation)]
         Ok(GpsMessage {
             latitude: self.nmea
                 .latitude()
@@ -109,7 +109,6 @@ where
                 .fix_type()
                 .map(FixTypeWraper::new)
                 .ok_or(GpsError::MissingFields)?,
-            #[allow(clippy::cast_possible_truncation)]
             num_of_fix_satellites: self.nmea
                 .fix_satellites()
                 .ok_or(GpsError::MissingFields)? as u8,
