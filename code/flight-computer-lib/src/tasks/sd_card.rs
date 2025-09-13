@@ -30,7 +30,8 @@ where
     O: OutputSwitch,
 {
     let mut log_filesystem = LogFileSystem::new(sd_card);
-    log_filesystem.create_unique_files();
+    let res = log_filesystem.create_unique_files();
+    info!("SD Card: Created unique log files: {:?}", res);
 
     let mut flush_files_ticker = Ticker::every(Duration::from_millis(500));
 

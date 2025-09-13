@@ -1,4 +1,4 @@
-use crate::model::filesystem::{FileSystem, FileSystemEvent};
+use crate::model::{filesystem::FileSystem, system_event::filesystem::{FileSystemError, FileSystemSuccess, FileSystemResult}};
 use defmt_or_log::{error, Debug2Format};
 use heapless::index_map::FnvIndexMap;
 use static_cell::ConstStaticCell;
@@ -28,59 +28,61 @@ where
         }
     }
 
-    pub fn create_unique_files(&mut self) -> FileSystemEvent {
+    pub fn create_unique_files(&mut self) -> FileSystemResult {
         for data_type in LogDataType::VALUES {
             let filename = data_type.to_filename();
             let file = match self.file_system.create_file(filename) {
                 Ok(file) => file,
                 Err(e) => {
                     error!("Failed to create file {}: {:?}", filename, Debug2Format(&e));
-                    return FileSystemEvent::Other;
+                    return Err(FileSystemError::FileCreationFailed(data_type));
                 },
             };
 
             match self.files.insert(data_type, file) {
                 Ok(None) => (),
                 Ok(Some(_)) => {
-                    error!("Existing file handle for {} already in the open files hash map", filename);
-                    return FileSystemEvent::Other;
+                    error!("Existing file handle for {} already in the new open files hash map", filename);
+                    return Err(FileSystemError::FileHandleAlreadyExists(data_type));
                 },
                 Err(_) => {
                     error!("Failed to store file handle for {}", filename);
-                    return FileSystemEvent::Other;
+                    return Err(FileSystemError::StoreFileHandleFailed(data_type));
                 }
             }
         }
-        FileSystemEvent::Other
+        Ok(FileSystemSuccess::UniqueFilesCreated)
     }
 
     /// Append a message to the appropriate file based on its type.
-    pub fn append_message<M: LogMessage>(&mut self, data: &M) -> FileSystemEvent {
+    pub fn append_message<M: LogMessage>(&mut self, data: &M) -> FileSystemResult {
+        let data_type = M::KIND;
+
         let Some(file) = self.files.get_mut(&M::KIND) else {
             error!("File for {:?} not opened", M::KIND);
-            return FileSystemEvent::Other;
+            return Err(FileSystemError::FileHandleNotFound(data_type));
         };
 
         let Ok(len) = serde_json_core::to_slice(&data, self.write_buffer) else {
             error!("Failed to serialize message of type {:?}", M::KIND);
-            return FileSystemEvent::FailedToSerializeMessage;
+            return Err(FileSystemError::FailedToSerializeMessage(data_type));
         };
 
         if let Err(err) = self.file_system.write_file(file, &self.write_buffer[..len]) {
             error!("Failed to append data: {:?}", Debug2Format(&err));
-            return FileSystemEvent::FailedToWriteMessage;
+            return Err(FileSystemError::FailedToWriteMessage(data_type));
         }
-        FileSystemEvent::Other
+        Ok(FileSystemSuccess::MessageAppended(M::KIND))
     }
 
     /// Flush all open files.
-    pub fn flush_all(&mut self) -> FileSystemEvent {
+    pub fn flush_all(&mut self) -> FileSystemResult {
         for (data_type, file) in &mut self.files {
             if let Err(err) = self.file_system.flush_file(file) {
                 error!("Failed to flush file for {:?}: {:?}", data_type, Debug2Format(&err));
-                return FileSystemEvent::FailedToFlushFile;
+                return Err(FileSystemError::FailedToFlushFile(*data_type));
             }
         }
-        FileSystemEvent::FileFlushed
+        Ok(FileSystemSuccess::FilesFlushed)
     }
 }

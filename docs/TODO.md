@@ -1,7 +1,7 @@
 # Flight Computer lib
 
 - [X] Remame quantities used in telemetry messages e.g. `pub type Altitude = Length`
-- [ ] Melhorar `FileSystemEvent`
+- [X] Melhorar `FileSystemEvent`
 - [ ] Deployment System
 - [ ] ApogeeDetector
 - [ ] Landing detector in FSM

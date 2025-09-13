@@ -1,18 +1,5 @@
 pub mod log_filesystem;
 
-#[defmt_or_log_macros::maybe_derive_format]
-#[derive(Debug, Clone, Copy)]
-pub enum FileSystemEvent {
-    MessageWritten,
-    FailedToSerializeMessage,
-    FailedToWriteMessage,
-    FileFlushed,
-    FailedToFlushFile,
-    FileReopened,
-    FailedToReopenFile,
-    Other,
-}
-
 pub type Filename = &'static str;
 
 pub trait FileSystem {
