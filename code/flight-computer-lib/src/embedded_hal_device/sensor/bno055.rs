@@ -4,7 +4,8 @@ use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
 use embassy_time::{Delay, Instant, Timer};
 use embedded_hal::i2c::{I2c, SevenBitAddress};
 use telemetry_messages::{nalgebra::{Quaternion, Vector3, Vector4}, EulerAngles, ImuMessage};
-use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, quantities::{Acceleration, Angle, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature}, thermodynamic_temperature::degree_celsius};
+use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, thermodynamic_temperature::degree_celsius};
+use telemetry_messages::{Acceleration, Angle, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature};
 
 use crate::model::sensor_device::SensorDevice;
 

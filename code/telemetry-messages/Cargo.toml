@@ -15,8 +15,9 @@ unwrap_used = "deny"
 [dependencies]
 nmea = { version = "0.7.0", default-features = false, features = ["GGA", "serde"] }
 serde ={ version = "1.0", default-features = false, features = ["derive"] }
-uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "u64", "si", "serde"] }
+uom = { version = "0.37.0", default-features = false, features = ["f32", "si", "serde"] }
 nalgebra = { version = "0.33.2", default-features = false, features = ["serde-serialize-no-std"] }
+defmt = { version = "1.0" }
 
 # postcard-schema = { version = "0.2", features = ["derive", "nalgebra-v0_33", "chrono-v0_4"] }
 postcard-schema = { version = "0.2", features = ["derive", "nalgebra-v0_33", "chrono-v0_4", "uom-v0_37"] }

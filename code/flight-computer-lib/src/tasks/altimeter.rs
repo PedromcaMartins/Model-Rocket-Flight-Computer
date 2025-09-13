@@ -4,8 +4,7 @@ use defmt_or_log::{info, error};
 use embassy_sync::{blocking_mutex::raw::RawMutex, channel::Sender, signal::Signal};
 use embassy_time::{Duration, Ticker};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
-use telemetry_messages::{AltimeterMessage, AltimeterTopic};
-use uom::si::f32::Length;
+use telemetry_messages::{AltimeterMessage, AltimeterTopic, Altitude};
 
 use crate::model::sensor_device::SensorDevice;
 
@@ -15,7 +14,7 @@ pub async fn altimeter_task<
     const DEPTH_DATA: usize,
 > (
     mut altimeter: S,
-    latest_altitude_signal: &'static Signal<M, Length>,
+    latest_altitude_signal: &'static Signal<M, Altitude>,
     sd_card_sender: Sender<'static, M, AltimeterMessage, DEPTH_DATA>,
     postcard_sender: PostcardSender<Tx>,
 ) -> !

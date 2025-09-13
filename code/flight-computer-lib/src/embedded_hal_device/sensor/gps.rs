@@ -2,8 +2,8 @@ use chrono::Timelike;
 use embassy_time::Instant;
 use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
 use static_cell::ConstStaticCell;
-use telemetry_messages::{FixTypeWraper, GpsMessage};
-use uom::si::{length::meter, quantities::{Length, Time}, time::{hour, minute, second}};
+use telemetry_messages::{FixTypeWrapper, GpsCoordinates, GpsMessage, Timestamp, Altitude};
+use uom::si::length::meter;
 
 use crate::model::sensor_device::SensorDevice;
 
@@ -86,32 +86,37 @@ where
         }
 
         let fix_time = self.nmea.fix_time.ok_or(GpsError::MissingFields).map(|t| {
-            Time::new::<hour>(t.hour().into())
-                + Time::new::<minute>(t.minute().into())
-                + Time::new::<second>(t.second().into())
+            Timestamp {
+                hour: t.hour() as u8,
+                minute: t.minute() as u8,
+                second: t.second() as u8,
+            }
         })?;
 
         Ok(GpsMessage {
-            latitude: self.nmea
-                .latitude()
-                .map(|l| l as f32)
-                .ok_or(GpsError::MissingFields)?,
-            longitude: self.nmea
-                .longitude()
-                .map(|l| l as f32)
-                .ok_or(GpsError::MissingFields)?,
+            coordinates: GpsCoordinates {
+                latitude: self.nmea
+                    .latitude()
+                    .map(|l| l as f32)
+                    .ok_or(GpsError::MissingFields)?,
+                longitude: self.nmea
+                    .longitude()
+                    .map(|l| l as f32)
+                    .ok_or(GpsError::MissingFields)?,
+            },
             altitude: self.nmea
                 .altitude()
-                .map(Length::new::<meter>)
+                .map(Altitude::new::<meter>)
                 .ok_or(GpsError::MissingFields)?,
             fix_time,
             fix_type: self.nmea
                 .fix_type()
-                .map(FixTypeWraper::new)
+                .map(FixTypeWrapper::new)
                 .ok_or(GpsError::MissingFields)?,
             num_of_fix_satellites: self.nmea
                 .fix_satellites()
-                .ok_or(GpsError::MissingFields)? as u8,
+                .ok_or(GpsError::MissingFields)?
+                as u8,
             timestamp: Instant::now().as_micros(),
         })
     }

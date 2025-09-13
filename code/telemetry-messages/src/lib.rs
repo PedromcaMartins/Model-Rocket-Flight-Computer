@@ -2,17 +2,24 @@
 #![deny(unsafe_code)]
 #![deny(unused_must_use)]
 
-use nalgebra::{Vector3, Quaternion};
-use nmea::sentences::FixType;
-use uom::si::quantities::{Acceleration, Angle, AngularVelocity, Length, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Time};
+use postcard_schema::{Schema, schema};
+use postcard_rpc::{endpoints, topics, TopicDirection};
+use defmt::Format;
 
 pub use nalgebra;
 pub use nmea;
 pub use uom;
 pub use serde::{Deserialize, Serialize};
+pub use nalgebra::Vector3;
+pub use uom::si::f32::{Acceleration, Angle, AngularVelocity, Length, MagneticFluxDensity, Pressure, ThermodynamicTemperature};
 
-use postcard_schema::{Schema, schema};
-use postcard_rpc::{endpoints, topics, TopicDirection};
+mod wrapper_types;
+pub use wrapper_types::*;
+
+mod log_data_type;
+pub use log_data_type::*;
+
+/* ------------------- Postcard RPC Endpoint Configuration ------------------ */
 
 endpoints! {
     list = ENDPOINT_LIST;
@@ -39,133 +46,113 @@ topics! {
     | ImuTopic                  | ImuMessage        | "imu/data"        |                               |
 }
 
+/* ------------------------------ Type Aliases ------------------------------ */
+
+pub type Altitude = Length;
+pub type Quaternion = nalgebra::Quaternion<f32>;
+
+/* ------------------------------ Flight State ------------------------------ */
+
+#[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, Format, PartialEq, Eq)]
+pub enum FlightState {
+    PreArmed,
+    Armed,
+    RecoveryActivated,
+    Touchdown,
+}
+
+/* ---------------------------- Altimeter Message --------------------------- */
+
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct AltimeterMessage {
     /// Pressure in Pascal.
-    pub pressure: Pressure<f32>,
+    pub pressure: Pressure,
     /// Altitude in meters.
-    pub altitude: Length<f32>,
+    pub altitude: Altitude,
     /// Temperature in Celsius degrees.
-    pub temperature: ThermodynamicTemperature<f32>,
+    pub temperature: ThermodynamicTemperature,
     /// Timestamp in microseconds.
     pub timestamp: u64,
+}
+
+impl LogMessage for AltimeterMessage {
+    const KIND: LogDataType = LogDataType::Altimeter;
+}
+
+/* ------------------------------- Gps Message ------------------------------ */
+
+#[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Timestamp {
+    pub hour:   u8,
+    pub minute: u8,
+    pub second: u8,
+}
+
+#[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, PartialEq)]
+pub struct GpsCoordinates {
+    /// Latitude in degrees.
+    pub latitude: f32,
+    /// Longitude in degrees.
+    pub longitude: f32,
 }
 
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct GpsMessage {
     /// Timestamp
-    pub fix_time: Time<u64>,
+    pub fix_time: Timestamp,
     /// Type of GPS Fix
-    pub fix_type: FixTypeWraper,
-    /// Latitude in degrees.
-    pub latitude: f32,
-    /// Longitude in degrees.
-    pub longitude: f32,
+    pub fix_type: FixTypeWrapper,
+    /// Gps Coordinates
+    pub coordinates: GpsCoordinates,
     /// MSL Altitude in meters
-    pub altitude: Length<f32>,
+    pub altitude: Altitude,
     /// Number of satellites used for fix.
     pub num_of_fix_satellites: u8,
     /// Timestamp in microseconds.
     pub timestamp: u64,
 }
 
-#[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq, Eq)]
-pub struct EulerAngles<T> {
-    pub roll:  T,
-    pub pitch: T,
-    pub yaw:   T,
+impl LogMessage for GpsMessage {
+    const KIND: LogDataType = LogDataType::Gps;
+}
+
+/* ------------------------------- Imu Message ------------------------------ */
+
+#[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
+pub struct EulerAngles {
+    pub roll:  Angle,
+    pub pitch: Angle,
+    pub yaw:   Angle,
 }
 
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct ImuMessage {
     /// Euler angles representation of heading in degrees.
     /// Euler angles is represented as (`roll`, `pitch`, `yaw/heading`).
-    pub euler_angles: EulerAngles<Angle<f32>>,
+    pub euler_angles: EulerAngles,
     /// Standard quaternion represented by the scalar and vector parts. Corresponds to a right-handed rotation matrix.
     /// Quaternion is represented as (x, y, z, s).
     ///
     /// where:
     /// x, y, z: Vector part of a quaternion;
     /// s: Scalar part of a quaternion.
-    pub quaternion: Quaternion<f32>,
+    pub quaternion: Quaternion,
     /// Linear acceleration vector in m/s^2 units.
-    pub linear_acceleration: Vector3<Acceleration<f32>>,
+    pub linear_acceleration: Vector3<Acceleration>,
     /// Gravity vector in m/s^2 units.
-    pub gravity: Vector3<Acceleration<f32>>,
+    pub gravity: Vector3<Acceleration>,
     /// Acceleration vector in m/s^2 units.
-    pub acceleration: Vector3<Acceleration<f32>>,
+    pub acceleration: Vector3<Acceleration>,
     /// Gyroscope vector in deg/s units.
-    pub gyro: Vector3<AngularVelocity<f32>>,
+    pub gyro: Vector3<AngularVelocity>,
     /// Magnetometer vector in uT units.
-    pub mag: Vector3<MagneticFluxDensity<f32>>,
+    pub mag: Vector3<MagneticFluxDensity>,
     /// Temperature of the chip in Celsius degrees.
-    pub temperature: ThermodynamicTemperature<f32>,
+    pub temperature: ThermodynamicTemperature,
     /// Timestamp in microseconds.
     pub timestamp: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct FixTypeWraper(FixType);
-
-impl Schema for FixTypeWraper {
-    const SCHEMA: &'static schema::NamedType = &schema::NamedType {
-        name: "FixType",
-        ty: &schema::DataModelType::Enum(&[
-            &schema::NamedVariant {
-                name: "Invalid",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-            &schema::NamedVariant {
-                name: "Gps",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-            &schema::NamedVariant {
-                name: "DGps",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-            &schema::NamedVariant {
-                name: "Pps",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-            &schema::NamedVariant {
-                name: "Rtk",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-            &schema::NamedVariant {
-                name: "FloatRtk",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-            &schema::NamedVariant {
-                name: "Estimated",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-            &schema::NamedVariant {
-                name: "Manual",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-            &schema::NamedVariant {
-                name: "Simulation",
-                ty: &schema::DataModelVariant::UnitVariant,
-            },
-        ]),
-    };
-}
-
-impl FixTypeWraper {
-    #[must_use]
-    pub const fn new(fix_type: FixType) -> Self {
-        Self(fix_type)
-    }
-
-    #[must_use]
-    pub const fn into_inner(self) -> FixType {
-        self.0
-    }
-}
-
-#[test]
-fn fix_type_wrapping() {
-    let x = FixType::DGps;
-    let y = FixTypeWraper::new(x.clone());
-    assert_eq!(x, y.into_inner());
+impl LogMessage for ImuMessage {
+    const KIND: LogDataType = LogDataType::Imu;
 }

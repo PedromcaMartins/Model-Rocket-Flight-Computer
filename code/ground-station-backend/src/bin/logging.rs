@@ -5,7 +5,7 @@ use ground_station_backend::PostcardClient;
 
 #[tokio::main]
 pub async fn main() {
-    let client = PostcardClient::new();
+    let client = PostcardClient::default();
 
     let mut subscription_altimeter = client.subscription_altimeter().await
         .expect("Failed to subscribe to altimeter topic");
@@ -22,7 +22,7 @@ pub async fn main() {
         }
         _ = async {
             let mut ticker = interval(Duration::from_millis(250));
-        
+
             for i in 0..10 {
                 ticker.tick().await;
                 print!("Pinging with {i}... ");

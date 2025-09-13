@@ -3,8 +3,8 @@ use core::fmt::Debug;
 use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP280};
 use embassy_time::Instant;
 use embedded_hal::i2c::{I2c, SevenBitAddress};
-use telemetry_messages::AltimeterMessage;
-use uom::si::{pressure::pascal, quantities::{Pressure, ThermodynamicTemperature}, thermodynamic_temperature::degree_celsius};
+use telemetry_messages::{AltimeterMessage, Pressure, ThermodynamicTemperature};
+use uom::si::{pressure::pascal, thermodynamic_temperature::degree_celsius};
 
 use crate::{model::sensor_device::SensorDevice, model::altimeter::altitude_from_pressure};
 

@@ -1,7 +1,9 @@
-use uom::si::{length::meter, pressure::pascal, quantities::{Length, Pressure}};
+use uom::si::{length::meter, pressure::pascal};
+use telemetry_messages::{Altitude, Pressure};
 
 #[must_use]
-pub fn altitude_from_pressure(pressure: Pressure<f32>) -> Length<f32> {
+pub fn altitude_from_pressure(pressure: Pressure) -> Altitude {
+    #[allow(unused_imports)]
     use uom::num_traits::Float;
 
     let pressure = pressure.get::<pascal>();
@@ -12,7 +14,7 @@ pub fn altitude_from_pressure(pressure: Pressure<f32>) -> Length<f32> {
     let pressure_ratio = pressure / p0;
     let altitude_m = scale * (1.0 - pressure_ratio.powf(exponent));
 
-    Length::new::<meter>(altitude_m)
+    Altitude::new::<meter>(altitude_m)
 }
 
 #[test]

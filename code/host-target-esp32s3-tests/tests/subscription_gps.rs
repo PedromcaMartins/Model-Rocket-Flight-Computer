@@ -9,7 +9,7 @@ use ground_station_backend::PostcardClient;
 #[fixture]
 #[once]
 fn client() -> PostcardClient {
-    PostcardClient::new()
+    PostcardClient::default()
 }
 
 #[fixture]

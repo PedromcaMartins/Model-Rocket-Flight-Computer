@@ -1,14 +1,14 @@
 use core::fmt::Debug;
 
 use embedded_sdmmc::{Mode, RawDirectory, RawFile, VolumeManager};
-use enum_map::Enum;
+use telemetry_messages::LogDataType;
 
-use crate::model::filesystem::{FileSystem, Filename, LogDataType};
+use crate::model::filesystem::{FileSystem, Filename};
 
 pub struct DummyTimeSource;
 impl embedded_sdmmc::TimeSource for DummyTimeSource {
     fn get_timestamp(&self) -> embedded_sdmmc::Timestamp {
-        embedded_sdmmc::Timestamp::from_calendar(2025, 1, 1, 1, 1, 1).expect("dummy time source uses valid timestamp")
+        embedded_sdmmc::Timestamp::from_calendar(2025, 1, 1, 1, 1, 1).expect("dummy time source uses static but valid timestamp")
     }
 }
 
@@ -50,7 +50,7 @@ impl<D: embedded_sdmmc::BlockDevice> FileSystem for SdCardFatFS<D> {
         match self.volume_manager.find_directory_entry(self.raw_root_dir, filename) {
             Ok(_) => Ok(true),
             Err(embedded_sdmmc::Error::NotFound) => Ok(false),
-            Err(e) => Err(SdCardError::FileSystem(e)),
+            Err(e) => Err(e.into()),
         }
     }
 

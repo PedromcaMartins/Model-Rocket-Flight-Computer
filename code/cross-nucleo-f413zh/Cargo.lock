@@ -1275,6 +1275,7 @@ dependencies = [
 name = "telemetry-messages"
 version = "0.0.0"
 dependencies = [
+ "defmt 1.0.1",
  "nalgebra",
  "nmea",
  "postcard-rpc",

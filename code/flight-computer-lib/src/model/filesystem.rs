@@ -1,50 +1,7 @@
-use enum_map::Enum;
-
 pub mod log_filesystem;
 
 #[defmt_or_log_macros::maybe_derive_format]
-#[derive(enum_map::Enum, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum LogDataType {
-    Altimeter,
-    Gps,
-    Imu,
-}
-
-impl LogDataType {
-    pub const VALUES: [Self; Self::LENGTH] = [
-        Self::Altimeter,
-        Self::Gps,
-        Self::Imu,
-    ];
-
-    #[must_use]
-    pub const fn to_filename(&self) -> &'static str {
-        match self {
-            Self::Altimeter => "ALTIM.LOG",
-            Self::Gps => "GPS.LOG",
-            Self::Imu => "IMU.LOG",
-        }
-    }
-}
-
-pub trait LogMessage: telemetry_messages::Serialize {
-    const KIND: LogDataType;
-}
-
-impl LogMessage for telemetry_messages::AltimeterMessage {
-    const KIND: LogDataType = LogDataType::Altimeter;
-}
-
-impl LogMessage for telemetry_messages::GpsMessage {
-    const KIND: LogDataType = LogDataType::Gps;
-}
-
-impl LogMessage for telemetry_messages::ImuMessage {
-    const KIND: LogDataType = LogDataType::Imu;
-}
-
-#[defmt_or_log_macros::maybe_derive_format]
-#[derive(enum_map::Enum, Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum FileSystemEvent {
     MessageWritten,
     FailedToSerializeMessage,

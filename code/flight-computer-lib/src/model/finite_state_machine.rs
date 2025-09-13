@@ -3,7 +3,8 @@ use core::marker::PhantomData;
 use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
 use embassy_time::Timer;
 use switch_hal::WaitSwitch;
-use uom::si::{f32::Length, length::meter};
+use telemetry_messages::Altitude;
+use uom::si::length::meter;
 use defmt_or_log::{error, info};
 
 pub struct PreArmed;
@@ -11,7 +12,7 @@ pub struct Armed;
 pub struct RecoveryActivated;
 pub struct Touchdown;
 
-pub struct FiniteStateMachine<WS, M, S> 
+pub struct FiniteStateMachine<WS, M, S>
 where
     WS: WaitSwitch + 'static,
     <WS as WaitSwitch>::Error: core::fmt::Debug,
@@ -19,13 +20,13 @@ where
     S: FlightState,
 {
     arm_button: WS,
-    latest_altitude_signal: &'static Signal<M, Length>,
+    latest_altitude_signal: &'static Signal<M, Altitude>,
     phantom_data: PhantomData<S>,
 
-    launchpad_altitude: Option<Length>,
-    recovery_activated_altitude: Option<Length>,
+    launchpad_altitude: Option<Altitude>,
+    recovery_activated_altitude: Option<Altitude>,
     #[allow(dead_code)]
-    touchdown_altitude: Option<Length>,
+    touchdown_altitude: Option<Altitude>,
 }
 
 pub trait FlightState {}
@@ -42,7 +43,7 @@ where
 {
     pub const fn new(
         arm_button: WS,
-        latest_altitude_signal: &'static Signal<M, Length>,
+        latest_altitude_signal: &'static Signal<M, Altitude>,
     ) -> Self {
         Self {
             latest_altitude_signal,
@@ -97,7 +98,7 @@ where
             let launchpad_altitude = self.launchpad_altitude.expect("Launchpad altitude should be set in Armed state");
             let altitude_above_launchpad = altitude - launchpad_altitude;
 
-            let min_altitude_deployment = Length::new::<meter>(2.0);
+            let min_altitude_deployment = Altitude::new::<meter>(2.0);
 
             if altitude_above_launchpad > min_altitude_deployment {
                 info!("Apogee of {} m Reached!", altitude_above_launchpad.get::<meter>());
@@ -131,7 +132,7 @@ where
             let launchpad_altitude = self.launchpad_altitude.expect("Launchpad altitude should be set in Armed state");
             let altitude_above_launchpad = altitude - launchpad_altitude;
 
-            let max_altitude_touchdown = Length::new::<meter>(2.0);
+            let max_altitude_touchdown = Altitude::new::<meter>(2.0);
 
             if altitude_above_launchpad <= max_altitude_touchdown {
                 info!("Touchdown!");

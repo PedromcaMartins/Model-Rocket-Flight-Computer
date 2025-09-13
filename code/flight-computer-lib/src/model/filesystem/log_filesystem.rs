@@ -1,14 +1,15 @@
-use crate::model::filesystem::{FileSystem, FileSystemEvent, LogDataType, LogMessage};
-use enum_map::Enum;
-use defmt_or_log::error;
+use crate::model::filesystem::{FileSystem, FileSystemEvent};
+use defmt_or_log::{error, Debug2Format};
+use heapless::index_map::FnvIndexMap;
 use static_cell::ConstStaticCell;
+use telemetry_messages::{LogDataType, LogMessage};
 
 pub struct LogFileSystem<FS, FH>
 where
     FS: FileSystem<File = FH>,
 {
     file_system: FS,
-    files: heapless::FnvIndexMap<LogDataType, FH, { LogDataType::LENGTH }>,
+    files: FnvIndexMap<LogDataType, FH, { LogDataType::LENGTH }>,
     write_buffer: &'static mut [u8],
 }
 
@@ -22,33 +23,32 @@ where
 
         Self {
             file_system,
-            files: heapless::FnvIndexMap::new(),
+            files: FnvIndexMap::new(),
             write_buffer: WRITE_BUFFER.take(),
         }
     }
 
-    /// Change directory to unique id folder.
     pub fn create_unique_files(&mut self) -> FileSystemEvent {
         for data_type in LogDataType::VALUES {
             let filename = data_type.to_filename();
-            match self.file_system.create_file(filename) {
-                Ok(file) => { 
-                    match self.files.insert(data_type, file) {
-                        Ok(None) => (),
-                        Ok(Some(_)) => {
-                            error!("Existing file handle for {} already in the open files hash map", filename);
-                            return FileSystemEvent::Other;
-                        }, 
-                        Err(_) => {
-                            error!("Failed to store file handle for {}", filename);
-                            return FileSystemEvent::Other;
-                        }
-                    }
-                },
+            let file = match self.file_system.create_file(filename) {
+                Ok(file) => file,
                 Err(e) => {
-                    error!("Failed to create file {}: {:?}", filename, e);
+                    error!("Failed to create file {}: {:?}", filename, Debug2Format(&e));
                     return FileSystemEvent::Other;
                 },
+            };
+
+            match self.files.insert(data_type, file) {
+                Ok(None) => (),
+                Ok(Some(_)) => {
+                    error!("Existing file handle for {} already in the open files hash map", filename);
+                    return FileSystemEvent::Other;
+                },
+                Err(_) => {
+                    error!("Failed to store file handle for {}", filename);
+                    return FileSystemEvent::Other;
+                }
             }
         }
         FileSystemEvent::Other
@@ -67,7 +67,7 @@ where
         };
 
         if let Err(err) = self.file_system.write_file(file, &self.write_buffer[..len]) {
-            error!("Failed to append data: {:?}", err);
+            error!("Failed to append data: {:?}", Debug2Format(&err));
             return FileSystemEvent::FailedToWriteMessage;
         }
         FileSystemEvent::Other
@@ -77,7 +77,7 @@ where
     pub fn flush_all(&mut self) -> FileSystemEvent {
         for (data_type, file) in &mut self.files {
             if let Err(err) = self.file_system.flush_file(file) {
-                error!("Failed to flush file for {:?}: {:?}", data_type, err);
+                error!("Failed to flush file for {:?}: {:?}", data_type, Debug2Format(&err));
                 return FileSystemEvent::FailedToFlushFile;
             }
         }
