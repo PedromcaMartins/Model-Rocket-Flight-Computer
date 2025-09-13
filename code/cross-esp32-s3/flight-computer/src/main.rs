@@ -11,12 +11,12 @@
 mod postcard_server;
 
 use crate::{postcard_server::{init_postcard_server, server_task, AppTx}};
-use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, Board, SdCardDetectPeripheral, SdCardInsertedLedPeripheral, SdCardPeripheral, UbloxNeo7mPeripheral};
+use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, Board, DeploymentPeripheral, SdCardDetectPeripheral, SdCardInsertedLedPeripheral, SdCardPeripheral, UbloxNeo7mPeripheral};
 
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::{self, Channel}, signal::Signal, watch::{self, Watch}};
-use flight_computer_lib::embedded_hal_device::{sd_card::SdCardFatFS, sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}};
+use flight_computer_lib::embedded_hal_device::{deployment_switch::DeploymentSwitch, sd_card::SdCardFatFS, sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}};
 use postcard_rpc::server::Sender as PostcardSender;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, Altitude, FlightState, GpsMessage, ImuMessage};
@@ -59,6 +59,7 @@ async fn main(spawner: Spawner) {
         postcard_server_usb_driver, 
         arm_button,
         rgb_led: _,
+        deployment,
     } = Board::init();
 
     let server = init_postcard_server(spawner, postcard_server_usb_driver).await;
@@ -82,7 +83,7 @@ async fn main(spawner: Spawner) {
         gps_sd_card_channel.receiver(), 
         imu_sd_card_channel.receiver()
     ));
-    spawner.must_spawn(finite_state_machine_task(arm_button, latest_altitude_signal, flight_state_watch.sender()));
+    spawner.must_spawn(finite_state_machine_task(arm_button, deployment, latest_altitude_signal, flight_state_watch.sender()));
 
     spawner.must_spawn(server_task(server));
 }
@@ -126,10 +127,13 @@ async fn gps_task(
 #[embassy_executor::task]
 async fn finite_state_machine_task(
     arm_button: ArmButtonPeripheral,
+    deployment: DeploymentPeripheral,
     latest_altitude_signal: &'static Signal<EmbassySyncRawMutex, Altitude>,
     flight_state_sender: watch::Sender<'static, EmbassySyncRawMutex, FlightState, FLIGHT_STATE_WATCH_CONSUMERS>,
 ) {
-    flight_computer_lib::tasks::finite_state_machine_task(arm_button, latest_altitude_signal, flight_state_sender).await
+    let deployment = DeploymentSwitch::new(deployment);
+
+    flight_computer_lib::tasks::finite_state_machine_task(arm_button, deployment, latest_altitude_signal, flight_state_sender).await
 }
 
 #[embassy_executor::task]

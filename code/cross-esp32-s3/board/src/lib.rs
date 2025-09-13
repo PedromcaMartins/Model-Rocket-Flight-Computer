@@ -23,6 +23,7 @@ mod types {
     pub type PostcardServerUsbDriver = Driver<'static>;
     pub type ArmButtonPeripheral = Switch<Input<'static>, ActiveHigh>;
     pub type RGBLedPeripheral = SmartLedsAdapterAsync<esp_hal::rmt::ConstChannelAccess<esp_hal::rmt::Tx, 0>, 25>;
+    pub type DeploymentPeripheral = Switch<Output<'static>, ActiveHigh>;
 }
 use defmt::{info, error};
 use embedded_hal_bus::spi::ExclusiveDevice;
@@ -46,6 +47,7 @@ pub struct Board {
     pub postcard_server_usb_driver: PostcardServerUsbDriver,
     pub arm_button: ArmButtonPeripheral,
     pub rgb_led: RGBLedPeripheral,
+    pub deployment: DeploymentPeripheral,
 }
 
 impl Board {
@@ -114,6 +116,7 @@ impl Board {
             ),
             arm_button: Input::new(p.GPIO21, gpio::InputConfig::default()).into_active_high_switch(),
             rgb_led: SmartLedsAdapterAsync::new(rmt.channel0, p.GPIO48, rmt_buffer),
+            deployment: Output::new(p.GPIO39, gpio::Level::Low, gpio::OutputConfig::default()).into_active_high_switch(),
         }
     }
 }

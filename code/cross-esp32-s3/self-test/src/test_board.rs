@@ -31,6 +31,7 @@ async fn main(_spawner: Spawner) {
         postcard_server_usb_driver: _, 
         arm_button,
         rgb_led,
+        deployment: _,
     } = Board::init();
 
 
