@@ -7,7 +7,9 @@ use telemetry_messages::Altitude;
 use uom::si::length::meter;
 use defmt_or_log::{error, info, Debug2Format};
 
-use crate::model::deployment_system::DeploymentSystem;
+use crate::{config::ApogeeDetectorConfig, model::{deployment_system::DeploymentSystem, finite_state_machine::apogee_detection::ApogeeDetector}};
+
+mod apogee_detector;
 
 pub struct PreArmed;
 pub struct Armed;
@@ -27,10 +29,9 @@ where
     latest_altitude_signal: &'static Signal<M, Altitude>,
     phantom_data: PhantomData<S>,
 
+    apogee_detector_config: ApogeeDetectorConfig,
+
     launchpad_altitude: Option<Altitude>,
-    recovery_activated_altitude: Option<Altitude>,
-    #[allow(dead_code)]
-    touchdown_altitude: Option<Altitude>,
 }
 
 pub trait FlightState {}
@@ -50,6 +51,7 @@ where
         arm_button: WS,
         deployment_system: D,
         latest_altitude_signal: &'static Signal<M, Altitude>,
+        apogee_detector_config: ApogeeDetectorConfig,
     ) -> Self {
         Self {
             arm_button,
@@ -57,9 +59,9 @@ where
             latest_altitude_signal,
             phantom_data: PhantomData,
 
+            apogee_detector_config,
+
             launchpad_altitude: None,
-            recovery_activated_altitude: None,
-            touchdown_altitude: None,
         }
     }
 
@@ -87,9 +89,9 @@ where
             latest_altitude_signal: self.latest_altitude_signal,
             phantom_data: PhantomData,
 
+            apogee_detector_config: self.apogee_detector_config,
+
             launchpad_altitude: Some(launchpad_altitude),
-            recovery_activated_altitude: None,
-            touchdown_altitude: None,
         }
     }
 }
@@ -102,40 +104,38 @@ where
     M: RawMutex + 'static
 {
     pub async fn wait_activate_recovery(mut self) -> FiniteStateMachine<WS, D, M, RecoveryActivated> {
+        let altitude_above_launchpad = ApogeeDetector::new(
+            self.latest_altitude_signal,
+            self.launchpad_altitude.expect("Launchpad altitude should have been set in Armed state"),
+            self.apogee_detector_config,
+        ).await
+        .await_apogee()
+        .await;
+
+        info!("Apogee of {} m Reached!", altitude_above_launchpad.get::<meter>());
+
         loop {
-            let altitude = self.latest_altitude_signal.wait().await;
-            let launchpad_altitude = self.launchpad_altitude.expect("Launchpad altitude should be set in Armed state");
-            let altitude_above_launchpad = altitude - launchpad_altitude;
-
-            let min_altitude_deployment = Altitude::new::<meter>(2.0);
-
-            if altitude_above_launchpad > min_altitude_deployment {
-                info!("Apogee of {} m Reached!", altitude_above_launchpad.get::<meter>());
-
-                loop {
-                    match self.deployment_system.deploy() {
-                        Ok(()) => {
-                            info!("Deployment system activated");
-                            break;
-                        },
-                        Err(e) => {
-                            error!("Deployment system activation failed: {:?}", Debug2Format(&e));
-                            Timer::after_millis(100).await;
-                        }
-                    }
-                }
-
-                return FiniteStateMachine {
-                    arm_button: self.arm_button,
-                    deployment_system: self.deployment_system,
-                    latest_altitude_signal: self.latest_altitude_signal,
-                    phantom_data: PhantomData,
-
-                    launchpad_altitude: self.launchpad_altitude,
-                    recovery_activated_altitude: Some(altitude),
-                    touchdown_altitude: None,
+            match self.deployment_system.deploy() {
+                Ok(()) => {
+                    info!("Deployment system activated");
+                    break;
+                },
+                Err(e) => {
+                    error!("Deployment system activation failed: {:?}", Debug2Format(&e));
+                    Timer::after_millis(100).await;
                 }
             }
+        }
+
+        FiniteStateMachine {
+            arm_button: self.arm_button,
+            deployment_system: self.deployment_system,
+            latest_altitude_signal: self.latest_altitude_signal,
+            phantom_data: PhantomData,
+
+            apogee_detector_config: self.apogee_detector_config,
+
+            launchpad_altitude: self.launchpad_altitude,
         }
     }
 }
@@ -166,9 +166,9 @@ where
                     latest_altitude_signal: self.latest_altitude_signal,
                     phantom_data: PhantomData,
 
+                    apogee_detector_config: self.apogee_detector_config,
+
                     launchpad_altitude: self.launchpad_altitude,
-                    recovery_activated_altitude: self.recovery_activated_altitude,
-                    touchdown_altitude: Some(altitude),
                 }
             }
         }

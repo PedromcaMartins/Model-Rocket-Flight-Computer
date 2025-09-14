@@ -11,7 +11,7 @@ pub use nmea;
 pub use uom;
 pub use serde::{Deserialize, Serialize};
 pub use nalgebra::Vector3;
-pub use uom::si::f32::{Acceleration, Angle, AngularVelocity, Length, MagneticFluxDensity, Pressure, ThermodynamicTemperature};
+pub use uom::si::f32::{Acceleration, Angle, AngularVelocity, Length, MagneticFluxDensity, Pressure, Time, ThermodynamicTemperature, Velocity};
 
 mod wrapper_types;
 pub use wrapper_types::*;
