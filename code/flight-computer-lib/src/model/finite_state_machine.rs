@@ -7,9 +7,10 @@ use telemetry_messages::Altitude;
 use uom::si::length::meter;
 use defmt_or_log::{error, info, Debug2Format};
 
-use crate::{config::ApogeeDetectorConfig, model::{deployment_system::DeploymentSystem, finite_state_machine::apogee_detection::ApogeeDetector}};
+use crate::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, model::{deployment_system::DeploymentSystem, finite_state_machine::{apogee_detector::ApogeeDetector, touchdown_detector::TouchdownDetector}}};
 
 mod apogee_detector;
+mod touchdown_detector;
 
 pub struct PreArmed;
 pub struct Armed;
@@ -30,6 +31,7 @@ where
     phantom_data: PhantomData<S>,
 
     apogee_detector_config: ApogeeDetectorConfig,
+    touchdown_detector_config: TouchdownDetectorConfig,
 
     launchpad_altitude: Option<Altitude>,
 }
@@ -51,7 +53,9 @@ where
         arm_button: WS,
         deployment_system: D,
         latest_altitude_signal: &'static Signal<M, Altitude>,
+
         apogee_detector_config: ApogeeDetectorConfig,
+        touchdown_detector_config: TouchdownDetectorConfig,
     ) -> Self {
         Self {
             arm_button,
@@ -60,6 +64,7 @@ where
             phantom_data: PhantomData,
 
             apogee_detector_config,
+            touchdown_detector_config,
 
             launchpad_altitude: None,
         }
@@ -90,6 +95,7 @@ where
             phantom_data: PhantomData,
 
             apogee_detector_config: self.apogee_detector_config,
+            touchdown_detector_config: self.touchdown_detector_config,
 
             launchpad_altitude: Some(launchpad_altitude),
         }
@@ -134,6 +140,7 @@ where
             phantom_data: PhantomData,
 
             apogee_detector_config: self.apogee_detector_config,
+            touchdown_detector_config: self.touchdown_detector_config,
 
             launchpad_altitude: self.launchpad_altitude,
         }
@@ -148,29 +155,25 @@ where
     M: RawMutex + 'static
 {
     pub async fn wait_touchdown(self) -> FiniteStateMachine<WS, D, M, Touchdown> {
-        use uom::si::length::meter;
+        let altitude = TouchdownDetector::new(
+            self.latest_altitude_signal,
+            self.touchdown_detector_config,
+        ).await
+        .await_touchdown()
+        .await;
 
-        loop {
-            let altitude = self.latest_altitude_signal.wait().await;
-            let launchpad_altitude = self.launchpad_altitude.expect("Launchpad altitude should be set in Armed state");
-            let altitude_above_launchpad = altitude - launchpad_altitude;
+        info!("Touchdown of {} m!", altitude.get::<meter>());
 
-            let max_altitude_touchdown = Altitude::new::<meter>(2.0);
+        FiniteStateMachine {
+            arm_button: self.arm_button,
+            deployment_system: self.deployment_system,
+            latest_altitude_signal: self.latest_altitude_signal,
+            phantom_data: PhantomData,
 
-            if altitude_above_launchpad <= max_altitude_touchdown {
-                info!("Touchdown!");
+            apogee_detector_config: self.apogee_detector_config,
+            touchdown_detector_config: self.touchdown_detector_config,
 
-                return FiniteStateMachine {
-                    arm_button: self.arm_button,
-                    deployment_system: self.deployment_system,
-                    latest_altitude_signal: self.latest_altitude_signal,
-                    phantom_data: PhantomData,
-
-                    apogee_detector_config: self.apogee_detector_config,
-
-                    launchpad_altitude: self.launchpad_altitude,
-                }
-            }
+            launchpad_altitude: self.launchpad_altitude,
         }
     }
 }

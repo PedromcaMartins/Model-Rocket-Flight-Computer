@@ -3,7 +3,7 @@ use embassy_sync::{blocking_mutex::raw::RawMutex, watch::Sender, signal::Signal}
 use switch_hal::WaitSwitch;
 use telemetry_messages::{Altitude, FlightState};
 
-use crate::{config::ApogeeDetectorConfig, model::{deployment_system::DeploymentSystem, finite_state_machine::FiniteStateMachine}};
+use crate::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, model::{deployment_system::DeploymentSystem, finite_state_machine::FiniteStateMachine}};
 
 #[inline]
 pub async fn finite_state_machine_task<
@@ -15,6 +15,7 @@ pub async fn finite_state_machine_task<
     latest_altitude_signal: &'static Signal<M, Altitude>,
 
     apogee_detector_config: ApogeeDetectorConfig,
+    touchdown_detector_config: TouchdownDetectorConfig,
 
     flight_state_sender: Sender<'static, M, FlightState, CONSUMERS>,
 )
@@ -30,6 +31,7 @@ where
         latest_altitude_signal,
 
         apogee_detector_config,
+        touchdown_detector_config,
     );
     flight_state_sender.send(FlightState::PreArmed);
     info!("Flight Computer Pre-Armed");

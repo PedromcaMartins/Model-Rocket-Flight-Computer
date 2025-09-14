@@ -1,13 +1,13 @@
 # Flight Computer lib
 
-- [X] Remame quantities used in telemetry messages e.g. `pub type Altitude = Length`
+- [X] Rename quantities used in telemetry messages e.g. `pub type Altitude = Length`
 - [X] Melhorar `FileSystemEvent`
 - [X] Deployment System
 - [X] ApogeeDetector
-    - [ ] Add Configuration to models
+    - [X] Add Configuration to models
     - [ ] Testing in model
-- [ ] Landing detector in FSM
-    - [ ] Add Configuration to models
+- [X] Landing detector in FSM
+    - [X] Add Configuration to models
     - [ ] Testing in model
 - [ ] Document and reduce use of Panics in functions
 

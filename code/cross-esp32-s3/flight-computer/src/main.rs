@@ -16,7 +16,7 @@ use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, Board, Depl
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::{self, Channel}, signal::Signal, watch::{self, Watch}};
-use flight_computer_lib::{config::ApogeeDetectorConfig, embedded_hal_device::{deployment_switch::DeploymentSwitch, sd_card::SdCardFatFS, sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}}};
+use flight_computer_lib::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, embedded_hal_device::{deployment_switch::DeploymentSwitch, sd_card::SdCardFatFS, sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}}};
 use postcard_rpc::server::Sender as PostcardSender;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, Altitude, FlightState, GpsMessage, ImuMessage};
@@ -133,7 +133,14 @@ async fn finite_state_machine_task(
 ) {
     let deployment = DeploymentSwitch::new(deployment);
 
-    flight_computer_lib::tasks::finite_state_machine_task(arm_button, deployment, latest_altitude_signal, ApogeeDetectorConfig::default(), flight_state_sender).await
+    flight_computer_lib::tasks::finite_state_machine_task(
+        arm_button, 
+        deployment, 
+        latest_altitude_signal, 
+        ApogeeDetectorConfig::default(), 
+        TouchdownDetectorConfig::default(),
+        flight_state_sender, 
+    ).await
 }
 
 #[embassy_executor::task]
