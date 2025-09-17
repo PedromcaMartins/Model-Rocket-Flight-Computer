@@ -4,7 +4,7 @@ use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_time::{Duration, Ticker};
 use switch_hal::{InputSwitch, OutputSwitch};
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
-use defmt_or_log::{info, error};
+use defmt_or_log::{debug, error, info};
 
 use crate::model::filesystem::log_filesystem::LogFileSystem;
 use crate::model::filesystem::FileSystem;
@@ -48,25 +48,25 @@ where
         match result {
             Either4::First(altimeter_message) => {
                 let res = log_filesystem.append_message(&altimeter_message);
-                info!("SD Card: Logged altimeter message: {:?}", res);
+                debug!("SD Card: Logged altimeter message: {:?}", res);
             },
             Either4::Second(gps_message) => {
                 let res = log_filesystem.append_message(&gps_message);
-                info!("SD Card: Logged GPS message: {:?}", res);
+                debug!("SD Card: Logged GPS message: {:?}", res);
             },
             Either4::Third(imu_message) => {
                 let res = log_filesystem.append_message(&imu_message);
-                info!("SD Card: Logged IMU message: {:?}", res);
+                debug!("SD Card: Logged IMU message: {:?}", res);
             },
             Either4::Fourth(()) => {
                 let res = log_filesystem.flush_all();
-                info!("SD Card: Flushed all files: {:?}", res);
+                debug!("SD Card: Flushed all files: {:?}", res);
 
                 // TODO: improve error FileSystemEvent to include Success + Failure states... 
                 // if res.is_err() {
                 //     error!("SD Card: Failed to flush files");
                 // } else {
-                //     info!("SD Card: Flushed all files");
+                //     debug!("SD Card: Flushed all files");
                 // }
             },
         }

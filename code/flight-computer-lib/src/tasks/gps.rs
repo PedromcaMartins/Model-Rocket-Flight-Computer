@@ -4,7 +4,7 @@ use embassy_sync::{blocking_mutex::raw::RawMutex, channel::Sender};
 use embassy_time::{Duration, Ticker};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{GpsMessage, GpsTopic};
-use defmt_or_log::{error, info};
+use defmt_or_log::{debug, error};
 
 use crate::model::sensor_device::SensorDevice;
 
@@ -31,7 +31,7 @@ where
 
         match gps.parse_new_message().await {
             Ok(msg) => {
-                info!("GPS: Parsed new message");
+                debug!("GPS: Parsed new message");
 
                 if postcard_sender.publish::<GpsTopic>(VarSeq::Seq4(seq.0), &msg).await.is_ok() {
                     seq += 1;

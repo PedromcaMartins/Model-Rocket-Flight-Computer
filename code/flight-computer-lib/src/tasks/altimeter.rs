@@ -1,6 +1,6 @@
 use core::num::Wrapping;
 
-use defmt_or_log::{info, error};
+use defmt_or_log::{debug, error};
 use embassy_sync::{blocking_mutex::raw::RawMutex, channel::Sender, signal::Signal};
 use embassy_time::{Duration, Ticker};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
@@ -32,7 +32,7 @@ where
 
         match altimeter.parse_new_message().await {
             Ok(msg) => {
-                info!("Altimeter: Parsed new message");
+                debug!("Altimeter: Parsed new message");
 
                 if postcard_sender.publish::<AltimeterTopic>(VarSeq::Seq4(seq.0), &msg).await.is_ok() {
                     seq += 1;
