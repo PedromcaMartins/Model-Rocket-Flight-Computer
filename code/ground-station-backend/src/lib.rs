@@ -29,8 +29,12 @@ impl From<SubscribeError> for PostcardError<Infallible> {
 
 // ---
 
-impl Default for PostcardClient {
-    fn default() -> Self {
+impl PostcardClient {
+    pub fn new(client: HostClient<WireError>) -> Self {
+        Self { client }
+    }
+
+    pub fn new_raw_nusb() -> Self {
         let client = HostClient::new_raw_nusb(
             |d| d.product_string() == Some("flight_computer"),
             ERROR_PATH,
@@ -42,9 +46,7 @@ impl Default for PostcardClient {
             client,
         }
     }
-}
 
-impl PostcardClient {
     pub async fn wait_closed(&self) {
         self.client.wait_closed().await;
     }
