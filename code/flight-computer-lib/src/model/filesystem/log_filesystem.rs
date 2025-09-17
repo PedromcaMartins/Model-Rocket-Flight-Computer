@@ -1,8 +1,19 @@
-use crate::{config::LogFileSystemConfig, model::{filesystem::FileSystem, system_event::filesystem::{FileSystemError, FileSystemResult, FileSystemSuccess}}};
+use core::fmt::Write as _;
+use embedded_io::Write as _;
+
+use crate::{config::LogFileSystemConfig, model::{filesystem::{FileSystem, Filename}, system_event::filesystem::{FileSystemError, FileSystemResult, FileSystemSuccess}}};
 use defmt_or_log::{error, Debug2Format};
 use heapless::index_map::FnvIndexMap;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{LogDataType, LogMessage};
+
+type FileUniqueId = u16;
+fn append_unique_id(base: &str, uid: FileUniqueId) -> Result<heapless::String<{ LogFileSystemConfig::MAX_FILENAME_LENGTH }>, FileSystemError>  {
+    let mut filename = heapless::String::<{ LogFileSystemConfig::MAX_FILENAME_LENGTH }>::new();
+    filename.write_fmt(format_args!("{uid:0width$}{base}", width = LogFileSystemConfig::MAX_UID_LENGTH))
+        .map_err(|_| FileSystemError::FilenameTooLong)?;
+    Ok(filename)
+}
 
 pub struct LogFileSystem<FS, FH>
 where
@@ -18,8 +29,7 @@ where
     FS: FileSystem<File = FH>,
 {
     pub fn new(file_system: FS) -> Self {
-        const WRITE_BUFFER_SIZE: usize = 256;
-        static WRITE_BUFFER: ConstStaticCell<[u8; WRITE_BUFFER_SIZE]> = ConstStaticCell::new([0_u8; WRITE_BUFFER_SIZE]);
+        static WRITE_BUFFER: ConstStaticCell<[u8; LogFileSystemConfig::WRITE_BUFFER_SIZE]> = ConstStaticCell::new([0_u8; LogFileSystemConfig::WRITE_BUFFER_SIZE]);
 
         Self {
             file_system,
@@ -28,28 +38,57 @@ where
         }
     }
 
-    pub fn create_unique_files(&mut self) -> FileSystemResult {
-        for data_type in LogDataType::VALUES {
-            let filename = data_type.to_filename();
-            let file = match self.file_system.create_file(filename) {
-                Ok(file) => file,
+    fn get_unique_id(&mut self, base: Filename) -> Result<Option<FileUniqueId>, FileSystemError> {
+        for uid in 0..=FileUniqueId::MAX {
+            let full_filename = append_unique_id(base, uid)
+                .map_err(|_| FileSystemError::FilenameTooLong)?;
+            match self.file_system.exist_file(&full_filename) {
+                Ok(true) => (),
+                Ok(false) => return Ok(Some(uid)),
                 Err(e) => {
-                    error!("Failed to create file {}: {:?}", filename, Debug2Format(&e));
-                    return Err(FileSystemError::FileCreationFailed(data_type));
+                    error!("Failed to check existence of file {}: {:?}", full_filename, Debug2Format(&e));
+                    return Err(FileSystemError::GetUniqueIdFailed);
                 },
-            };
-
-            match self.files.insert(data_type, file) {
-                Ok(None) => (),
-                Ok(Some(_)) => {
-                    error!("Existing file handle for {} already in the new open files hash map", filename);
-                    return Err(FileSystemError::FileHandleAlreadyExists(data_type));
-                },
-                Err(_) => {
-                    error!("Failed to store file handle for {}", filename);
-                    return Err(FileSystemError::StoreFileHandleFailed(data_type));
-                }
             }
+        }
+        Ok(None)
+    }
+
+    fn create_file(&mut self, filename: Filename, data_type: LogDataType) -> Result<(), FileSystemError> {
+        let file = match self.file_system.create_file(filename) {
+            Ok(file) => file,
+            Err(e) => {
+                error!("Failed to create file {}: {:?}", filename, Debug2Format(&e));
+                return Err(FileSystemError::FileCreationFailed(data_type));
+            },
+        };
+
+        match self.files.insert(data_type, file) {
+            Ok(None) => Ok(()),
+            Ok(Some(_)) => {
+                error!("Existing file handle for {} already in the new open files hash map", filename);
+                Err(FileSystemError::FileHandleAlreadyExists(data_type))
+            },
+            Err(_) => {
+                error!("Failed to store file handle for {}", filename);
+                Err(FileSystemError::StoreFileHandleFailed(data_type))
+            }
+        }
+    }
+
+    pub fn create_unique_files(&mut self) -> FileSystemResult {
+        let reference_data_type = LogDataType::VALUES[0];
+        let uid = self.get_unique_id(reference_data_type.to_base_filename())?.ok_or_else(|| {
+            error!("No unique ID available");
+            FileSystemError::UniqueIdUnavailable
+        })?;
+
+        for data_type in LogDataType::VALUES {
+            let base = data_type.to_base_filename();
+            self.create_file(
+                &append_unique_id(base, uid)?, 
+                data_type
+            )?;
         }
         Ok(FileSystemSuccess::UniqueFilesCreated)
     }
@@ -58,15 +97,15 @@ where
     pub fn append_message<M: LogMessage>(&mut self, data: &M) -> FileSystemResult {
         let data_type = M::KIND;
 
-        let Some(file) = self.files.get_mut(&M::KIND) else {
+        let file = self.files.get_mut(&M::KIND).ok_or_else(|| {
             error!("File for {:?} not opened", M::KIND);
-            return Err(FileSystemError::FileHandleNotFound(data_type));
-        };
+            FileSystemError::FileHandleNotFound(data_type)
+        })?;
 
-        let Ok(len) = serde_json_core::to_slice(&data, self.write_buffer) else {
+        let len = serde_json_core::to_slice(&data, self.write_buffer).map_err(|_| {
             error!("Failed to serialize message of type {:?}", M::KIND);
-            return Err(FileSystemError::FailedToSerializeMessage(data_type));
-        };
+            FileSystemError::FailedToSerializeMessage(data_type)
+        })?;
 
         // Add newline sequence to the buffer
         if len + 2 > self.write_buffer.len() {

@@ -1,6 +1,6 @@
 pub mod log_filesystem;
 
-pub type Filename = &'static str;
+pub type Filename<'a> = &'a str;
 
 pub trait FileSystem {
     type File;

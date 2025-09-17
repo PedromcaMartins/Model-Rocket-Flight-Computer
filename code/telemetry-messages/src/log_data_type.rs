@@ -11,6 +11,7 @@ pub enum LogDataType {
 
 impl LogDataType {
     pub const LENGTH: usize = 3;
+    pub const MAX_BASE_FILENAME_LENGTH: usize = 3;
 
     pub const VALUES: [Self; Self::LENGTH] = [
         Self::Altimeter,
@@ -19,13 +20,20 @@ impl LogDataType {
     ];
 
     #[must_use]
-    pub const fn to_filename(&self) -> &'static str {
+    pub const fn to_base_filename(&self) -> &'static str {
         match self {
-            Self::Altimeter => "ALTIM.LOG",
-            Self::Gps => "GPS.LOG",
-            Self::Imu => "IMU.LOG",
+            Self::Altimeter => "ALT",
+            Self::Gps => "GPS",
+            Self::Imu => "IMU",
         }
     }
+
+    #[allow(dead_code)]
+    const ASSERT_FILENAME_LENGTHS: () = {
+        assert!(Self::VALUES[0].to_base_filename().len() <= Self::MAX_BASE_FILENAME_LENGTH);
+        assert!(Self::VALUES[2].to_base_filename().len() <= Self::MAX_BASE_FILENAME_LENGTH);
+        assert!(Self::VALUES[1].to_base_filename().len() <= Self::MAX_BASE_FILENAME_LENGTH);
+    };
 }
 
 pub trait LogMessage: Serialize {

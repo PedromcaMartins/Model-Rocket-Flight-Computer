@@ -21,4 +21,9 @@ impl LogFileSystemConfig {
 
         SIZE
     };
+
+    pub const WRITE_BUFFER_SIZE: usize = 576;
+
+    pub const MAX_FILENAME_LENGTH: usize = 8;
+    pub const MAX_UID_LENGTH: usize = Self::MAX_FILENAME_LENGTH - LogDataType::MAX_BASE_FILENAME_LENGTH;
 }

@@ -11,6 +11,9 @@ pub enum FileSystemSuccess {
 #[defmt_or_log_macros::maybe_derive_format]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FileSystemError {
+    FilenameTooLong,
+    GetUniqueIdFailed,
+    UniqueIdUnavailable,
     FileCreationFailed(LogDataType),
     FileHandleAlreadyExists(LogDataType),
     StoreFileHandleFailed(LogDataType),
