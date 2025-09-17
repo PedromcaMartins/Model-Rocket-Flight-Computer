@@ -1,4 +1,4 @@
-use crate::model::{filesystem::FileSystem, system_event::filesystem::{FileSystemError, FileSystemSuccess, FileSystemResult}};
+use crate::{config::LogFileSystemConfig, model::{filesystem::FileSystem, system_event::filesystem::{FileSystemError, FileSystemResult, FileSystemSuccess}}};
 use defmt_or_log::{error, Debug2Format};
 use heapless::index_map::FnvIndexMap;
 use static_cell::ConstStaticCell;
@@ -9,7 +9,7 @@ where
     FS: FileSystem<File = FH>,
 {
     file_system: FS,
-    files: FnvIndexMap<LogDataType, FH, { LogDataType::LENGTH }>,
+    files: FnvIndexMap<LogDataType, FH, { LogFileSystemConfig::FNV_INDEX_MAP_SIZE }>,
     write_buffer: &'static mut [u8],
 }
 
@@ -67,6 +67,15 @@ where
             error!("Failed to serialize message of type {:?}", M::KIND);
             return Err(FileSystemError::FailedToSerializeMessage(data_type));
         };
+
+        // Add newline sequence to the buffer
+        if len + 2 > self.write_buffer.len() {
+            error!("Buffer too small to add newline for message of type {:?}", M::KIND);
+            return Err(FileSystemError::FailedToSerializeMessage(data_type));
+        }
+        self.write_buffer[len] = b'\r';
+        self.write_buffer[len + 1] = b'\n';
+        let len = len + 2;
 
         if let Err(err) = self.file_system.write_file(file, &self.write_buffer[..len]) {
             error!("Failed to append data: {:?}", Debug2Format(&err));
