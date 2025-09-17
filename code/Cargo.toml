@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "host-flight-computer",
     "host-target-esp32s3-tests",
     "telemetry-messages",
     "flight-computer-lib",

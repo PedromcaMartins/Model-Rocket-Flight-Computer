@@ -1,0 +1,32 @@
+[package]
+name = "host-flight-computer"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[dependencies]
+telemetry-messages = { version = "*", path = "../telemetry-messages" }
+flight-computer-lib = { version = "*", path = "../flight-computer-lib", default-features = false, features = ["log"] }
+postcard ={ version = "1.1" }
+postcard-rpc = { version = "0.11", features = ["test-utils"] }
+switch-hal ={ version = "*" }
+
+tokio = { version = "=1.46.1", features = ["full"] }
+embassy-time = { version = "0.4", features = ["std", "generic-queue-128"] }
+critical-section = { version = "1.1", features = ["std"] }
+env_logger = { version = "*" }
+log = { version = "*" }
+
+futures = "0.3.31"
+chrono = "0.4.42"
+uom = { version = "0.37.0", features = ["f32"] }
+nalgebra = { version = "0.34" }
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter", "json"] }
+tracing-appender = "0.2"
+tracing-log = "0.2"
+tracing-flame = "0.2"
+console-subscriber = "0.4.1"
+# tracing-opentelemetry = "0.31"
+# opentelemetry = { version = "0.3", features = ["rt-tokio"] }

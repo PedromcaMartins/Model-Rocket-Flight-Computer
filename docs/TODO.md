@@ -13,16 +13,29 @@
 
 # Host Flight Computer lib
 
-- [ ] Create host drivers lib to be used in Flight Computer lib tests / Create test drivers in flight computer lib exclusive to testing
-- [ ] Create Simulator
-    - [ ] Logging with Tokio Console + Tracing
-    - [ ] Physics Engine + config
-    - [ ] Altitude
-    - [ ] Gps
-    - [ ] Imu
+- [X] Create host drivers lib to be used in Flight Computer lib tests / Create test drivers in flight computer lib exclusive to testing
+- [X] Create Simulator
+    - [X] Altitude
+    - [X] Gps
+    - [X] Imu
+    - [X] Logging with Tokio Console + Tracing
+    - [ ] Add Custom Timer Driver with std + advance()
+    - [ ] Physics Engine + config (1D)
     - [ ] Manual triggers
         - [ ] Fire Ignitor
         - [ ] Deploy Parachute
         - [ ] Trigger Arm
     - [ ] Automatic triggers (Scripted Events)
     - [ ] Fault Engine + config
+    - [ ] Integration with ground station lib
+
+# Ground Station
+
+- [ ] Develop a TUI front-end 
+    - [ ] Display PostCard Messages
+    - [ ] Display log messages
+        - [ ] Open logs dir / current log
+    - [ ] Display simulator
+        - [ ] start/stop/restart simulation 
+        - [ ] tweak simulation options
+        - [ ] send manual events
