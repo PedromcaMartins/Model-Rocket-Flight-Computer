@@ -1,4 +1,6 @@
+#[allow(unused_imports)]
 use core::fmt::Write as _;
+#[allow(unused_imports)]
 use embedded_io::Write as _;
 
 use crate::{config::LogFileSystemConfig, model::{filesystem::{FileSystem, Filename}, system_event::filesystem::{FileSystemError, FileSystemResult, FileSystemSuccess}}};

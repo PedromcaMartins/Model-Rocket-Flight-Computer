@@ -15,12 +15,14 @@ pub mod sd_card;
 
 pub struct SimulatorConfig {
     tick_duration: Time,
+    initial_altitude: Altitude,
 }
 
 impl Default for SimulatorConfig {
     fn default() -> Self {
         Self {
             tick_duration: Time::new::<millisecond>(10.),
+            initial_altitude: Altitude::new::<meter>(20.0),
         }
     }
 }
@@ -79,7 +81,7 @@ impl Simulator {
                 sd_card_detect_tx,
                 sd_card_status_led_rx,
 
-                altitude: Altitude::new::<meter>(0.0),
+                altitude: config.initial_altitude,
                 velocity: Velocity::new::<meter_per_second>(0.0),
                 acceleration: Acceleration::new::<meter_per_second_squared>(0.0),
 
