@@ -1,6 +1,6 @@
 use switch_hal::OutputSwitch;
 
-use crate::model::deployment_system::DeploymentSystem;
+use crate::interfaces::DeploymentSystem;
 
 pub struct DeploymentSwitch<O>
 where

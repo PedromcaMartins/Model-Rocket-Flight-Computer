@@ -1,27 +1,25 @@
-mod finite_state_machine;
 use defmt_or_log::info;
 use embassy_futures::join::join5;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal, watch::Watch};
-pub use finite_state_machine::finite_state_machine_task;
-
-mod imu;
-pub use imu::imu_task;
-
-mod altimeter;
-pub use altimeter::altimeter_task;
-
-mod gps;
-pub use gps::gps_task;
-
-mod sd_card;
 use postcard_rpc::server::{Sender, WireTx};
-pub use sd_card::sd_card_task;
 use switch_hal::{InputSwitch, OutputSwitch, WaitSwitch};
 use telemetry_messages::{AltimeterMessage, Altitude, FlightState, GpsMessage, ImuMessage};
 
-use crate::{config::{FlightComputerConfig, TasksConfig}, model::{deployment_system::{self}, filesystem::FileSystem, sensor_device::SensorDevice}};
+use crate::{config::{FlightComputerConfig, TasksConfig}, interfaces::{self, FileSystem, SensorDevice}};
 
+
+mod finite_state_machine;
+pub use finite_state_machine::finite_state_machine_task;
+mod imu;
+pub use imu::imu_task;
+mod altimeter;
+pub use altimeter::altimeter_task;
+mod gps;
+pub use gps::gps_task;
+mod sd_card;
+pub use sd_card::sd_card_task;
 pub mod postcard;
+
 
 static LATEST_ALTITUDE_SIGNAL: Signal<CriticalSectionRawMutex, Altitude> = Signal::new();
 
@@ -46,7 +44,7 @@ where
     Altimeter: SensorDevice<DataMessage = AltimeterMessage>,
     ArmButton: WaitSwitch + 'static,
     <ArmButton as WaitSwitch>::Error: core::fmt::Debug,
-    DeploymentSystem: deployment_system::DeploymentSystem,
+    DeploymentSystem: interfaces::DeploymentSystem,
     Gps: SensorDevice<DataMessage = GpsMessage>,
     Imu: SensorDevice<DataMessage = ImuMessage>,
     SdCard: FileSystem,
@@ -91,7 +89,7 @@ where
     Altimeter: SensorDevice<DataMessage = AltimeterMessage>,
     ArmButton: WaitSwitch + 'static,
     <ArmButton as WaitSwitch>::Error: core::fmt::Debug,
-    DeploymentSystem: deployment_system::DeploymentSystem,
+    DeploymentSystem: interfaces::DeploymentSystem,
     Gps: SensorDevice<DataMessage = GpsMessage>,
     Imu: SensorDevice<DataMessage = ImuMessage>,
     SdCard: FileSystem,

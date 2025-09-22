@@ -19,7 +19,9 @@
     - [X] Gps
     - [X] Imu
     - [X] Logging with Tokio Console + Tracing
-    - [ ] Add Custom Timer Driver with std + advance()
+    - [~] Add Custom Timer Driver with std + advance()
+        - Not necessary... 
+    - [ ] Integration with ground station lib
     - [ ] Physics Engine + config (1D)
     - [ ] Manual triggers
         - [ ] Fire Ignitor
@@ -27,7 +29,7 @@
         - [ ] Trigger Arm
     - [ ] Automatic triggers (Scripted Events)
     - [ ] Fault Engine + config
-    - [ ] Integration with ground station lib
+- [ ] Add [BlockDevice](https://docs.rs/embedded-sdmmc/0.9.0/embedded_sdmmc/trait.BlockDevice.html) implementation for filesystem - then mount the filesystem as FATFS - what is tested using this?... 
 
 # Ground Station
 

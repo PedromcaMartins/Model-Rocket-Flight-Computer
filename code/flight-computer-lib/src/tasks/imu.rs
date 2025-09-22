@@ -6,7 +6,7 @@ use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{ImuMessage, ImuTopic};
 use defmt_or_log::{debug, error};
 
-use crate::model::sensor_device::SensorDevice;
+use crate::interfaces::SensorDevice;
 
 #[inline]
 pub async fn imu_task<

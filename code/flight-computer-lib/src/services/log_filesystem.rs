@@ -3,7 +3,8 @@ use core::fmt::Write as _;
 #[allow(unused_imports)]
 use embedded_io::Write as _;
 
-use crate::{config::LogFileSystemConfig, model::{filesystem::{FileSystem, Filename}, system_event::filesystem::{FileSystemError, FileSystemResult, FileSystemSuccess}}};
+use crate::{config::LogFileSystemConfig, interfaces::{FileSystem, Filename}, events::filesystem::{FileSystemError, FileSystemResult, FileSystemSuccess}};
+
 use defmt_or_log::{error, Debug2Format};
 use heapless::index_map::FnvIndexMap;
 use static_cell::ConstStaticCell;

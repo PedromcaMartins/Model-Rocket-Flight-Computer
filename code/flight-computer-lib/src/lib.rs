@@ -13,9 +13,13 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
-pub mod model;
-pub mod tasks;
-pub mod embedded_hal_device;
+pub(crate) mod core;
+pub(crate) mod events;
+pub(crate) mod services;
+
 pub mod config;
+pub mod impls;
+pub mod interfaces;
+pub mod tasks;
 
 pub use embassy_sync;

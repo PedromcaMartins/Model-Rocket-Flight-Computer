@@ -1,6 +1,6 @@
 use std::{convert::Infallible, fs::OpenOptions, io::Write, path::PathBuf};
 
-use flight_computer_lib::model::filesystem::{FileSystem, Filename};
+use flight_computer_lib::interfaces::{FileSystem, Filename};
 use switch_hal::{InputSwitch, OutputSwitch};
 use tokio::sync::watch;
 

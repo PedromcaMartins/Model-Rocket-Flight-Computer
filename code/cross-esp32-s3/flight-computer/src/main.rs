@@ -16,7 +16,7 @@ use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, Board, Depl
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::{self, Channel}, signal::Signal, watch::{self, Watch}};
-use flight_computer_lib::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, embedded_hal_device::{deployment_switch::DeploymentSwitch, sd_card::SdCardFatFS, sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}}};
+use flight_computer_lib::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, impls::{deployment_switch::DeploymentSwitch, sd_card::SdCardFatFS, bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}};
 use postcard_rpc::server::Sender as PostcardSender;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, Altitude, FlightState, GpsMessage, ImuMessage};

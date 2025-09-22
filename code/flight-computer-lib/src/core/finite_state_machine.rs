@@ -7,7 +7,7 @@ use telemetry_messages::Altitude;
 use uom::si::length::meter;
 use defmt_or_log::{error, info, Debug2Format};
 
-use crate::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, model::{deployment_system::DeploymentSystem, finite_state_machine::{apogee_detector::ApogeeDetector, touchdown_detector::TouchdownDetector}}};
+use crate::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, interfaces::DeploymentSystem, core::finite_state_machine::{apogee_detector::ApogeeDetector, touchdown_detector::TouchdownDetector}};
 
 mod apogee_detector;
 mod touchdown_detector;

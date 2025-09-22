@@ -5,7 +5,7 @@ use static_cell::ConstStaticCell;
 use telemetry_messages::{FixTypeWrapper, GpsCoordinates, GpsMessage, Timestamp, Altitude};
 use uom::si::length::meter;
 
-use crate::model::sensor_device::SensorDevice;
+use crate::interfaces::SensorDevice;
 
 #[defmt_or_log::maybe_derive_format]
 #[derive(thiserror::Error, Debug, PartialEq, Eq, Clone)]

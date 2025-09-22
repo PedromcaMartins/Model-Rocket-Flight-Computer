@@ -3,7 +3,7 @@ use embassy_sync::{blocking_mutex::raw::RawMutex, watch::Sender, signal::Signal}
 use switch_hal::WaitSwitch;
 use telemetry_messages::{Altitude, FlightState};
 
-use crate::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, model::{deployment_system::DeploymentSystem, finite_state_machine::FiniteStateMachine}};
+use crate::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, interfaces::DeploymentSystem, core::finite_state_machine::FiniteStateMachine};
 
 #[inline]
 pub async fn finite_state_machine_task<

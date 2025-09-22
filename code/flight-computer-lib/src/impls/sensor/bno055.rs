@@ -7,7 +7,7 @@ use telemetry_messages::{nalgebra::{Quaternion, Vector3, Vector4}, EulerAngles, 
 use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, thermodynamic_temperature::degree_celsius};
 use telemetry_messages::{Acceleration, Angle, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature};
 
-use crate::model::sensor_device::SensorDevice;
+use crate::interfaces::SensorDevice;
 
 pub struct Bno055Device<I, E>
 where

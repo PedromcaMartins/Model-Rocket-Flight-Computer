@@ -15,8 +15,8 @@ use bno055::Bno055;
 
 use defmt::{Debug2Format, info, error};
 use embassy_time::Timer;
-use flight_computer_lib::embedded_hal_device::sensor::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice};
-use flight_computer_lib::model::sensor_device::SensorDevice;
+use flight_computer_lib::impls::{bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice};
+use flight_computer_lib::interfaces::SensorDevice;
 use smart_leds::SmartLedsWriteAsync;
 use switch_hal::{InputSwitch, StatefulOutputSwitch, WaitSwitch};
 

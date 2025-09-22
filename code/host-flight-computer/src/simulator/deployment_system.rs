@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use flight_computer_lib::model::deployment_system::DeploymentSystem;
+use flight_computer_lib::interfaces::DeploymentSystem;
 use tokio::sync::watch;
 
 pub struct SimParachute {

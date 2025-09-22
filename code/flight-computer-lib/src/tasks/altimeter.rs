@@ -6,7 +6,7 @@ use embassy_time::{Duration, Ticker};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{AltimeterMessage, AltimeterTopic, Altitude};
 
-use crate::model::sensor_device::SensorDevice;
+use crate::interfaces::SensorDevice;
 
 #[inline]
 pub async fn altimeter_task<

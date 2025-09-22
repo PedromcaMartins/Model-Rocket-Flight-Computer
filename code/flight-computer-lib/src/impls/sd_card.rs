@@ -3,7 +3,7 @@ use core::fmt::Debug;
 use embedded_sdmmc::{Mode, RawDirectory, RawFile, VolumeManager};
 use telemetry_messages::LogDataType;
 
-use crate::model::filesystem::{FileSystem, Filename};
+use crate::interfaces::{FileSystem, Filename};
 
 pub struct DummyTimeSource;
 impl embedded_sdmmc::TimeSource for DummyTimeSource {

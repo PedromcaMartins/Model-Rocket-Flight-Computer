@@ -1,4 +1,4 @@
-use flight_computer_lib::model::sensor_device::SensorDevice;
+use flight_computer_lib::interfaces::SensorDevice;
 use telemetry_messages::AltimeterMessage;
 use tokio::sync::mpsc;
 

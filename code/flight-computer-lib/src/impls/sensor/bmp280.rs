@@ -6,7 +6,7 @@ use embedded_hal::i2c::{I2c, SevenBitAddress};
 use telemetry_messages::{AltimeterMessage, Pressure, ThermodynamicTemperature};
 use uom::si::{pressure::pascal, thermodynamic_temperature::degree_celsius};
 
-use crate::{model::sensor_device::SensorDevice, model::altimeter::altitude_from_pressure};
+use crate::{interfaces::SensorDevice, services::altimeter::altitude_from_pressure};
 
 pub struct Bmp280Device<I, E>
 where

@@ -6,8 +6,7 @@ use switch_hal::{InputSwitch, OutputSwitch};
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use defmt_or_log::{debug, error, info};
 
-use crate::model::filesystem::log_filesystem::LogFileSystem;
-use crate::model::filesystem::FileSystem;
+use crate::{interfaces::FileSystem, services::log_filesystem::LogFileSystem};
 
 #[inline]
 pub async fn sd_card_task<

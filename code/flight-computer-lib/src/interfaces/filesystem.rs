@@ -1,5 +1,3 @@
-pub mod log_filesystem;
-
 pub type Filename<'a> = &'a str;
 
 pub trait FileSystem {
