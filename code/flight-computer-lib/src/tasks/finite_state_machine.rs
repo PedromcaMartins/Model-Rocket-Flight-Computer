@@ -3,7 +3,7 @@ use embassy_sync::{blocking_mutex::raw::RawMutex, watch::Sender, signal::Signal}
 use switch_hal::WaitSwitch;
 use telemetry_messages::{Altitude, FlightState};
 
-use crate::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, interfaces::DeploymentSystem, core::finite_state_machine::FiniteStateMachine};
+use crate::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, interfaces::DeploymentSystem, core::state_machine::FlightStateMachine};
 
 #[inline]
 pub async fn finite_state_machine_task<
@@ -25,7 +25,7 @@ where
     D: DeploymentSystem,
     M: RawMutex + 'static,
 {
-    let fsm = FiniteStateMachine::new(
+    let fsm = FlightStateMachine::new(
         arm_button, 
         deployment_system, 
         latest_altitude_signal,

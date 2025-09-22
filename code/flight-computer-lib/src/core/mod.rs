@@ -1,1 +1,1 @@
-pub mod finite_state_machine;
+pub mod state_machine;
