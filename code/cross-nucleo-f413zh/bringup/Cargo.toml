@@ -17,7 +17,7 @@ embassy-executor = { version = "0.7.0", features = ["task-arena-size-81920", "ar
 # embassy-futures = "0.1"
 embassy-stm32 = { version = "0.2", features = ["stm32f413zh", "memory-x", "exti", "time-driver-any"] } # chrono - not used because rtc not used
 embassy-sync = "0.6.2"
-embassy-time = { version = "0.4", features = ["tick-hz-32_768"] }
+embassy-time = { version = "0.4", features = ["tick-hz-1_000_000"] }
 embassy-usb = { version = "0.4.0" }
 # embassy-net = { version = "0.6.0", features = ["tcp", "dhcpv4", "medium-ethernet", ] }
 # embassy-net-wiznet = { version = "0.2.0" }
