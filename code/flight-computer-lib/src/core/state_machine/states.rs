@@ -1,7 +1,7 @@
 mod pre_armed;
 mod armed;
 mod recovery_activated;
-// TODO: mod touchdown;
+mod touchdown;
 
 pub struct PreArmed;
 pub struct Armed;

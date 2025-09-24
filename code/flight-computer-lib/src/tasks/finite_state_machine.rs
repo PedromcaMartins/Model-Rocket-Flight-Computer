@@ -44,7 +44,9 @@ where
     flight_state_sender.send(FlightState::RecoveryActivated);
     info!("Recovery System Activated");
 
-    let _ = fsm.wait_touchdown().await;
+    let fsm = fsm.wait_touchdown().await;
     flight_state_sender.send(FlightState::Touchdown);
     info!("Touchdown Detected");
+
+    fsm.shutdown().await;
 }
