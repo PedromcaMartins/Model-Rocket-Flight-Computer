@@ -6,13 +6,6 @@ use telemetry_messages::{nalgebra::Quaternion, nmea::sentences::FixType, Acceler
 use tokio::{sync::{mpsc, watch, Mutex}, time::sleep};
 use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::radian_per_second, length::meter, magnetic_flux_density::tesla, pressure::pascal, thermodynamic_temperature::degree_celsius, time::{microsecond, millisecond}, velocity::meter_per_second};
 
-pub mod altimeter;
-pub mod arm_button;
-pub mod deployment_system;
-pub mod gps;
-pub mod imu;
-pub mod sd_card;
-
 pub struct SimulatorConfig {
     tick_duration: Time,
     initial_altitude: Altitude,

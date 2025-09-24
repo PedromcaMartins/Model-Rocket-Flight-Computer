@@ -5,6 +5,7 @@ use crate::{board::{SimBoard, SimBoardConfig}, logging::{Logging, LoggingConfig}
 mod board;
 mod logging;
 mod simulator;
+mod sim_devices;
 
 #[derive(Default)]
 pub struct HostFlightComputerConfig {

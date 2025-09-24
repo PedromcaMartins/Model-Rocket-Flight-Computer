@@ -6,8 +6,8 @@ use postcard_rpc::{standard_icd::WireError};
 use tokio::sync::{mpsc, watch};
 use postcard_rpc::test_utils::local_setup;
 
-use crate::simulator::SimulatorConfig;
-use crate::simulator::{altimeter::SimAltimeter, arm_button::SimButton, deployment_system::SimParachute, gps::SimGps, imu::SimImu, sd_card::{SimSdCard, SimSdCardDetect, SimSdCardStatusLed}, Simulator};
+use crate::simulator::{Simulator, SimulatorConfig};
+use crate::sim_devices::{altimeter::SimAltimeter, arm_button::SimButton, deployment_system::SimParachute, gps::SimGps, imu::SimImu, sd_card::{SimSdCard, SimSdCardDetect, SimSdCardStatusLed}};
 
 pub struct SimBoardConfig {
     pub sd_card_log_dir_path: PathBuf,
