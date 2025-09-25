@@ -21,13 +21,13 @@ pub use sd_card::sd_card_task;
 pub mod postcard;
 
 
-static LATEST_ALTITUDE_SIGNAL: Signal<CriticalSectionRawMutex, Altitude> = Signal::new();
+pub static LATEST_ALTITUDE_SIGNAL: Signal<CriticalSectionRawMutex, Altitude> = Signal::new();
 
-static FLIGHT_STATE_WATCH: Watch<CriticalSectionRawMutex, FlightState, { TasksConfig::FLIGHT_STATE_WATCH_CONSUMERS }> = Watch::new();
+pub static FLIGHT_STATE_WATCH: Watch<CriticalSectionRawMutex, FlightState, { TasksConfig::FLIGHT_STATE_WATCH_CONSUMERS }> = Watch::new();
 
-static ALTIMETER_SD_CARD_CHANNEL: Channel<CriticalSectionRawMutex, AltimeterMessage, { TasksConfig::ALTIMETER_SD_CARD_CHANNEL_DEPTH }> = Channel::new();
-static GPS_SD_CARD_CHANNEL:       Channel<CriticalSectionRawMutex, GpsMessage, { TasksConfig::GPS_SD_CARD_CHANNEL_DEPTH }> = Channel::new();
-static IMU_SD_CARD_CHANNEL:       Channel<CriticalSectionRawMutex, ImuMessage, { TasksConfig::IMU_SD_CARD_CHANNEL_DEPTH }> = Channel::new();
+pub static ALTIMETER_SD_CARD_CHANNEL: Channel<CriticalSectionRawMutex, AltimeterMessage, { TasksConfig::ALTIMETER_SD_CARD_CHANNEL_DEPTH }> = Channel::new();
+pub static GPS_SD_CARD_CHANNEL:       Channel<CriticalSectionRawMutex, GpsMessage, { TasksConfig::GPS_SD_CARD_CHANNEL_DEPTH }> = Channel::new();
+pub static IMU_SD_CARD_CHANNEL:       Channel<CriticalSectionRawMutex, ImuMessage, { TasksConfig::IMU_SD_CARD_CHANNEL_DEPTH }> = Channel::new();
 
 pub struct FlightComputer<
     Altimeter,

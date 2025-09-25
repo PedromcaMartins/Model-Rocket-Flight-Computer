@@ -1,4 +1,5 @@
-use flight_computer_lib::{config::FlightComputerConfig, tasks::FlightComputer};
+use flight_computer_lib::{config::FlightComputerConfig, tasks::{altimeter_task, finite_state_machine_task, gps_task, imu_task, sd_card_task, ALTIMETER_SD_CARD_CHANNEL, FLIGHT_STATE_WATCH, GPS_SD_CARD_CHANNEL, IMU_SD_CARD_CHANNEL, LATEST_ALTITUDE_SIGNAL}};
+use tokio::select;
 
 use crate::{board::{SimBoard, SimBoardConfig}, logging::{Logging, LoggingConfig}, simulator::SimulatorConfig};
 
@@ -39,18 +40,49 @@ async fn main() {
 
     tracing::info!("Application started");
 
-    FlightComputer {
-        config: config.flight_computer,
-        altimeter,
-        arm_button,
-        deployment_system,
-        gps,
-        imu,
-        sd_card,
-        sd_card_detect,
-        sd_card_status_led,
-        postcard_sender,
-    }.start().await;
+    let altimeter_task = tokio::spawn(altimeter_task(
+        altimeter, 
+        &LATEST_ALTITUDE_SIGNAL, 
+        ALTIMETER_SD_CARD_CHANNEL.sender(), 
+        postcard_sender.clone(),
+    ));
 
-    tracing::info!("Application tasks exited");
+    let finite_state_machine_task = tokio::spawn(finite_state_machine_task(
+        arm_button, 
+        deployment_system, 
+        &LATEST_ALTITUDE_SIGNAL, 
+        config.flight_computer.apogee_detector, 
+        config.flight_computer.touchdown_detector, 
+        FLIGHT_STATE_WATCH.sender(),
+    ));
+
+    let gps_task = tokio::spawn(gps_task(
+        gps,
+        GPS_SD_CARD_CHANNEL.sender(), 
+        postcard_sender.clone()
+    ));
+
+    let imu_task = tokio::spawn(imu_task(
+        imu, 
+        IMU_SD_CARD_CHANNEL.sender(), 
+        postcard_sender.clone()
+    ));
+
+    let sd_card_task = tokio::spawn(sd_card_task(
+        sd_card, 
+        sd_card_detect, 
+        sd_card_status_led, 
+        ALTIMETER_SD_CARD_CHANNEL.receiver(), 
+        GPS_SD_CARD_CHANNEL.receiver(), 
+        IMU_SD_CARD_CHANNEL.receiver()
+    ));
+
+    select! {
+        _ = altimeter_task => tracing::info!("Altimeter task exited"),
+        _ = finite_state_machine_task => tracing::info!("Finite State Machine task exited"),
+        _ = gps_task => tracing::info!("GPS task exited"),
+        _ = imu_task => tracing::info!("IMU task exited"),
+        _ = sd_card_task => tracing::info!("SD Card task exited"),
+        _ = tokio::signal::ctrl_c() => tracing::info!("Received Ctrl-C, shutting down"),
+    }
 }
