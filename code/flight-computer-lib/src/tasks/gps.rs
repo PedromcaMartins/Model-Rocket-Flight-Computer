@@ -4,7 +4,7 @@ use embassy_sync::{blocking_mutex::raw::RawMutex, channel::Sender};
 use embassy_time::{Duration, Ticker};
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{GpsMessage, GpsTopic};
-use defmt_or_log::{debug, error};
+use defmt_or_log::{debug, error, warn};
 
 use crate::interfaces::SensorDevice;
 
@@ -36,7 +36,7 @@ where
                 if postcard_sender.publish::<GpsTopic>(VarSeq::Seq4(seq.0), &msg).await.is_ok() {
                     seq += 1;
                 } else { 
-                    error!("GPS: Failed to publish to Postcard");
+                    warn!("GPS: Failed to publish to Postcard");
                 }
 
                 if sd_card_sender.try_send(msg).is_err() {

@@ -1,5 +1,5 @@
 use defmt_or_log::info;
-use embassy_futures::join::join5;
+use embassy_futures::{select::select5, select::Either5};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal, watch::Watch};
 use postcard_rpc::server::{Sender, WireTx};
 use switch_hal::{InputSwitch, OutputSwitch, WaitSwitch};
@@ -135,13 +135,20 @@ where
             IMU_SD_CARD_CHANNEL.receiver()
         );
 
-        let _ = join5(
+        #[allow(clippy::ignored_unit_patterns)]
+        match select5(
             altimeter_task, 
             finite_state_machine_task, 
             gps_task, 
             imu_task,
             sd_card_task,
-        ).await;
+        ).await {
+            Either5::First(_) => { info!("Altimeter task ended") },
+            Either5::Second(_) => { info!("Finite State Machine task ended") },
+            Either5::Third(_) => { info!("GPS task ended") },
+            Either5::Fourth(_) => { info!("IMU task ended") },
+            Either5::Fifth(_) => { info!("SD Card task ended") },
+        }
 
         info!("Flight Computer finished!");
     }
