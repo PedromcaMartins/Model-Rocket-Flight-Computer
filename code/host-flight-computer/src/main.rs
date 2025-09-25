@@ -38,6 +38,7 @@ async fn main() {
 
     simulator.start();
 
+    tracing::info!("TICK_HZ: {:?}", embassy_time::TICK_HZ);
     tracing::info!("Application started");
 
     let altimeter_task = tokio::spawn(altimeter_task(

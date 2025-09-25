@@ -1,12 +1,12 @@
 use embassy_futures::select::{select4, Either4};
 use embassy_sync::channel::Receiver;
 use embassy_sync::blocking_mutex::raw::RawMutex;
-use embassy_time::{Duration, Ticker};
+use embassy_time::Ticker;
 use switch_hal::{InputSwitch, OutputSwitch};
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
 use defmt_or_log::{debug, error, info};
 
-use crate::{interfaces::FileSystem, services::log_filesystem::LogFileSystem};
+use crate::{config::LogFileSystemConfig, interfaces::FileSystem, services::{log_filesystem::LogFileSystem, trace::{TraceAsync, TraceSync}}};
 
 #[inline]
 pub async fn sd_card_task<
@@ -18,6 +18,7 @@ pub async fn sd_card_task<
     sd_card: FS,
     _sd_card_detect: I,
     mut sd_card_status_led: O,
+    config: LogFileSystemConfig,
     altimeter_receiver: Receiver<'static, M, AltimeterMessage, DEPTH_ALTIMETER_DATA>,
     gps_receiver: Receiver<'static, M, GpsMessage, DEPTH_GPS_DATA>,
     imu_receiver: Receiver<'static, M, ImuMessage, DEPTH_IMU_DATA>,
@@ -28,19 +29,24 @@ where
     I: InputSwitch,
     O: OutputSwitch,
 {
+    let trace = TraceSync::start("sd_card_task_init");
     let mut log_filesystem = LogFileSystem::new(sd_card);
     let res = log_filesystem.create_unique_files();
     info!("SD Card: Created unique log files: {:?}", res);
 
-    let mut flush_files_ticker = Ticker::every(Duration::from_millis(500));
+    let mut flush_files_ticker = Ticker::every(config.flush_files_ticker_period);
 
+    drop(trace);
     loop {
+        let mut trace = TraceAsync::start("sd_card_task_loop");
+        trace.before_await();
         let result = select4 (
             altimeter_receiver.receive(), 
             gps_receiver.receive(), 
             imu_receiver.receive(), 
             flush_files_ticker.next(),
         ).await;
+        trace.after_await();
 
         if sd_card_status_led.on().is_err() { error!("SD Card: Status Led error") }
 

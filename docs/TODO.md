@@ -9,6 +9,7 @@
 - [X] Landing detector in FSM
     - [X] Add Configuration to models
     - [ ] Testing in model
+- [X] Tracing with sync and async
 - [ ] Document and reduce use of Panics in functions
 
 # Host Flight Computer lib

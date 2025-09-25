@@ -135,6 +135,8 @@ where
             IMU_SD_CARD_CHANNEL.receiver()
         );
 
+        defmt_or_log::trace!("TICK_HZ: {:?}", embassy_time::TICK_HZ);
+
         #[allow(clippy::ignored_unit_patterns)]
         match select5(
             altimeter_task, 

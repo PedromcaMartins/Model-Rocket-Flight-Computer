@@ -3,7 +3,7 @@ use core::fmt::Write as _;
 #[allow(unused_imports)]
 use embedded_io::Write as _;
 
-use crate::{config::LogFileSystemConfig, interfaces::{FileSystem, Filename}, events::filesystem::{FileSystemError, FileSystemResult, FileSystemSuccess}};
+use crate::{config::LogFileSystemConfig, events::filesystem::{FileSystemError, FileSystemResult, FileSystemSuccess}, interfaces::{FileSystem, Filename}, services::trace::TraceSync};
 
 use defmt_or_log::{error, Debug2Format};
 use heapless::index_map::FnvIndexMap;
@@ -80,6 +80,8 @@ where
     }
 
     pub fn create_unique_files(&mut self) -> FileSystemResult {
+        let trace = TraceSync::start("LogFileSystem::create_unique_files");
+
         let reference_data_type = LogDataType::VALUES[0];
         let uid = self.get_unique_id(reference_data_type.to_base_filename())?.ok_or_else(|| {
             error!("No unique ID available");
@@ -93,11 +95,15 @@ where
                 data_type
             )?;
         }
+
+        drop(trace);
         Ok(FileSystemSuccess::UniqueFilesCreated)
     }
 
     /// Append a message to the appropriate file based on its type.
     pub fn append_message<M: LogMessage>(&mut self, data: &M) -> FileSystemResult {
+        let trace = TraceSync::start("LogFileSystem::append_message");
+
         let data_type = M::KIND;
 
         let file = self.files.get_mut(&M::KIND).ok_or_else(|| {
@@ -123,17 +129,23 @@ where
             error!("Failed to append data: {:?}", Debug2Format(&err));
             return Err(FileSystemError::FailedToWriteMessage(data_type));
         }
+
+        drop(trace);
         Ok(FileSystemSuccess::MessageAppended(M::KIND))
     }
 
     /// Flush all open files.
     pub fn flush_all(&mut self) -> FileSystemResult {
+        let trace = TraceSync::start("LogFileSystem::flush_all");
+
         for (data_type, file) in &mut self.files {
             if let Err(err) = self.file_system.flush_file(file) {
                 error!("Failed to flush file for {:?}: {:?}", data_type, Debug2Format(&err));
                 return Err(FileSystemError::FailedToFlushFile(*data_type));
             }
         }
+
+        drop(trace);
         Ok(FileSystemSuccess::FilesFlushed)
     }
 }
