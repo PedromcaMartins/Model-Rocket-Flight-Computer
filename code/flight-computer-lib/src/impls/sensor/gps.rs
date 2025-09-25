@@ -3,7 +3,7 @@ use embassy_time::Instant;
 use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
 use static_cell::ConstStaticCell;
 use telemetry_messages::{FixTypeWrapper, GpsCoordinates, GpsMessage, Timestamp, Altitude};
-use uom::si::length::meter;
+use telemetry_messages::uom::si::length::meter;
 
 use crate::interfaces::SensorDevice;
 

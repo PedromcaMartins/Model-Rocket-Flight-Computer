@@ -4,7 +4,7 @@ use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
 use embassy_time::{Instant, Ticker};
 use heapless::HistoryBuf;
 use telemetry_messages::{Altitude, Time, Velocity};
-use uom::si::time::microsecond;
+use telemetry_messages::uom::si::time::microsecond;
 
 use crate::config::TouchdownDetectorConfig;
 

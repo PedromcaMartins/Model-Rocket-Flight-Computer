@@ -7,17 +7,15 @@ edition = "2024"
 [dependencies]
 telemetry-messages = { version = "*", path = "../telemetry-messages" }
 flight-computer-lib = { version = "*", path = "../flight-computer-lib", default-features = false, features = ["log"] }
-postcard ={ version = "1.1" }
 postcard-rpc = { version = "0.11", features = ["test-utils"] }
 switch-hal ={ version = "*" }
 
-tokio = { version = "=1.46.1", features = ["full"] }
+tokio = { version = "=1.46.1", features = ["full", "tracing"] }
 embassy-time = { version = "0.4", features = ["std", "generic-queue-128"] }
 critical-section = { version = "1.1", features = ["std"] }
 env_logger = { version = "*" }
 log = { version = "*" }
 
-futures = "0.3.31"
 chrono = "0.4.42"
 uom = { version = "0.37.0", features = ["f32"] }
 nalgebra = { version = "0.34" }

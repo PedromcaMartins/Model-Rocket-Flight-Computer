@@ -1,6 +1,6 @@
 use embassy_time::Duration;
 use telemetry_messages::{Altitude, Velocity};
-use uom::si::{length::meter, velocity::meter_per_second};
+use telemetry_messages::uom::si::{length::meter, velocity::meter_per_second};
 
 #[derive(Copy, Clone)]
 pub struct TouchdownDetectorConfig {

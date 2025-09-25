@@ -1,6 +1,6 @@
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use switch_hal::WaitSwitch;
-use uom::si::length::meter;
+use telemetry_messages::uom::si::length::meter;
 use defmt_or_log::info;
 
 use crate::{core::state_machine::{detectors::{TouchdownDetector}, states::{RecoveryActivated, Touchdown}, FlightStateMachine}, interfaces::DeploymentSystem};

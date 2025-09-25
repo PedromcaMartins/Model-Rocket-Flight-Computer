@@ -22,43 +22,37 @@ unwrap_used = "warn"
 telemetry-messages = { version = "*", path = "../telemetry-messages" }
 chrono = { version = "^0.4", default-features = false}
 
-# embassy-futures = "0.1"
 embassy-sync = "0.6.2"
-embassy-time = { version = "0.4" }
-embassy-usb = { version = "0.4.0" }
-embassy-futures = "0.1.1"
-# embassy-net = { version = "0.6.0", features = ["tcp", "dhcpv4", "medium-ethernet", ] }
-# embassy-net-wiznet = { version = "0.2.0" }
+embassy-time = "0.4"
+embassy-futures = "0.1.2"
 
 defmt = { version = "1.0", optional = true }
 log = { version = "0.4", optional = true }
 defmt-or-log = "0.2.2"
 defmt-or-log-macros = "0.1.2"
 
-embedded-hal = { version = "1.0.0", features = ["defmt-03"] }
-embedded-hal-async = { version = "1.0.0", features = ["defmt-03"] }
-embedded-hal-bus = { version = "0.3", features = ["async", "defmt-03"] }
-embedded-io = { version = "0.6.0", features = ["defmt-03"] }
-embedded-io-async = { version = "0.6.1", features = ["defmt-03"] }
+embedded-hal = "1.0.0"
+embedded-hal-async = "1.0.0"
+embedded-io = "0.6.0"
+embedded-io-async = "0.6.1"
 embedded-storage = "0.3.1"
-embedded-sdmmc = { version = "0.9.0", default-features = false, features = ["defmt-log"] }
+embedded-hal-bus = { version = "0.3", features = ["async"] }
+embedded-sdmmc = { version = "0.9.0", default-features = false }
 
 # Drivers
 bmp280-ehal = "0.0.6"
 bno055 = "0.4.0"
 nmea = { version = "0.7.0", default-features = false, features = ["GGA"] }
-switch-hal ={ version = "*" }
+switch-hal = "*"
 
-postcard-rpc = { version = "0.11" }
+postcard-rpc = "0.11"
 
 static_cell = "2"
-uom = { version = "0.37.0", default-features = false, features = ["f32", "f64", "si", "serde"] }
-micromath = "2.1.0"
 thiserror = {version = "2.0.12", default-features = false }
 heapless = { version = "0.9.1", default-features = false, features = ["serde"] }
-# fugit = "0.3.7"
-futures = { version = "0.3", default-features = false, features = ["async-await"] }
 serde-json-core = { version = "0.6", features = ["custom-error-messages"] }
+# fugit = "0.3.7"
+# micromath = "2.1.0"
 
 [dev-dependencies]
 # Support `log` crate only (default).
@@ -84,19 +78,22 @@ default = ["log"]
 log = [
     "dep:log",
     "defmt-or-log/log",
+    "embedded-sdmmc/log",
 ]
 defmt = [
     "dep:defmt",
     "defmt-or-log/defmt",
     "embassy-sync/defmt",
-    # "embassy-futures/defmt",
     "embassy-time/defmt",
     "embassy-time/defmt-timestamp-uptime",
-    "embassy-usb/defmt",
-    # "embassy-net/defmt",
-    # "embassy-net-wiznet/defmt",
+    "embedded-hal/defmt-03",
+    "embedded-hal-async/defmt-03",
+    "embedded-hal-bus/defmt-03",
+    "embedded-io/defmt-03",
+    "embedded-io-async/defmt-03",
+    "embedded-sdmmc/defmt-log",
     "bno055/defmt-03",
     "nmea/defmt-03",
-    "serde-json-core/defmt",
     "heapless/defmt",
+    "serde-json-core/defmt",
 ]

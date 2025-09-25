@@ -4,7 +4,7 @@ use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP
 use embassy_time::Instant;
 use embedded_hal::i2c::{I2c, SevenBitAddress};
 use telemetry_messages::{AltimeterMessage, Pressure, ThermodynamicTemperature};
-use uom::si::{pressure::pascal, thermodynamic_temperature::degree_celsius};
+use telemetry_messages::uom::si::{pressure::pascal, thermodynamic_temperature::degree_celsius};
 
 use crate::{interfaces::SensorDevice, services::altimeter::altitude_from_pressure};
 

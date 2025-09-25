@@ -1,7 +1,7 @@
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_time::Timer;
 use switch_hal::WaitSwitch;
-use uom::si::length::meter;
+use telemetry_messages::uom::si::length::meter;
 use defmt_or_log::{error, info, Debug2Format};
 
 use crate::{core::state_machine::{detectors::ApogeeDetector, states::{Armed, RecoveryActivated}, FlightStateMachine}, interfaces::DeploymentSystem};

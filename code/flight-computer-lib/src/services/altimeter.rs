@@ -1,10 +1,10 @@
-use uom::si::{length::meter, pressure::pascal};
+use telemetry_messages::uom::si::{length::meter, pressure::pascal};
 use telemetry_messages::{Altitude, Pressure};
 
 #[must_use]
 pub fn altitude_from_pressure(pressure: Pressure) -> Altitude {
     #[allow(unused_imports)]
-    use uom::num_traits::Float;
+    use telemetry_messages::uom::num_traits::Float;
 
     let pressure = pressure.get::<pascal>();
     let p0 = 101_325.0; // ISA sea level standard pressure in pascal
