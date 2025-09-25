@@ -1,7 +1,18 @@
+use embassy_time::Duration;
 use telemetry_messages::LogDataType;
 
-#[derive(Copy, Clone, Default)]
-pub struct LogFileSystemConfig;
+#[derive(Copy, Clone)]
+pub struct LogFileSystemConfig {
+    pub flush_files_ticker_period: Duration,
+}
+
+impl Default for LogFileSystemConfig {
+    fn default() -> Self {
+        Self {
+            flush_files_ticker_period: Duration::from_millis(500),
+        }
+    }
+}
 
 impl LogFileSystemConfig {
     pub const FNV_INDEX_MAP_SIZE: usize = {

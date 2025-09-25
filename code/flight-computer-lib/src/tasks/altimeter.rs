@@ -2,11 +2,11 @@ use core::num::Wrapping;
 
 use defmt_or_log::{debug, error, warn};
 use embassy_sync::{blocking_mutex::raw::RawMutex, channel::Sender, signal::Signal};
-use embassy_time::{Duration, Ticker};
+use embassy_time::Ticker;
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{AltimeterMessage, AltimeterTopic, Altitude};
 
-use crate::interfaces::SensorDevice;
+use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice};
 
 #[inline]
 pub async fn altimeter_task<
@@ -14,6 +14,7 @@ pub async fn altimeter_task<
     const DEPTH_DATA: usize,
 > (
     mut altimeter: S,
+    config: DataAcquisitionConfig,
     latest_altitude_signal: &'static Signal<M, Altitude>,
     sd_card_sender: Sender<'static, M, AltimeterMessage, DEPTH_DATA>,
     postcard_sender: PostcardSender<Tx>,
@@ -25,7 +26,7 @@ where
 {
     let mut seq: Wrapping<u32> = Wrapping::default();
 
-    let mut sensor_ticker = Ticker::every(Duration::from_millis(50));
+    let mut sensor_ticker = Ticker::every(config.altimeter_ticker_period);
 
     loop {
         sensor_ticker.next().await;

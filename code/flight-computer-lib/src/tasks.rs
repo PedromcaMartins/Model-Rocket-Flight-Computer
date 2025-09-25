@@ -100,6 +100,7 @@ where
     pub async fn start(self) {
         let altimeter_task = altimeter_task(
             self.altimeter, 
+            self.config.data_acquisition,
             &LATEST_ALTITUDE_SIGNAL, 
             ALTIMETER_SD_CARD_CHANNEL.sender(), 
             self.postcard_sender.clone(),
@@ -116,12 +117,14 @@ where
 
         let gps_task = gps_task(
             self.gps,
+            self.config.data_acquisition,
             GPS_SD_CARD_CHANNEL.sender(), 
             self.postcard_sender.clone()
         );
 
         let imu_task = imu_task(
             self.imu, 
+            self.config.data_acquisition,
             IMU_SD_CARD_CHANNEL.sender(), 
             self.postcard_sender.clone()
         );
@@ -130,6 +133,7 @@ where
             self.sd_card, 
             self.sd_card_detect, 
             self.sd_card_status_led, 
+            self.config.log_filesystem,
             ALTIMETER_SD_CARD_CHANNEL.receiver(), 
             GPS_SD_CARD_CHANNEL.receiver(), 
             IMU_SD_CARD_CHANNEL.receiver()

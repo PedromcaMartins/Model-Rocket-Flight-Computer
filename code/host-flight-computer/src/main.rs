@@ -43,6 +43,7 @@ async fn main() {
 
     let altimeter_task = tokio::spawn(altimeter_task(
         altimeter, 
+        config.flight_computer.data_acquisition,
         &LATEST_ALTITUDE_SIGNAL, 
         ALTIMETER_SD_CARD_CHANNEL.sender(), 
         postcard_sender.clone(),
@@ -59,12 +60,14 @@ async fn main() {
 
     let gps_task = tokio::spawn(gps_task(
         gps,
+        config.flight_computer.data_acquisition,
         GPS_SD_CARD_CHANNEL.sender(), 
         postcard_sender.clone()
     ));
 
     let imu_task = tokio::spawn(imu_task(
         imu, 
+        config.flight_computer.data_acquisition,
         IMU_SD_CARD_CHANNEL.sender(), 
         postcard_sender.clone()
     ));
@@ -73,6 +76,7 @@ async fn main() {
         sd_card, 
         sd_card_detect, 
         sd_card_status_led, 
+        config.flight_computer.log_filesystem,
         ALTIMETER_SD_CARD_CHANNEL.receiver(), 
         GPS_SD_CARD_CHANNEL.receiver(), 
         IMU_SD_CARD_CHANNEL.receiver()

@@ -1,4 +1,4 @@
-#[derive(Default)]
+#[derive(Copy, Clone, Default)]
 pub struct TasksConfig;
 
 impl TasksConfig {

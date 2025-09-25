@@ -10,9 +10,14 @@ pub use log_filesystem::LogFileSystemConfig;
 mod tasks;
 pub use tasks::TasksConfig;
 
-#[derive(Default)]
+mod data_acquisition;
+pub use data_acquisition::DataAcquisitionConfig;
+
+#[derive(Clone, Default)]
 pub struct FlightComputerConfig {
     pub apogee_detector: ApogeeDetectorConfig,
     pub touchdown_detector: TouchdownDetectorConfig,
     pub log_filesystem: LogFileSystemConfig,
+    pub tasks: TasksConfig,
+    pub data_acquisition: DataAcquisitionConfig,
 }
