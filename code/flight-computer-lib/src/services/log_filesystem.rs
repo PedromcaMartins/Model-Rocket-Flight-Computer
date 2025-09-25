@@ -42,6 +42,8 @@ where
     }
 
     fn get_unique_id(&mut self, base: Filename) -> Result<Option<FileUniqueId>, FileSystemError> {
+        let trace = TraceSync::start("LogFileSystem::get_unique_id");
+
         for uid in 0..=FileUniqueId::MAX {
             let full_filename = append_unique_id(base, uid)
                 .map_err(|_| FileSystemError::FilenameTooLong)?;
@@ -54,6 +56,8 @@ where
                 },
             }
         }
+
+        drop(trace);
         Ok(None)
     }
 

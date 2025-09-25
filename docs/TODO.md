@@ -42,3 +42,4 @@
         - [ ] start/stop/restart simulation 
         - [ ] tweak simulation options
         - [ ] send manual events
+- [ ] Implement Trace Parser that can generate somewhat flame-graphs

@@ -6,7 +6,7 @@ use embassy_time::Ticker;
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{AltimeterMessage, AltimeterTopic, Altitude};
 
-use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice};
+use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice, services::trace::TraceAsync};
 
 #[inline]
 pub async fn altimeter_task<
@@ -29,9 +29,14 @@ where
     let mut sensor_ticker = Ticker::every(config.altimeter_ticker_period);
 
     loop {
-        sensor_ticker.next().await;
+        let mut trace = TraceAsync::start("altimeter_task_loop");
 
-        match altimeter.parse_new_message().await {
+        trace.before_await();
+        sensor_ticker.next().await;
+        let res = altimeter.parse_new_message().await;
+        trace.after_await();
+
+        match res {
             Ok(msg) => {
                 debug!("Altimeter: Parsed new message");
 

@@ -30,6 +30,7 @@ where
     O: OutputSwitch,
 {
     let trace = TraceSync::start("sd_card_task_init");
+
     let mut log_filesystem = LogFileSystem::new(sd_card);
     let res = log_filesystem.create_unique_files();
     info!("SD Card: Created unique log files: {:?}", res);
@@ -39,6 +40,7 @@ where
     drop(trace);
     loop {
         let mut trace = TraceAsync::start("sd_card_task_loop");
+
         trace.before_await();
         let result = select4 (
             altimeter_receiver.receive(), 

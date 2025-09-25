@@ -6,7 +6,7 @@ use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{GpsMessage, GpsTopic};
 use defmt_or_log::{debug, error, warn};
 
-use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice};
+use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice, services::trace::TraceAsync};
 
 #[inline]
 pub async fn gps_task<
@@ -28,9 +28,14 @@ where
     let mut sensor_ticker = Ticker::every(config.gps_ticker_period);
 
     loop {
-        sensor_ticker.next().await;
+        let mut trace = TraceAsync::start("gps_task_loop");
 
-        match gps.parse_new_message().await {
+        trace.before_await();
+        sensor_ticker.next().await;
+        let res = gps.parse_new_message().await;
+        trace.after_await();
+
+        match res {
             Ok(msg) => {
                 debug!("GPS: Parsed new message");
 

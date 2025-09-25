@@ -6,7 +6,7 @@ use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use telemetry_messages::{ImuMessage, ImuTopic};
 use defmt_or_log::{debug, error, warn};
 
-use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice};
+use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice, services::trace::TraceAsync};
 
 #[inline]
 pub async fn imu_task<
@@ -28,9 +28,14 @@ where
     let mut sensor_ticker = Ticker::every(config.imu_ticker_period);
 
     loop {
-        sensor_ticker.next().await;
+        let mut trace = TraceAsync::start("imu_task_loop");
 
-        match imu.parse_new_message().await {
+        trace.before_await();
+        sensor_ticker.next().await;
+        let res = imu.parse_new_message().await;
+        trace.after_await();
+
+        match res {
             Ok(msg) => {
                 debug!("IMU: Parsed new message");
 

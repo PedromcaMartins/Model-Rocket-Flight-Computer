@@ -7,6 +7,7 @@ use telemetry_messages::{Altitude, Time, Velocity};
 use telemetry_messages::uom::si::time::microsecond;
 
 use crate::config::TouchdownDetectorConfig;
+use crate::services::trace::TraceAsync;
 
 pub struct TouchdownDetector<M>
 where
@@ -73,8 +74,12 @@ where
         let mut ticker = Ticker::every(self.config.detector_tick_period);
 
         loop {
+            let mut trace = TraceAsync::start("imu_task_loop");
+
+            trace.before_await();
             ticker.next().await;
             self.wait_new_data_and_update_buffers().await;
+            trace.after_await();
 
             // Check if buffers are full before evaluating conditions
             if self.are_buffers_full() {
