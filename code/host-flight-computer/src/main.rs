@@ -7,6 +7,7 @@ mod board;
 mod logging;
 mod simulator;
 mod sim_devices;
+mod simulator_ui;
 
 #[derive(Default)]
 pub struct HostFlightComputerConfig {
@@ -30,10 +31,11 @@ async fn main() {
         gps,
         imu,
         postcard_sender,
-        postcard_host_client: _, // TODO: use ground-station-backend :D
+        postcard_host_client,
         sd_card,
         sd_card_detect,
         sd_card_status_led,
+        ui,
     } = SimBoard::init(config.sim_board, config.simulator).await;
 
     simulator.start();
@@ -90,4 +92,10 @@ async fn main() {
         _ = sd_card_task => tracing::info!("SD Card task exited"),
         _ = tokio::signal::ctrl_c() => tracing::info!("Received Ctrl-C, shutting down"),
     }
+
+    // TODO: use ground-station-backend :D
+    let _ = postcard_host_client;
+
+    // TODO: simulator ui (state + actuators)
+    let _ = ui;
 }

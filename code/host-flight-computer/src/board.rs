@@ -8,6 +8,7 @@ use postcard_rpc::test_utils::local_setup;
 
 use crate::simulator::{Simulator, SimulatorConfig};
 use crate::sim_devices::{altimeter::SimAltimeter, arm_button::SimButton, deployment_system::SimParachute, gps::SimGps, imu::SimImu, sd_card::{SimSdCard, SimSdCardDetect, SimSdCardStatusLed}};
+use crate::simulator_ui::SimulatorUi;
 
 pub struct SimBoardConfig {
     pub sd_card_log_dir_path: PathBuf,
@@ -51,6 +52,7 @@ pub struct SimBoard {
     pub sd_card: SimSdCard,
     pub sd_card_detect: SimSdCardDetect,
     pub sd_card_status_led: SimSdCardStatusLed,
+    pub ui: SimulatorUi,
 }
 
 impl SimBoard {
@@ -66,16 +68,18 @@ impl SimBoard {
         let (sd_card_status_led_tx, sd_card_status_led_rx) = watch::channel(false);
 
         let simulator = Simulator::new(
-            button_tx,
             deployment_rx,
             alt_tx,
             gps_tx,
             imu_tx,
 
+            simulator_config,
+        );
+
+        let ui = SimulatorUi::new(
+            button_tx,
             sd_card_detect_tx,
             sd_card_status_led_rx,
-
-            simulator_config,
         );
 
         // postcard rpc setup
@@ -100,6 +104,7 @@ impl SimBoard {
             sd_card: SimSdCard::new(board_config.sd_card_log_dir_path).await,
             sd_card_detect: SimSdCardDetect::new(sd_card_detect_rx),
             sd_card_status_led: SimSdCardStatusLed::new(sd_card_status_led_tx),
+            ui,
         }
     }
 }

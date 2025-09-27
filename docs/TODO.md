@@ -10,6 +10,7 @@
     - [X] Add Configuration to models
     - [ ] Testing in model
 - [X] Tracing with sync and async
+    - [ ] Testing for tracing structs
 - [ ] Document and reduce use of Panics in functions
 
 # Host Flight Computer lib
