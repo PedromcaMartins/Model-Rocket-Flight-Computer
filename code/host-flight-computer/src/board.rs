@@ -28,9 +28,9 @@ impl Default for SimBoardConfig {
         Self {
             sd_card_log_dir_path,
 
-            alt_sd_card_channel_depth: 1024,
-            gps_sd_card_channel_depth: 1024,
-            imu_sd_card_channel_depth: 1024,
+            alt_sd_card_channel_depth: 1,
+            gps_sd_card_channel_depth: 1,
+            imu_sd_card_channel_depth: 1,
 
             postcard_fake_server_depth: 1024,
             postcard_fake_server_err_uri_path: "/error",

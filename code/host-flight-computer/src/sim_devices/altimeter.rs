@@ -17,6 +17,6 @@ impl SensorDevice for SimAltimeter {
     type DeviceError = ();
 
     async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
-        self.rx.recv().await.ok_or(())
+        Ok(self.rx.recv().await.expect("Altimeter channel closed"))
     }
 }
