@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use chrono::{Local, Timelike};
+use chrono::Local;
 use embassy_time::Instant;
-use telemetry_messages::{nalgebra::Quaternion, nmea::sentences::FixType, Acceleration, AltimeterMessage, Altitude, Angle, AngularVelocity, EulerAngles, FixTypeWrapper, GpsCoordinates, GpsMessage, ImuMessage, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Time, Timestamp, Vector3, Velocity};
+use telemetry_messages::{nalgebra::Quaternion, nmea::sentences::FixType, Acceleration, AltimeterMessage, Altitude, Angle, AngularVelocity, EulerAngles, GpsCoordinates, GpsMessage, ImuMessage, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Time, Vector3, Velocity};
 use tokio::{sync::{mpsc, watch, Mutex}, time::sleep};
 use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::radian_per_second, length::meter, magnetic_flux_density::tesla, pressure::pascal, thermodynamic_temperature::degree_celsius, time::{microsecond, millisecond}, velocity::meter_per_second};
 
@@ -121,13 +121,10 @@ impl Simulator {
     }
 
     async fn send_gps_message(&self) {
-        let ts = Local::now();
-        let fix_time = Timestamp { hour: ts.hour() as u8, minute: ts.minute() as u8, second: ts.second() as u8 };
-
         let inner = self.0.lock().await;
         let msg = GpsMessage { // TODO
-            fix_time,
-            fix_type: FixTypeWrapper::new(FixType::Simulation),
+            fix_time: Local::now().naive_local().time().into(),
+            fix_type: FixType::Simulation.into(),
             coordinates: GpsCoordinates {
                 latitude: 37.7749,   // San Francisco, CA
                 longitude: -122.4194,

@@ -1,8 +1,7 @@
-use chrono::Timelike;
 use embassy_time::Instant;
 use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
 use static_cell::ConstStaticCell;
-use telemetry_messages::{FixTypeWrapper, GpsCoordinates, GpsMessage, Timestamp, Altitude};
+use telemetry_messages::{GpsCoordinates, GpsMessage, Altitude};
 use telemetry_messages::uom::si::length::meter;
 
 use crate::interfaces::SensorDevice;
@@ -85,14 +84,6 @@ where
             return Err(GpsError::UnimplementedSentenceType(sentence_type));
         }
 
-        let fix_time = self.nmea.fix_time.ok_or(GpsError::MissingFields).map(|t| {
-            Timestamp {
-                hour: t.hour() as u8,
-                minute: t.minute() as u8,
-                second: t.second() as u8,
-            }
-        })?;
-
         Ok(GpsMessage {
             coordinates: GpsCoordinates {
                 latitude: self.nmea
@@ -108,11 +99,14 @@ where
                 .altitude()
                 .map(Altitude::new::<meter>)
                 .ok_or(GpsError::MissingFields)?,
-            fix_time,
+            fix_time: self.nmea
+                .fix_time
+                .ok_or(GpsError::MissingFields)?
+                .into(),
             fix_type: self.nmea
                 .fix_type()
-                .map(FixTypeWrapper::new)
-                .ok_or(GpsError::MissingFields)?,
+                .ok_or(GpsError::MissingFields)?
+                .into(),
             num_of_fix_satellites: self.nmea
                 .fix_satellites()
                 .ok_or(GpsError::MissingFields)?

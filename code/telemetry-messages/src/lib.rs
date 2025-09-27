@@ -81,13 +81,6 @@ impl LogMessage for AltimeterMessage {
 
 /* ------------------------------- Gps Message ------------------------------ */
 
-#[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Timestamp {
-    pub hour:   u8,
-    pub minute: u8,
-    pub second: u8,
-}
-
 #[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, PartialEq)]
 pub struct GpsCoordinates {
     /// Latitude in degrees.
@@ -99,7 +92,7 @@ pub struct GpsCoordinates {
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct GpsMessage {
     /// Timestamp
-    pub fix_time: Timestamp,
+    pub fix_time: NaiveTimeWrapper,
     /// Type of GPS Fix
     pub fix_type: FixTypeWrapper,
     /// Gps Coordinates

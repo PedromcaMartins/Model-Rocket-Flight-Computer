@@ -8,13 +8,14 @@ pub struct FixTypeWrapper(FixType);
 
 impl FixTypeWrapper {
     #[must_use]
-    pub const fn new(fix_type: FixType) -> Self {
-        Self(fix_type)
-    }
-
-    #[must_use]
     pub const fn into_inner(self) -> FixType {
         self.0
+    }
+}
+
+impl From<FixType> for FixTypeWrapper {
+    fn from(value: FixType) -> Self {
+        Self(value)
     }
 }
 
