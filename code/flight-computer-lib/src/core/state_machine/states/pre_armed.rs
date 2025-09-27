@@ -50,7 +50,6 @@ where
 
     pub async fn wait_arm(mut self) -> FlightStateMachine<WS, D, M, Armed> {
         self.await_arm_button().await;
-        info!("Flight Computer Armed");
 
         let launchpad_altitude = self.latest_altitude_signal.wait().await;
         info!("Launchpad Altitude: {} m", launchpad_altitude.get::<meter>());

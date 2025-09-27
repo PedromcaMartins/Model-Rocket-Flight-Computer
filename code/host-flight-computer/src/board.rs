@@ -72,6 +72,7 @@ impl SimBoard {
             alt_tx,
             gps_tx,
             imu_tx,
+            button_tx.clone(),
 
             simulator_config,
         );

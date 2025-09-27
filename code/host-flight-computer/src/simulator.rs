@@ -27,6 +27,9 @@ pub struct Simulator {
     gps_tx: mpsc::Sender<GpsMessage>,
     imu_tx: mpsc::Sender<ImuMessage>,
 
+    // scripted_events
+    arm_button_tx: watch::Sender<bool>,
+
     config: SimulatorConfig,
 }
 
@@ -36,6 +39,7 @@ impl Simulator {
         alt_tx: mpsc::Sender<AltimeterMessage>,
         gps_tx: mpsc::Sender<GpsMessage>,
         imu_tx: mpsc::Sender<ImuMessage>,
+        arm_button_tx: watch::Sender<bool>,
         config: SimulatorConfig,
     ) -> Self {
         Self{
@@ -46,6 +50,7 @@ impl Simulator {
             alt_tx,
             gps_tx,
             imu_tx,
+            arm_button_tx,
             config,
         }
     }
@@ -67,6 +72,7 @@ impl Simulator {
         ));
         tokio::spawn(Self::scripted_events(
             self.config.scripted_events, 
+            self.arm_button_tx,
             self.physics.clone()
         ));
     }
@@ -143,10 +149,24 @@ impl Simulator {
 
     async fn scripted_events(
         scripted_events: ScriptedEvents,
+        arm_button_tx: watch::Sender<bool>,
         physics: Arc<Mutex<PhysicsSimulator>>,
     ) {
         let start_time = Instant::now();
 
+        // Auto arm button press
+        if let Some(press_time) = scripted_events.arm_button_press_time {
+            tracing::debug!("Waiting {:.3} seconds to auto press arm button", press_time.as_secs_f32());
+            sleep_until(start_time + press_time).await;
+
+            tracing::info!("Auto arm button press event triggered");
+            arm_button_tx.send(true).expect("Failed to send arm button press signal");
+            // Simulate button release after short delay
+            sleep(Duration::from_secs(1)).await;
+            arm_button_tx.send(false).expect("Failed to send arm button release signal");
+        }
+
+        // Auto ignition
         if let Some(ignition_time) = scripted_events.auto_motor_ignition {
             tracing::debug!("Waiting {:.3} seconds to auto ignite motor", ignition_time.as_secs_f32());
             sleep_until(start_time + ignition_time).await;

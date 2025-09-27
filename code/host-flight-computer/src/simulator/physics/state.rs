@@ -1,13 +1,18 @@
 use chrono::Local;
 use telemetry_messages::{nalgebra::Quaternion, nmea::sentences::FixType, Acceleration, AltimeterMessage, Altitude, Angle, AngularVelocity, EulerAngles, GpsCoordinates, GpsMessage, ImuMessage, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Vector3, Velocity};
-use uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::radian_per_second, magnetic_flux_density::tesla, pressure::pascal, thermodynamic_temperature::degree_celsius};
+use uom::si::{f32::Time, pressure::pascal, thermodynamic_temperature::degree_celsius, time::microsecond};
 
 #[derive(Copy, Clone)]
 pub struct PhysicsState {
+    pub timestamp: Time,
     pub altitude: Altitude,
     pub velocity: Velocity,
     pub acceleration: Acceleration,
     pub coordinates: GpsCoordinates,
+
+    pub motor_ignited_ts: Option<Time>,
+    pub recovery_deployed_ts: Option<Time>,
+    pub landed: bool,
 }
 
 impl From<PhysicsState> for AltimeterMessage {
@@ -16,17 +21,17 @@ impl From<PhysicsState> for AltimeterMessage {
             altitude: value.altitude,
             pressure: Pressure::new::<pascal>(101325.0), // sea level standard
             temperature: ThermodynamicTemperature::new::<degree_celsius>(20.0),
-            timestamp: embassy_time::Instant::now().as_micros(),
+            timestamp: value.timestamp.get::<microsecond>() as u64,
         }
     }
 }
 
 impl From<PhysicsState> for ImuMessage {
     fn from(value: PhysicsState) -> Self {
-        let angle = Angle::new::<degree>(0.0);
-        let gyro = AngularVelocity::new::<radian_per_second>(0.0);
-        let mag = MagneticFluxDensity::new::<tesla>(0.0);
-        let accel = Acceleration::new::<meter_per_second_squared>(0.0);
+        let angle = Angle::default();
+        let gyro = AngularVelocity::default();
+        let mag = MagneticFluxDensity::default();
+        let accel = Acceleration::default();
 
         ImuMessage { // TODO
             euler_angles: EulerAngles { roll: angle, pitch: angle, yaw: angle },
@@ -37,7 +42,7 @@ impl From<PhysicsState> for ImuMessage {
             gyro: Vector3::new(gyro, gyro, gyro),
             mag: Vector3::new(mag, mag, mag),
             temperature: ThermodynamicTemperature::new::<degree_celsius>(20.0),
-            timestamp: embassy_time::Instant::now().as_micros(),
+            timestamp: value.timestamp.get::<microsecond>() as u64,
         }
     }
 }
@@ -50,7 +55,7 @@ impl From<PhysicsState> for GpsMessage {
             coordinates: value.coordinates,
             altitude: value.altitude,
             num_of_fix_satellites: 12,
-            timestamp: embassy_time::Instant::now().as_micros(),
+            timestamp: value.timestamp.get::<microsecond>() as u64,
         }
     }
 }
