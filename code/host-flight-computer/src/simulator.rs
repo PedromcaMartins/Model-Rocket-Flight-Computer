@@ -87,13 +87,13 @@ impl Simulator {
         physics: Arc<Mutex<PhysicsSimulator>>
     ) {
         let time_step = config.time_step_period.get::<second>();
+        let mut interval = tokio::time::interval(Duration::from_secs_f32(time_step * config.time_acceleration_factor));
 
         loop {
-            sleep(Duration::from_secs_f32(time_step)).await;
+            interval.tick().await;
 
             let mut physics = physics.lock().await;
             physics.advance_simulation();
-            tracing::debug!("Physics simulation advanced by {:?}", time_step);
         }
     }
 

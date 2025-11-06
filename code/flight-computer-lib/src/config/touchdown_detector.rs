@@ -17,9 +17,10 @@ impl TouchdownDetectorConfig {
 impl Default for TouchdownDetectorConfig {
     fn default() -> Self {
         Self {
+            // TODO: acceleration needs to be 0, along with vel + min altitude above launchpad would be better :D
             touchdown_stability_threshold: Altitude::new::<meter>(1.0),
             touchdown_velocity_threshold: Velocity::new::<meter_per_second>(0.5),
-            detector_tick_period: Duration::from_millis(100),
+            detector_tick_period: Duration::from_hz(1),
         }
     }
 }

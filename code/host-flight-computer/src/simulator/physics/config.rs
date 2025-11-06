@@ -4,6 +4,8 @@ use uom::si::{acceleration::meter_per_second_squared, f32::{Force, Mass, Time}, 
 #[derive(Copy, Clone)]
 pub struct PhysicsConfig {
     pub time_step_period: Time,
+    // how much faster than real time the simulation should run
+    pub time_acceleration_factor: f32,
     pub gravity: Acceleration,
     pub mass: Mass,
 
@@ -23,6 +25,7 @@ impl Default for PhysicsConfig {
     fn default() -> Self {
         Self {
             time_step_period: Time::new::<millisecond>(1.0),
+            time_acceleration_factor: 1.0,
             gravity: Acceleration::new::<meter_per_second_squared>(9.81),
             mass: Mass::new::<gram>(232.0),
 

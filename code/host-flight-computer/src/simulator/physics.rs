@@ -79,6 +79,7 @@ impl PhysicsSimulator {
         // --- position integration ---
         s.altitude += s.velocity * dt;
         if s.altitude <= config.landing_altitude {
+            tracing::info!("Touchdown at t={}", s.timestamp.get::<second>());
             s.landed = true;
         }
     }

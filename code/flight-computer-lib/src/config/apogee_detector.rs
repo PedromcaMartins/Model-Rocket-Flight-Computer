@@ -17,9 +17,9 @@ impl ApogeeDetectorConfig {
 impl Default for ApogeeDetectorConfig {
     fn default() -> Self {
         Self {
-            max_descent_velocity: Velocity::new::<meter_per_second>(2.0),
-            min_apogee_altitude_above_launchpad: Altitude::new::<meter>(5.0),
-            detector_tick_period: Duration::from_millis(100),
+            max_descent_velocity: Velocity::new::<meter_per_second>(-1.0),
+            min_apogee_altitude_above_launchpad: Altitude::new::<meter>(10.0),
+            detector_tick_period: Duration::from_hz(2),
         }
     }
 }

@@ -3,14 +3,15 @@
 - [X] Rename quantities used in telemetry messages e.g. `pub type Altitude = Length`
 - [X] Melhorar `FileSystemEvent`
 - [X] Deployment System
-- [X] ApogeeDetector
+- [ ] ApogeeDetector
     - [X] Add Configuration to models
     - [ ] Testing in model
-- [X] Landing detector in FSM
+- [ ] Landing detector in FSM
     - [X] Add Configuration to models
     - [ ] Testing in model
 - [X] Tracing with sync and async
     - [ ] Testing for tracing structs
+- [ ] Add state to flight computer! 
 - [ ] Document and reduce use of Panics in functions
 
 # Host Flight Computer lib
@@ -35,6 +36,7 @@
 
 # Ground Station
 
+- [ ] add backend binary for serial port connection (not just usb) with the embedded target!
 - [ ] Develop a TUI front-end 
     - [ ] Display PostCard Messages
     - [ ] Display log messages
