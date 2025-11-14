@@ -1,3 +1,6 @@
+- [ ] Change type of Ping Message to `PingRequest` and `PingResponse` in telemetry and the rest of the libs!
+- [ ] Use `xtask` crate to manage build and run tasks
+
 # Flight Computer lib
 
 - [X] Rename quantities used in telemetry messages e.g. `pub type Altitude = Length`
@@ -13,6 +16,7 @@
     - [ ] Testing for tracing structs
 - [ ] Add state to flight computer! 
 - [ ] Document and reduce use of Panics in functions
+- [ ] postcard task that receives a server and executes in loop the postcard server run method!
 
 # Host Flight Computer lib
 
@@ -33,6 +37,7 @@
     - [ ] Automatic triggers (Scripted Events)
     - [ ] Fault Engine + config
 - [ ] Add [BlockDevice](https://docs.rs/embedded-sdmmc/0.9.0/embedded_sdmmc/trait.BlockDevice.html) implementation for filesystem - then mount the filesystem as FATFS - what is tested using this?... 
+- [ ] Add [Sguaba](https://docs.rs/sguaba/latest/sguaba/index.html) for reference frames
 
 # Ground Station
 
@@ -46,3 +51,5 @@
         - [ ] tweak simulation options
         - [ ] send manual events
 - [ ] Implement Trace Parser that can generate somewhat flame-graphs
+- [ ] Store all data locally on disk/ memory
+- [ ] Use REST API with JSON serialization for communication between backend and frontend

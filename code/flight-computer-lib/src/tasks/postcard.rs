@@ -17,6 +17,6 @@ impl SpawnContext for Context {
 // TODO: implement postcard server with receiving requests from flight computer (instead of current impl)
 
 pub fn ping_handler(_context: &mut Context, _header: VarHeader, rqst: u32) -> u32 {
-    info!("ping");
+    info!("ping: {}", rqst);
     rqst
 }

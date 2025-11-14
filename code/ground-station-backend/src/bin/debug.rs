@@ -5,7 +5,7 @@ use ground_station_backend::PostcardClient;
 
 #[tokio::main]
 pub async fn main() {
-    let client = PostcardClient::new_raw_nusb();
+    let client = PostcardClient::try_new_raw_nusb().expect("Failed to create PostcardClient");
 
     let mut subscription_altimeter = client.subscription_altimeter().await
         .expect("Failed to subscribe to altimeter topic");

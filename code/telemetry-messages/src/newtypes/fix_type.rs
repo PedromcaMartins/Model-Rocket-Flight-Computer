@@ -1,3 +1,5 @@
+use core::ops::Deref;
+
 use nmea::sentences::FixType;
 
 use crate::{Serialize, Deserialize, Schema};
@@ -6,10 +8,11 @@ use crate::schema;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct FixTypeWrapper(FixType);
 
-impl FixTypeWrapper {
-    #[must_use]
-    pub const fn into_inner(self) -> FixType {
-        self.0
+impl Deref for FixTypeWrapper {
+    type Target = FixType;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -66,6 +69,6 @@ impl Schema for FixTypeWrapper {
 #[test]
 fn fix_type_wrapping() {
     let x = FixType::DGps;
-    let y = FixTypeWrapper::new(x.clone());
-    assert_eq!(x, y.into_inner());
+    let y = FixTypeWrapper::from(x);
+    assert_eq!(x, *y);
 }

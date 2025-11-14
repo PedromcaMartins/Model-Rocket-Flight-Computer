@@ -1,3 +1,5 @@
+use core::ops::Deref;
+
 use chrono::NaiveTime;
 
 use crate::{Serialize, Deserialize, Schema};
@@ -6,10 +8,11 @@ use crate::schema;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct NaiveTimeWrapper(NaiveTime);
 
-impl NaiveTimeWrapper {
-    #[must_use]
-    pub const fn into_inner(self) -> NaiveTime {
-        self.0
+impl Deref for NaiveTimeWrapper {
+    type Target = NaiveTime;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -38,7 +41,6 @@ impl Schema for NaiveTimeWrapper {
 #[test]
 fn fix_type_wrapping() {
     let time = NaiveTime::from_hms_micro_opt(12, 34, 56, 789012).unwrap();
-    let wrapped = NaiveTimeWrapper::new(time);
-    let unwrapped = wrapped.into_inner();
-    assert_eq!(time, unwrapped);
+    let wrapped = NaiveTimeWrapper::from(time);
+    assert_eq!(time, *wrapped);
 }

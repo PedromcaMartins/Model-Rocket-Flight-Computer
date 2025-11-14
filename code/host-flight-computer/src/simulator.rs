@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use telemetry_messages::{AltimeterMessage, GpsMessage, ImuMessage};
-use tokio::{select, sync::{mpsc, watch, Mutex}, time::{sleep, sleep_until, Instant, Duration}};
+use tokio::{select, sync::{Mutex, mpsc, watch}, time::{Duration, Instant, sleep, sleep_until}};
 use uom::si::time::second;
 
 use crate::simulator::{physics::{config::PhysicsConfig, PhysicsSimulator}, scripted_events::ScriptedEvents};
@@ -55,26 +55,30 @@ impl Simulator {
         }
     }
 
-    pub fn start(self) {
-        tokio::spawn(Self::physics_loop(
-            self.config.physics, 
-            self.physics.clone()
-        ));
-        tokio::spawn(Self::sensor_loop(
-            self.alt_tx, 
-            self.gps_tx, 
-            self.imu_tx, 
-            self.physics.clone()
-        ));
-        tokio::spawn(Self::actuator_loop(
-            self.deployment_rx, 
-            self.physics.clone()
-        ));
+    pub async fn run(self) {
         tokio::spawn(Self::scripted_events(
             self.config.scripted_events, 
             self.arm_button_tx,
             self.physics.clone()
         ));
+
+        tokio::spawn(Self::actuator_loop(
+            self.deployment_rx, 
+            self.physics.clone()
+        ));
+
+        select! {
+            _ = tokio::spawn(Self::physics_loop(
+                self.config.physics, 
+                self.physics.clone()
+            )) => tracing::error!("Physics loop ended unexpectedly"),
+            _ = tokio::spawn(Self::sensor_loop(
+                self.alt_tx, 
+                self.gps_tx, 
+                self.imu_tx, 
+                self.physics.clone()
+            )) => tracing::error!("Sensor loop ended unexpectedly"),
+        }
     }
 
     // pub async fn ignite_engine(&self) {
@@ -134,7 +138,11 @@ impl Simulator {
         loop {
             select! {
                 res = deployment_rx.changed() => {
-                    res.expect("deployment channel closed");
+                    if res.is_err() {
+                        tracing::error!("Parachute deployment channel closed");
+                        return;
+                    }
+
                     let deployed = *deployment_rx.borrow_and_update();
                     tracing::info!("Parachute deployment event triggered: {}", if deployed { "deployed" } else { "not deployed" });
 

@@ -13,8 +13,8 @@ pub use serde::{Deserialize, Serialize};
 pub use nalgebra::Vector3;
 pub use uom::si::f32::{Acceleration, Angle, AngularVelocity, Length, MagneticFluxDensity, Pressure, Time, ThermodynamicTemperature, Velocity};
 
-mod wrapper_types;
-pub use wrapper_types::*;
+mod newtypes;
+pub use newtypes::*;
 
 mod log_data_type;
 pub use log_data_type::*;

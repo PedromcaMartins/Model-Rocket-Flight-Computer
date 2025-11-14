@@ -4,14 +4,19 @@ version = "0.0.0"
 edition = "2024"
 
 [[bin]]
-name = "logging"
-path = "src/bin/logging.rs"
+name = "debug"
+path = "src/bin/debug.rs"
+
+[[bin]]
+name = "serial"
+path = "src/bin/serial.rs"
 
 [dependencies]
 telemetry-messages = { version = "*", path = "../telemetry-messages" }
 
 postcard-rpc = { version = "0.11", features = ["use-std", "raw-nusb"] }
 tokio = { version = "1.37.0", features = ["rt-multi-thread", "macros", "time"] }
+rocket = { version = "0.5.1", features = ["json"] }
 
 [dev-dependencies]
 test-log = { version = "0.2" }
