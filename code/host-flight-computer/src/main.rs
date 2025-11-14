@@ -86,8 +86,6 @@ async fn main() {
 
     let postcard_server_task = tokio::spawn(server_task(postcard_server));
 
-    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-
     let ground_station_backend_task = tokio::spawn(
         ground_station_backend::start_api(
             postcard_client,

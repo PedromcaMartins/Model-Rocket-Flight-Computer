@@ -58,14 +58,14 @@ impl PostcardClient {
     }
 
     pub async fn subscription_altimeter(&self) -> Result<Subscription<AltimeterMessage>, PostcardError<Infallible>> {
-        self.client.subscribe_exclusive::<AltimeterTopic>(usize::MAX).await.map_err(PostcardError::from)
+        self.client.subscribe_exclusive::<AltimeterTopic>(u16::MAX.into()).await.map_err(PostcardError::from)
     }
 
     pub async fn subscription_imu(&self) -> Result<Subscription<ImuMessage>, PostcardError<Infallible>> {
-        self.client.subscribe_exclusive::<ImuTopic>(usize::MAX).await.map_err(PostcardError::from)
+        self.client.subscribe_exclusive::<ImuTopic>(u16::MAX.into()).await.map_err(PostcardError::from)
     }
 
     pub async fn subscription_gps(&self) -> Result<Subscription<GpsMessage>, PostcardError<Infallible>> {
-        self.client.subscribe_exclusive::<GpsTopic>(usize::MAX).await.map_err(PostcardError::from)
+        self.client.subscribe_exclusive::<GpsTopic>(u16::MAX.into()).await.map_err(PostcardError::from)
     }
 }
