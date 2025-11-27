@@ -26,7 +26,7 @@ endpoints! {
     omit_std = true;
     | EndpointTy                | RequestTy     | ResponseTy            | Path              |
     | ----------                | ---------     | ----------            | ----              |
-    | PingEndpoint              | u32           | u32                   | "ping"            |
+    | PingEndpoint              | PingRequest   | PingResponse          | "ping"            |
 }
 
 topics! {

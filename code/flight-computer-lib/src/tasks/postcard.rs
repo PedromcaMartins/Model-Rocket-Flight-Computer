@@ -1,5 +1,6 @@
 use defmt_or_log::info;
 use postcard_rpc::{header::VarHeader, server::SpawnContext};
+use telemetry_messages::{PingRequest, PingResponse};
 
 pub struct Context {
 }
@@ -16,7 +17,7 @@ impl SpawnContext for Context {
 
 // TODO: implement postcard server with receiving requests from flight computer (instead of current impl)
 
-pub fn ping_handler(_context: &mut Context, _header: VarHeader, rqst: u32) -> u32 {
-    info!("ping: {}", rqst);
-    rqst
+pub fn ping_handler(_context: &mut Context, _header: VarHeader, rqst: PingRequest) -> PingResponse {
+    info!("ping: {}", *rqst);
+    (*rqst).into()
 }

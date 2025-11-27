@@ -39,7 +39,7 @@ impl Deref for PingResponse {
 #[test]
 fn ping_wrapping() {
     let value: u32 = 42;
-    let request = PingRequest::from(value);
+    let request: PingRequest = value.into();
     let response = PingResponse::from(value);
     assert_eq!(value, *request);
     assert_eq!(value, *response);

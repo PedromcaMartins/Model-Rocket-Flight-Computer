@@ -5,6 +5,7 @@ use rocket::{
     serde::{json::{serde_json, Json}, Deserialize, Serialize},
     State, response::stream::{Event, EventStream}, tokio::select,
 };
+use telemetry_messages::{PingRequest, PingResponse};
 use tokio::{sync::Mutex, time::sleep};
 
 use crate::{postcard_client::PostcardClient};
@@ -49,11 +50,11 @@ fn routes() -> Vec<rocket::Route> {
 #[rocket::post("/ping", data = "<req>")]
 async fn ping(
     state: &State<SharedClient>,
-    req: Json<u32>,
-) -> Result<Json<u32>, String> {
+    req: Json<PingRequest>,
+) -> Result<Json<PingResponse>, String> {
     let client = state.inner().clone();
     let id = req.0;
-    match client.lock().await.ping(id).await {
+    match client.lock().await.ping(id.into()).await {
         Ok(resp) => Ok(Json(resp)),
         Err(e) => Err(format!("Ping failed: {e:?}")),
     }

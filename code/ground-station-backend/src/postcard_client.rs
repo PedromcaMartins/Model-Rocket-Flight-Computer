@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 
 use postcard_rpc::{header::VarSeqKind, host_client::{HostClient, HostErr, SubscribeError, Subscription}, standard_icd::{WireError, ERROR_PATH}};
-use telemetry_messages::{AltimeterMessage, AltimeterTopic, GpsMessage, GpsTopic, ImuMessage, ImuTopic, PingEndpoint};
+use telemetry_messages::{AltimeterMessage, AltimeterTopic, GpsMessage, GpsTopic, ImuMessage, ImuTopic, PingEndpoint, PingRequest, PingResponse};
 
 
 pub struct PostcardClient {
@@ -53,8 +53,8 @@ impl PostcardClient {
         self.client.wait_closed().await;
     }
 
-    pub async fn ping(&self, id: u32) -> Result<u32, PostcardError<Infallible>> {
-        self.client.send_resp::<PingEndpoint>(&id).await.map_err(PostcardError::from)
+    pub async fn ping(&self, id: PingRequest) -> Result<PingResponse, PostcardError<Infallible>> {
+        self.client.send_resp::<PingEndpoint>(&id.into()).await.map_err(PostcardError::from)
     }
 
     pub async fn subscription_altimeter(&self) -> Result<Subscription<AltimeterMessage>, PostcardError<Infallible>> {

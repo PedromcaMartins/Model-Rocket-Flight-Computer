@@ -26,7 +26,7 @@ pub async fn main() {
             for i in 0..10 {
                 ticker.tick().await;
                 print!("Pinging with {i}... ");
-                let res = client.ping(i).await.unwrap();
+                let res = *client.ping(i.into()).await.unwrap();
                 println!("got {res}!");
                 assert_eq!(res, i);
             }

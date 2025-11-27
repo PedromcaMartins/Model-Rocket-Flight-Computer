@@ -18,7 +18,7 @@ pub async fn ping(client: &PostcardClient) {
     for i in 0..10 {
         ticker.tick().await;
         dbg!("Pinging with {i}... ");
-        let res = client.ping(i).await.unwrap();
+        let res = *client.ping(i.into()).await.unwrap();
         dbg!("got {res}!");
         assert_eq!(res, i);
     }
