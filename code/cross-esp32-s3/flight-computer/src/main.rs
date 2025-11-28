@@ -10,13 +10,13 @@
 
 mod postcard_server;
 
-use crate::{postcard_server::{init_postcard_server, server_task, AppTx}};
+use crate::{postcard_server::{init_postcard_server, AppTx}};
 use board::{ArmButtonPeripheral, Bmp280Peripheral, Bno055Peripheral, Board, DeploymentPeripheral, SdCardDetectPeripheral, SdCardInsertedLedPeripheral, SdCardPeripheral, UbloxNeo7mPeripheral};
 
 use bmp280_ehal::BMP280;
 use bno055::Bno055;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::{self, Channel}, signal::Signal, watch::{self, Watch}};
-use flight_computer_lib::{config::{ApogeeDetectorConfig, TouchdownDetectorConfig}, impls::{deployment_switch::DeploymentSwitch, sd_card::SdCardFatFS, bmp280::Bmp280Device, bno055::Bno055Device, gps::GpsDevice}};
+use flight_computer_lib::{config::{ApogeeDetectorConfig, DataAcquisitionConfig, FlightComputerConfig, LogFileSystemConfig, TouchdownDetectorConfig}, impls::{bmp280::Bmp280Device, bno055::Bno055Device, deployment_switch::DeploymentSwitch, gps::GpsDevice, sd_card::SdCardFatFS}};
 use postcard_rpc::server::Sender as PostcardSender;
 use static_cell::ConstStaticCell;
 use telemetry_messages::{AltimeterMessage, Altitude, FlightState, GpsMessage, ImuMessage};
@@ -62,6 +62,8 @@ async fn main(spawner: Spawner) {
         deployment,
     } = Board::init();
 
+    let _config = FlightComputerConfig::default();
+
     let server = init_postcard_server(spawner, postcard_server_usb_driver).await;
 
     let latest_altitude_signal = LATEST_ALTITUDE_SIGNAL.take();
@@ -97,7 +99,12 @@ async fn imu_task(
     let bno055 = Bno055::new(bno055);
     let bno055 = Bno055Device::init(bno055).await.unwrap();
 
-    flight_computer_lib::tasks::imu_task(bno055, sd_card_sender, postcard_sender).await
+    flight_computer_lib::tasks::imu_task(
+        bno055, 
+        DataAcquisitionConfig::default(),
+        sd_card_sender, 
+        postcard_sender
+    ).await
 }
 
 #[embassy_executor::task]
@@ -110,7 +117,13 @@ async fn altimeter_task(
     let bmp280 = BMP280::new(bmp280).unwrap();
     let bmp280 = Bmp280Device::init(bmp280).unwrap();
 
-    flight_computer_lib::tasks::altimeter_task(bmp280, latest_altitude_signal, sd_card_sender, postcard_sender).await
+    flight_computer_lib::tasks::altimeter_task(
+        bmp280, 
+        DataAcquisitionConfig::default(),
+        latest_altitude_signal, 
+        sd_card_sender, 
+        postcard_sender
+    ).await
 }
 
 #[embassy_executor::task]
@@ -121,7 +134,12 @@ async fn gps_task(
 ) {
     let gps = GpsDevice::init(gps).unwrap();
 
-    flight_computer_lib::tasks::gps_task(gps, sd_card_sender, postcard_sender).await
+    flight_computer_lib::tasks::gps_task(
+        gps, 
+        DataAcquisitionConfig::default(),
+        sd_card_sender, 
+        postcard_sender
+    ).await
 }
 
 #[embassy_executor::task]
@@ -158,8 +176,14 @@ async fn sd_card_task(
         sd_card, 
         sd_card_detect,
         sd_card_status_led,
+        LogFileSystemConfig::default(),
         altimeter_receiver, 
         gps_receiver, 
         imu_receiver
     ).await
+}
+
+#[embassy_executor::task]
+async fn postcard_server_task(mut server: AppServer) -> ! {
+    flight_computer_lib::tasks::postcard_server_task(server).await
 }

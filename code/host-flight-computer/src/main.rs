@@ -1,7 +1,7 @@
-use flight_computer_lib::{config::FlightComputerConfig, tasks::{altimeter_task, finite_state_machine_task, gps_task, imu_task, sd_card_task, ALTIMETER_SD_CARD_CHANNEL, FLIGHT_STATE_WATCH, GPS_SD_CARD_CHANNEL, IMU_SD_CARD_CHANNEL, LATEST_ALTITUDE_SIGNAL}};
+use flight_computer_lib::{config::FlightComputerConfig, tasks::{ALTIMETER_SD_CARD_CHANNEL, FLIGHT_STATE_WATCH, GPS_SD_CARD_CHANNEL, IMU_SD_CARD_CHANNEL, LATEST_ALTITUDE_SIGNAL, altimeter_task, finite_state_machine_task, gps_task, imu_task, postcard::postcard_server_task, sd_card_task}};
 use tokio::select;
 
-use crate::{board::{SimBoard, SimBoardConfig}, logging::{Logging, LoggingConfig}, sim_devices::postcard_server::server_task, simulator::SimulatorConfig};
+use crate::{board::{SimBoard, SimBoardConfig}, logging::{Logging, LoggingConfig}, simulator::SimulatorConfig};
 
 mod board;
 mod logging;
@@ -84,7 +84,7 @@ async fn main() {
         IMU_SD_CARD_CHANNEL.receiver()
     ));
 
-    let postcard_server_task = tokio::spawn(server_task(postcard_server));
+    let postcard_server_task = tokio::spawn(postcard_server_task(postcard_server));
 
     let ground_station_backend_task = tokio::spawn(
         ground_station_backend::start_api(

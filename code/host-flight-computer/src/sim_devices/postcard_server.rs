@@ -62,13 +62,3 @@ pub fn postcard_local_setup(
 
     (server, client.into())
 }
-
-/// This handles the server management
-pub async fn server_task(mut server: LocalServer) -> ! {
-    loop {
-        // If the host disconnects, we'll return an error here.
-        // If this happens, just wait until the host reconnects
-        let _ = server.run().await;
-        tracing::debug!("Postcard server disconnected, waiting for reconnect...");
-    }
-}

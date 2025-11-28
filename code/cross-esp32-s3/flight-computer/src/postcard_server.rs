@@ -67,16 +67,6 @@ pub async fn init_postcard_server(spawner: Spawner, driver: PostcardServerUsbDri
     )
 }
 
-/// This handles the server management
-#[embassy_executor::task]
-pub async fn server_task(mut server: AppServer) {
-    loop {
-        // If the host disconnects, we'll return an error here.
-        // If this happens, just wait until the host reconnects
-        let _ = server.run().await;
-    }
-}
-
 /// This handles the low level USB management
 #[embassy_executor::task]
 pub async fn usb_task(mut usb: UsbDevice<'static, PostcardServerUsbDriver>) {
