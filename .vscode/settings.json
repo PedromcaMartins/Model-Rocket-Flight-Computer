@@ -1,8 +1,11 @@
 {
     "rust-analyzer.linkedProjects": [
         "code/Cargo.toml",
-        "code/cross-esp32-s3/Cargo.toml",
-        "code/cross-nucleo-f413zh/Cargo.toml",
+        "code/flight-computer/Cargo.toml",
+        "code/ground-station-backend/Cargo.toml",
+        "code/proto/Cargo.toml",
+        "code/simulator/Cargo.toml",
+        "code/xtask/Cargo.toml",
     ],
     "rust-analyzer.checkOnSave": false,
 }

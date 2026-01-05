@@ -1,0 +1,22 @@
+use crate::interfaces::SensorDevice;
+use proto::AltimeterMessage;
+use tokio::sync::mpsc;
+
+pub struct SimAltimeter {
+    rx: mpsc::Receiver<AltimeterMessage>,
+}
+
+impl SimAltimeter {
+    pub fn new(rx: mpsc::Receiver<AltimeterMessage>) -> Self {
+        Self { rx }
+    }
+}
+
+impl SensorDevice for SimAltimeter {
+    type DataMessage = AltimeterMessage;
+    type DeviceError = ();
+
+    async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
+        Ok(self.rx.recv().await.expect("Altimeter channel closed"))
+    }
+}

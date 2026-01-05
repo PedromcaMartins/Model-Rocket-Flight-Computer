@@ -12,7 +12,7 @@ name = "serial"
 path = "src/bin/serial.rs"
 
 [dependencies]
-telemetry-messages = { version = "*", path = "../telemetry-messages" }
+proto = { version = "*", path = "../proto" }
 
 postcard-rpc = { version = "0.11", features = ["use-std", "raw-nusb"] }
 tokio = { version = "1.37.0", features = ["rt-multi-thread", "macros", "time"] }

@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 
 use postcard_rpc::{header::VarSeqKind, host_client::{HostClient, HostErr, SubscribeError, Subscription}, standard_icd::{WireError, ERROR_PATH}};
-use telemetry_messages::{AltimeterMessage, AltimeterTopic, GpsMessage, GpsTopic, ImuMessage, ImuTopic, PingEndpoint, PingRequest, PingResponse};
+use proto::{AltimeterMessage, AltimeterTopic, GpsMessage, GpsTopic, ImuMessage, ImuTopic, PingEndpoint, PingRequest, PingResponse};
 
 
 pub struct PostcardClient {

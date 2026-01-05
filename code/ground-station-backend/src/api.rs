@@ -5,7 +5,7 @@ use rocket::{
     serde::{json::{serde_json, Json}, Deserialize, Serialize},
     State, response::stream::{Event, EventStream}, tokio::select,
 };
-use telemetry_messages::{PingRequest, PingResponse};
+use proto::{PingRequest, PingResponse};
 use tokio::{sync::Mutex, time::sleep};
 
 use crate::{postcard_client::PostcardClient};

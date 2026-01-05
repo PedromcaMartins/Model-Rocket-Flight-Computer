@@ -1046,7 +1046,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "flight-computer-lib"
+name = "flight-computer"
 version = "0.0.0"
 dependencies = [
  "async-std",
@@ -1072,12 +1072,12 @@ dependencies = [
  "log",
  "nmea",
  "postcard-rpc",
+ "proto",
  "rstest",
  "serde-json-core",
  "serial_test",
  "static_cell",
  "switch-hal",
- "telemetry-messages",
  "test-log",
  "thiserror 2.0.12",
 ]
@@ -1372,9 +1372,9 @@ version = "0.0.0"
 dependencies = [
  "futures",
  "postcard-rpc",
+ "proto",
  "rocket",
  "rstest",
- "telemetry-messages",
  "test-log",
  "tokio",
 ]
@@ -1503,46 +1503,6 @@ name = "hermit-abi"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
-
-[[package]]
-name = "host-flight-computer"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "console-subscriber",
- "critical-section",
- "embassy-time",
- "env_logger",
- "flight-computer-lib",
- "ground-station-backend",
- "log",
- "nalgebra 0.34.0",
- "postcard",
- "postcard-rpc",
- "postcard-schema",
- "switch-hal",
- "telemetry-messages",
- "tokio",
- "tracing",
- "tracing-appender",
- "tracing-flame",
- "tracing-log",
- "tracing-subscriber",
- "uom",
-]
-
-[[package]]
-name = "host-target-esp32s3-tests"
-version = "0.0.0"
-dependencies = [
- "futures",
- "ground-station-backend",
- "postcard-rpc",
- "rstest",
- "telemetry-messages",
- "test-log",
- "tokio",
-]
 
 [[package]]
 name = "http"
@@ -2574,6 +2534,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "proto"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "defmt 1.0.1",
+ "nalgebra 0.33.2",
+ "nmea",
+ "postcard-rpc",
+ "postcard-schema",
+ "serde",
+ "uom",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3050,6 +3024,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "simulator"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "console-subscriber",
+ "critical-section",
+ "embassy-time",
+ "env_logger",
+ "flight-computer",
+ "ground-station-backend",
+ "log",
+ "nalgebra 0.34.0",
+ "postcard",
+ "postcard-rpc",
+ "postcard-schema",
+ "proto",
+ "switch-hal",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-flame",
+ "tracing-log",
+ "tracing-subscriber",
+ "uom",
+]
+
+[[package]]
 name = "slab"
 version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3164,20 +3165,6 @@ name = "sync_wrapper"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bf256ce5efdfa370213c1dabab5935a12e49f2c58d15e9eac2870d3b4f27263"
-
-[[package]]
-name = "telemetry-messages"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "defmt 1.0.1",
- "nalgebra 0.33.2",
- "nmea",
- "postcard-rpc",
- "postcard-schema",
- "serde",
- "uom",
-]
 
 [[package]]
 name = "tempfile"
