@@ -1,41 +1,32 @@
 use embassy_futures::select::{select4, Either4};
-use embassy_sync::channel::Receiver;
-use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_time::Ticker;
-use switch_hal::{InputSwitch, OutputSwitch};
-use proto::{AltimeterMessage, GpsMessage, ImuMessage};
+use switch_hal::OutputSwitch;
 use defmt_or_log::{debug, error, info};
 
-use crate::{config::LogFileSystemConfig, interfaces::FileSystem, core::{storage::log_filesystem::LogFileSystem, trace::{TraceAsync, TraceSync}}};
+use crate::{config::LogFileSystemConfig, core::{storage::log_filesystem::LogFileSystem, trace::{TraceAsync, TraceSync}}, interfaces::FileSystem, sync::{ALTIMETER_SD_CARD_CHANNEL, GPS_SD_CARD_CHANNEL, IMU_SD_CARD_CHANNEL}};
 
 #[inline]
 pub async fn sd_card_task<
-    FS, M, I, O,
-    const DEPTH_ALTIMETER_DATA: usize,
-    const DEPTH_GPS_DATA: usize,
-    const DEPTH_IMU_DATA: usize,
+    FS, O,
 > (
     sd_card: FS,
-    _sd_card_detect: I,
     mut sd_card_status_led: O,
-    config: LogFileSystemConfig,
-    altimeter_receiver: Receiver<'static, M, AltimeterMessage, DEPTH_ALTIMETER_DATA>,
-    gps_receiver: Receiver<'static, M, GpsMessage, DEPTH_GPS_DATA>,
-    imu_receiver: Receiver<'static, M, ImuMessage, DEPTH_IMU_DATA>,
 ) -> !
 where
     FS: FileSystem,
-    M: RawMutex + 'static,
-    I: InputSwitch,
     O: OutputSwitch,
 {
+    let altimeter_receiver = ALTIMETER_SD_CARD_CHANNEL.receiver();
+    let gps_receiver = GPS_SD_CARD_CHANNEL.receiver();
+    let imu_receiver = IMU_SD_CARD_CHANNEL.receiver();
+
     let trace = TraceSync::start("sd_card_task_init");
 
     let mut log_filesystem = LogFileSystem::new(sd_card);
     let res = log_filesystem.create_unique_files();
     info!("SD Card: Created unique log files: {:?}", res);
 
-    let mut flush_files_ticker = Ticker::every(config.flush_files_ticker_period);
+    let mut flush_files_ticker = Ticker::every(LogFileSystemConfig::FLUSH_FILES_TICKER_PERIOD);
 
     drop(trace);
     loop {

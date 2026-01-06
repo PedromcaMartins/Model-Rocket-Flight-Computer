@@ -1,15 +1,13 @@
 use std::convert::Infallible;
 
 use switch_hal::WaitSwitch;
-use tokio::sync::watch;
 
-pub struct SimButton {
-    rx: watch::Receiver<bool>,
-}
-
+pub struct SimButton;
 impl SimButton {
-    pub fn new(rx: watch::Receiver<bool>) -> Self {
-        Self { rx }
+    const LATEST_DATA: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+
+    pub async fn activate_button() {
+        Self::LATEST_DATA.signal(());
     }
 }
 
@@ -18,11 +16,6 @@ impl WaitSwitch for SimButton {
 
     /// Wait for button press signal from simulator
     async fn wait_active(&mut self) -> Result<(), Self::Error> {
-        loop {
-            self.rx.changed().await.expect("Failed to wait for button state change: sender dropped");
-            if *self.rx.borrow_and_update() {
-                return Ok(());
-            }
-        }
+        Ok(Self::LATEST_DATA.wait().await)
     }
 }

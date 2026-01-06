@@ -1,32 +1,27 @@
 use core::num::Wrapping;
 
 use defmt_or_log::{debug, error, warn};
-use embassy_sync::{blocking_mutex::raw::RawMutex, channel::Sender, signal::Signal};
 use embassy_time::Ticker;
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
-use proto::{AltimeterMessage, AltimeterTopic, Altitude};
+use proto::{AltimeterMessage, AltimeterTopic};
 
-use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice, core::trace::TraceAsync};
+use crate::{config::DataAcquisitionConfig, core::trace::TraceAsync, interfaces::SensorDevice, sync::{ALTIMETER_SD_CARD_CHANNEL, LATEST_ALTITUDE_SIGNAL}};
 
 #[inline]
 pub async fn altimeter_task<
-    S, M, Tx, 
-    const DEPTH_DATA: usize,
+    S, Tx, 
 > (
     mut altimeter: S,
-    config: DataAcquisitionConfig,
-    latest_altitude_signal: &'static Signal<M, Altitude>,
-    sd_card_sender: Sender<'static, M, AltimeterMessage, DEPTH_DATA>,
-    postcard_sender: PostcardSender<Tx>,
+    postcard_sender: &PostcardSender<Tx>,
 ) -> !
 where
     S: SensorDevice<DataMessage = AltimeterMessage>,
-    M: RawMutex + 'static,
     Tx: WireTx,
 {
+    let sd_card_sender = ALTIMETER_SD_CARD_CHANNEL.sender();
     let mut seq: Wrapping<u32> = Wrapping::default();
 
-    let mut sensor_ticker = Ticker::every(config.altimeter_ticker_period);
+    let mut sensor_ticker = Ticker::every(DataAcquisitionConfig::ALTIMETER_TICKER_PERIOD);
 
     loop {
         let mut trace = TraceAsync::start("altimeter_task_loop");
@@ -46,7 +41,7 @@ where
                     warn!("Altimeter: Failed to publish to Postcard");
                 }
 
-                latest_altitude_signal.signal(msg.altitude);
+                LATEST_ALTITUDE_SIGNAL.signal(msg.altitude);
 
                 if sd_card_sender.try_send(msg).is_err() {
                     error!("Altimeter: Failed to send to SD card");

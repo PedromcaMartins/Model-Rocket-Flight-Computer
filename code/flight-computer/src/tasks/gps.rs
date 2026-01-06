@@ -1,31 +1,27 @@
 use core::num::Wrapping;
 
-use embassy_sync::{blocking_mutex::raw::RawMutex, channel::Sender};
 use embassy_time::Ticker;
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use proto::{GpsMessage, GpsTopic};
 use defmt_or_log::{debug, error, warn};
 
-use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice, core::trace::TraceAsync};
+use crate::{config::DataAcquisitionConfig, core::trace::TraceAsync, interfaces::SensorDevice, sync::GPS_SD_CARD_CHANNEL};
 
 #[inline]
 pub async fn gps_task<
-    S, M, Tx,
-    const DEPTH_DATA: usize,
+    S, Tx,
 > (
     mut gps: S,
-    config: DataAcquisitionConfig,
-    sd_card_sender: Sender<'static, M, GpsMessage, DEPTH_DATA>,
-    postcard_sender: PostcardSender<Tx>,
+    postcard_sender: &PostcardSender<Tx>,
 ) -> !
 where
     S: SensorDevice<DataMessage = GpsMessage>,
-    M: RawMutex + 'static,
     Tx: WireTx,
 {
+    let sd_card_sender = GPS_SD_CARD_CHANNEL.sender();
     let mut seq: Wrapping<u32> = Wrapping::default();
 
-    let mut sensor_ticker = Ticker::every(config.gps_ticker_period);
+    let mut sensor_ticker = Ticker::every(DataAcquisitionConfig::GPS_TICKER_PERIOD);
 
     loop {
         let mut trace = TraceAsync::start("gps_task_loop");

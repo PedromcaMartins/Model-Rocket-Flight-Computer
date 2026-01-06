@@ -1,17 +1,15 @@
-use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_time::Timer;
 use switch_hal::WaitSwitch;
 use proto::uom::si::length::meter;
 use defmt_or_log::{error, info, Debug2Format};
 
-use crate::{core::state_machine::{detectors::ApogeeDetector, states::{Armed, RecoveryActivated}, FlightStateMachine}, interfaces::DeploymentSystem};
+use crate::{core::state_machine::{FlightStateMachine, detectors::ApogeeDetector, states::{Armed, RecoveryActivated}}, interfaces::DeploymentSystem};
 
-impl<WS, D, M> FlightStateMachine<WS, D, M, Armed>
+impl<WS, D> FlightStateMachine<WS, D, Armed>
 where
     WS: WaitSwitch + 'static,
     <WS as WaitSwitch>::Error: core::fmt::Debug,
     D: DeploymentSystem,
-    M: RawMutex + 'static
 {
     async fn await_deployment_system(&mut self) {
         loop {
@@ -28,11 +26,9 @@ where
         }
     }
 
-    pub async fn wait_activate_recovery(mut self) -> FlightStateMachine<WS, D, M, RecoveryActivated> {
+    pub async fn wait_activate_recovery(mut self) -> FlightStateMachine<WS, D, RecoveryActivated> {
         let altitude_above_launchpad = ApogeeDetector::new(
-            self.latest_altitude_signal,
             self.launchpad_altitude.expect("Launchpad altitude should have been set in Armed state"),
-            self.apogee_detector_config,
         ).await
         .await_apogee()
         .await;
@@ -41,6 +37,6 @@ where
 
         self.await_deployment_system().await;
 
-        self.transition_to(None)
+        self.transition()
     }
 }

@@ -1,14 +1,13 @@
 use crate::interfaces::SensorDevice;
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use proto::GpsMessage;
-use tokio::sync::mpsc;
 
-pub struct SimGps {
-    rx: mpsc::Receiver<GpsMessage>,
-}
-
+pub struct SimGps;
 impl SimGps {
-    pub fn new(rx: mpsc::Receiver<GpsMessage>) -> Self {
-        Self { rx }
+    const LATEST_DATA: Signal<CriticalSectionRawMutex, GpsMessage> = Signal::new();
+
+    pub async fn update_data(data: GpsMessage) {
+        Self::LATEST_DATA.signal(data);
     }
 }
 
@@ -17,6 +16,6 @@ impl SensorDevice for SimGps {
     type DeviceError = ();
 
     async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
-        Ok(self.rx.recv().await.expect("GPS channel closed"))
+        Ok(Self::LATEST_DATA.wait().await)
     }
 }

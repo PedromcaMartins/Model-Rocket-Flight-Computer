@@ -1,14 +1,13 @@
 use std::convert::Infallible;
 
 use crate::interfaces::DeploymentSystem;
-use tokio::sync::watch;
 
-pub struct SimParachute {
-    tx: watch::Sender<bool>,
+pub struct SimParachute<Tx: WireTx> {
+    tx: &PostcardSender<Tx>,
 }
 
 impl SimParachute {
-    pub fn new(tx: watch::Sender<bool>) -> Self {
+    pub fn new(tx: &PostcardSender<Tx>) -> Self {
         Self { tx }
     }
 }
@@ -18,7 +17,7 @@ impl DeploymentSystem for SimParachute {
 
     /// deploy parachute signal to simulator
     fn deploy(&mut self) -> Result<(), Self::Error> {
-        self.tx.send(true).expect("Failed to send parachute deployment signal: receiver dropped");
+        todo!("Requires postcard endpoint!");
         Ok(())
     }
 }

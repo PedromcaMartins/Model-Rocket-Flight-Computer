@@ -1,14 +1,13 @@
 use crate::interfaces::SensorDevice;
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use proto::ImuMessage;
-use tokio::sync::mpsc;
 
-pub struct SimImu {
-    rx: mpsc::Receiver<ImuMessage>,
-}
-
+pub struct SimImu;
 impl SimImu {
-    pub fn new(rx: mpsc::Receiver<ImuMessage>) -> Self {
-        Self { rx }
+    const LATEST_DATA: Signal<CriticalSectionRawMutex, ImuMessage> = Signal::new();
+
+    pub async fn update_data(data: ImuMessage) {
+        Self::LATEST_DATA.signal(data);
     }
 }
 
@@ -17,6 +16,6 @@ impl SensorDevice for SimImu {
     type DeviceError = ();
 
     async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
-        Ok(self.rx.recv().await.expect("IMU channel closed"))
+        Ok(Self::LATEST_DATA.wait().await)
     }
 }

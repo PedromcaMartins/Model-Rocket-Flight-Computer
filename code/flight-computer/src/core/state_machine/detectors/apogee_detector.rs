@@ -1,4 +1,3 @@
-use embassy_sync::{blocking_mutex::raw::RawMutex, signal::Signal};
 use embassy_time::{Instant, Ticker};
 use heapless::HistoryBuf;
 use proto::{Altitude, Time, Velocity};
@@ -6,36 +5,25 @@ use proto::uom::si::time::microsecond;
 
 use crate::config::ApogeeDetectorConfig;
 use crate::core::trace::TraceAsync;
+use crate::sync::LATEST_ALTITUDE_SIGNAL;
 
-pub struct ApogeeDetector<M>
-where
-    M: RawMutex + 'static,
-{
-    altitude_signal: &'static Signal<M, Altitude>,
+pub struct ApogeeDetector {
     launchpad_altitude: Altitude,
-    config: ApogeeDetectorConfig,
 
     altitude_buffer: HistoryBuf<Altitude, { ApogeeDetectorConfig::ALTITUDE_BUFFER_SIZE }>,
     velocity_buffer: HistoryBuf<Velocity, { ApogeeDetectorConfig::VELOCITY_BUFFER_SIZE }>,
     prev_data: (Altitude, Instant),
 }
 
-impl<M> ApogeeDetector<M>
-where
-    M: RawMutex + 'static,
-{
+impl ApogeeDetector {
     pub async fn new(
-        altitude_signal: &'static Signal<M, Altitude>,
         launchpad_altitude: Altitude,
-        config: ApogeeDetectorConfig,
     ) -> Self {
-        let altitude = altitude_signal.wait().await;
+        let altitude = LATEST_ALTITUDE_SIGNAL.wait().await;
         let altitude_above_launchpad = altitude - launchpad_altitude;
 
         Self {
-            altitude_signal,
             launchpad_altitude,
-            config,
 
             altitude_buffer: HistoryBuf::new(),
             velocity_buffer: HistoryBuf::new(),
@@ -49,7 +37,7 @@ where
     }
 
     async fn get_altitude_above_launchpad(&self) -> Altitude {
-        let raw_altitude = self.altitude_signal.wait().await;
+        let raw_altitude = LATEST_ALTITUDE_SIGNAL.wait().await;
         raw_altitude - self.launchpad_altitude
     }
 
@@ -78,7 +66,7 @@ where
     }
 
     pub async fn await_apogee(&mut self) -> Altitude {
-        let mut ticker = Ticker::every(self.config.detector_tick_period);
+        let mut ticker = Ticker::every(ApogeeDetectorConfig::DETECTOR_TICK_PERIOD);
 
         loop {
             let mut trace = TraceAsync::start("imu_task_loop");
@@ -91,11 +79,11 @@ where
             // Check if buffers are full before evaluating conditions
             if self.are_buffers_full() {
                 let descent_vel_check = self.velocity_buffer.iter().all(
-                    |&v| v <= self.config.max_descent_velocity
+                    |&v| v <= ApogeeDetectorConfig::max_descent_velocity()
                 );
 
                 let minimum_altitude_check = self.altitude_buffer.iter().all(
-                    |&h| h >= self.config.min_apogee_altitude_above_launchpad
+                    |&h| h >= ApogeeDetectorConfig::min_apogee_altitude_above_launchpad()
                 );
 
                 if descent_vel_check && minimum_altitude_check {

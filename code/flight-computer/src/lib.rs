@@ -14,11 +14,11 @@
 #![allow(clippy::missing_panics_doc)]
 
 pub(crate) mod core;
+pub(crate) mod config;
+pub(crate) mod events;
+pub(crate) mod sync;
 
 pub mod interfaces;
 pub mod tasks;
-
-pub mod config;
-pub(crate) mod events;
 
 pub use embassy_sync;
