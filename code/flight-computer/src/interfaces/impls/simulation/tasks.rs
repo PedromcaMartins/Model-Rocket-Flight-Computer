@@ -3,88 +3,50 @@ use core::ops::DerefMut;
 use defmt_or_log::info;
 use embassy_futures::{select::select6, select::Either6};
 use postcard_rpc::server::{Dispatch, Sender, Server, WireRx, WireTx};
-use switch_hal::{InputSwitch, OutputSwitch, WaitSwitch};
-use proto::{AltimeterMessage, GpsMessage, ImuMessage};
 
-use crate::interfaces::{self, FileSystem, SensorDevice};
+use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arm_button::SimButton, deployment_system::SimParachute, gps::SimGps, imu::SimImu, sd_card_led::SimSdCardLed}}, tasks::{altimeter_task, finite_state_machine_task, gps_task, imu_task, postcard_server_task, sd_card_task}};
 
-mod finite_state_machine;
-pub use finite_state_machine::finite_state_machine_task;
-mod imu;
-pub use imu::imu_task;
-mod altimeter;
-pub use altimeter::altimeter_task;
-mod gps;
-pub use gps::gps_task;
-mod sd_card;
-pub use sd_card::sd_card_task;
-pub mod postcard;
-pub use postcard::postcard_server_task;
-
-pub async fn start_flight_computer<
-    Altimeter,
-    ArmButton,
-    DeploymentSystem,
-    Gps,
-    Imu,
+pub async fn start_software_flight_computer<
     SdCard,
-    SdCardDetect,
-    SdCardStatusLed,
     PostcardTx,
     PostcardRx,
     PostcardBuf,
     PostcardD,
 > (
-    altimeter: Altimeter, 
-    arm_button: ArmButton, 
-    deployment_system: DeploymentSystem, 
-    gps: Gps, 
-    imu: Imu, 
     sd_card: SdCard, 
-    sd_card_detect: SdCardDetect, 
-    sd_card_status_led: SdCardStatusLed, 
     postcard_sender: Sender<PostcardTx>,
     server: Server<PostcardTx, PostcardRx, PostcardBuf, PostcardD>,
 )
 where 
-    Altimeter: SensorDevice<DataMessage = AltimeterMessage>,
-    ArmButton: WaitSwitch + 'static,
-    <ArmButton as WaitSwitch>::Error: core::fmt::Debug,
-    DeploymentSystem: interfaces::DeploymentSystem,
-    Gps: SensorDevice<DataMessage = GpsMessage>,
-    Imu: SensorDevice<DataMessage = ImuMessage>,
     SdCard: FileSystem,
-    SdCardDetect: InputSwitch,
-    SdCardStatusLed: OutputSwitch,
     PostcardTx: WireTx + Clone,
     PostcardRx: WireRx,
     PostcardBuf: DerefMut<Target = [u8]>,
     PostcardD: Dispatch<Tx = PostcardTx>,
 {
     let altimeter_task = altimeter_task(
-        altimeter, 
+        SimAltimeter, 
         &postcard_sender,
     );
 
     let finite_state_machine_task = finite_state_machine_task(
-        arm_button, 
-        deployment_system, 
+        SimButton, 
+        SimParachute::new(&postcard_sender), 
     );
 
     let gps_task = gps_task(
-        gps,
+        SimGps,
         &postcard_sender,
     );
 
     let imu_task = imu_task(
-        imu, 
+        SimImu, 
         &postcard_sender,
     );
 
     let sd_card_task = sd_card_task(
         sd_card, 
-        sd_card_detect, 
-        sd_card_status_led, 
+        SimSdCardLed::new(&postcard_sender), 
     );
 
     let postcard_task = postcard_server_task(server);

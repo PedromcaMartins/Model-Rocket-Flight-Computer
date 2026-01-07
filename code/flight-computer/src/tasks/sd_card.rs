@@ -10,7 +10,7 @@ pub async fn sd_card_task<
     FS, O,
 > (
     sd_card: FS,
-    mut sd_card_status_led: O,
+    mut sd_card_led: O,
 ) -> !
 where
     FS: FileSystem,
@@ -41,7 +41,7 @@ where
         ).await;
         trace.after_await();
 
-        if sd_card_status_led.on().is_err() { error!("SD Card: Status Led error") }
+        if sd_card_led.on().is_err() { error!("SD Card: Status Led error") }
 
         match result {
             Either4::First(altimeter_message) => {
@@ -69,6 +69,6 @@ where
             },
         }
 
-        if sd_card_status_led.off().is_err() { error!("SD Card: Status Led error") }
+        if sd_card_led.off().is_err() { error!("SD Card: Status Led error") }
     }
 }
