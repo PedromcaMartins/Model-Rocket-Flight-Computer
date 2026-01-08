@@ -1,40 +1,14 @@
-use core::ops::Deref;
+use derive_more::{Deref, From, Into};
 
-use crate::{Serialize, Deserialize, Schema, Format};
+use crate::{Serialize, Deserialize, Schema};
 
-#[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, Format, PartialEq, Eq)]
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, PartialEq, Eq, From, Into, Deref)]
 pub struct PingRequest(u32);
 
-impl From<u32> for PingRequest {
-    fn from(value: u32) -> Self {
-        Self(value)
-    }
-}
-
-impl Deref for PingRequest {
-    type Target = u32;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, Format, PartialEq, Eq)]
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Serialize, Deserialize, Schema, Clone, Copy, Debug, PartialEq, Eq, From, Into, Deref)]
 pub struct PingResponse(u32);
-
-impl From<u32> for PingResponse {
-    fn from(value: u32) -> Self {
-        Self(value)
-    }
-}
-
-impl Deref for PingResponse {
-    type Target = u32;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 #[test]
 fn ping_wrapping() {

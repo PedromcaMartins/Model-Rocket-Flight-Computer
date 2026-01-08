@@ -720,6 +720,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "derive_more"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d751e9e49156b02b44f9c1815bcb94b984cdcc4396ecc32521c739452808b134"
+dependencies = [
+ "derive_more-impl",
+]
+
+[[package]]
+name = "derive_more-impl"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "799a97264921d8623a957f6c3b9011f3b5492f557bbb7a5a19b7fa6d06ba8dcb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "rustc_version",
+ "syn 2.0.104",
+]
+
+[[package]]
 name = "devise"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2028,9 +2049,9 @@ dependencies = [
 
 [[package]]
 name = "nalgebra"
-version = "0.34.0"
+version = "0.34.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cd59afb6639828b33677758314a4a1a745c15c02bc597095b851c8fd915cf49"
+checksum = "c4d5b3eff5cd580f93da45e64715e8c20a3996342f1e466599cf7a267a0c2f5f"
 dependencies = [
  "approx",
  "glam 0.14.0",
@@ -2408,6 +2429,7 @@ dependencies = [
 name = "postcard-rpc"
 version = "0.11.9"
 dependencies = [
+ "defmt 0.3.100",
  "heapless 0.8.0",
  "maitake-sync",
  "nusb",
@@ -2427,6 +2449,7 @@ name = "postcard-schema"
 version = "0.2.2"
 dependencies = [
  "chrono",
+ "defmt 0.3.100",
  "nalgebra 0.33.2",
  "postcard-derive",
  "serde",
@@ -2539,6 +2562,11 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "defmt 1.0.1",
+ "defmt-or-log",
+ "defmt-or-log-macros",
+ "derive_more",
+ "embassy-time",
+ "log",
  "nalgebra 0.33.2",
  "nmea",
  "postcard-rpc",
@@ -3035,7 +3063,7 @@ dependencies = [
  "flight-computer",
  "ground-station-backend",
  "log",
- "nalgebra 0.34.0",
+ "nalgebra 0.34.1",
  "postcard",
  "postcard-rpc",
  "postcard-schema",

@@ -1,5 +1,5 @@
 use chrono::Local;
-use proto::{nalgebra::Quaternion, nmea::sentences::FixType, Acceleration, AltimeterMessage, Altitude, Angle, AngularVelocity, EulerAngles, GpsCoordinates, GpsMessage, ImuMessage, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Vector3, Velocity};
+use proto::{nalgebra::Quaternion, nmea::sentences::FixType, Acceleration, AltimeterData, Altitude, Angle, AngularVelocity, EulerAngles, GpsCoordinates, GpsData, ImuData, MagneticFluxDensity, Pressure, ThermodynamicTemperature, Vector3, Velocity};
 use uom::si::{f32::Time, pressure::pascal, thermodynamic_temperature::degree_celsius, time::microsecond};
 
 #[derive(Copy, Clone)]
@@ -15,9 +15,9 @@ pub struct PhysicsState {
     pub landed: bool,
 }
 
-impl From<PhysicsState> for AltimeterMessage {
+impl From<PhysicsState> for AltimeterData {
     fn from(value: PhysicsState) -> Self {
-        AltimeterMessage { // TODO
+        AltimeterData { // TODO
             altitude: value.altitude,
             pressure: Pressure::new::<pascal>(101325.0), // sea level standard
             temperature: ThermodynamicTemperature::new::<degree_celsius>(20.0),
@@ -26,14 +26,14 @@ impl From<PhysicsState> for AltimeterMessage {
     }
 }
 
-impl From<PhysicsState> for ImuMessage {
+impl From<PhysicsState> for ImuData {
     fn from(value: PhysicsState) -> Self {
         let angle = Angle::default();
         let gyro = AngularVelocity::default();
         let mag = MagneticFluxDensity::default();
         let accel = Acceleration::default();
 
-        ImuMessage { // TODO
+        ImuData { // TODO
             euler_angles: EulerAngles { roll: angle, pitch: angle, yaw: angle },
             quaternion: Quaternion::identity(),
             linear_acceleration: Vector3::new(accel, accel, value.acceleration),
@@ -47,9 +47,9 @@ impl From<PhysicsState> for ImuMessage {
     }
 }
 
-impl From<PhysicsState> for GpsMessage {
+impl From<PhysicsState> for GpsData {
     fn from(value: PhysicsState) -> Self {
-        GpsMessage { // TODO
+        GpsData { // TODO
             fix_time: Local::now().naive_local().time().into(),
             fix_type: FixType::Simulation.into(),
             coordinates: value.coordinates,

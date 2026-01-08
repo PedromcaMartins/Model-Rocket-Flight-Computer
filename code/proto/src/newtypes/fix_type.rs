@@ -1,26 +1,12 @@
-use core::ops::Deref;
-
+use derive_more::{Deref, From, Into};
 use nmea::sentences::FixType;
 
 use crate::{Serialize, Deserialize, Schema};
 use crate::schema;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, From, Into, Deref)]
 pub struct FixTypeWrapper(FixType);
-
-impl Deref for FixTypeWrapper {
-    type Target = FixType;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<FixType> for FixTypeWrapper {
-    fn from(value: FixType) -> Self {
-        Self(value)
-    }
-}
 
 impl Schema for FixTypeWrapper {
     const SCHEMA: &'static schema::NamedType = &schema::NamedType {

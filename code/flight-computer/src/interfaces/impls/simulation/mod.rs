@@ -1,8 +1,8 @@
 pub mod tasks;
 
 pub mod altimeter;
-pub mod arm_button;
+pub mod arming_system;
 pub mod deployment_system;
 pub mod gps;
 pub mod imu;
-pub mod sd_card_led;
+pub mod filesystem_led;

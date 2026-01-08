@@ -1,5 +1,5 @@
 use proto::uom::si::{length::meter, pressure::pascal};
-use proto::{Altitude, Pressure};
+use proto::sensor_data::{Altitude, Pressure};
 
 #[must_use]
 pub fn altitude_from_pressure(pressure: Pressure) -> Altitude {

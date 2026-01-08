@@ -1,20 +1,18 @@
 use core::marker::PhantomData;
 
 use embassy_time::Timer;
-use switch_hal::WaitSwitch;
 use proto::uom::si::length::meter;
 use defmt_or_log::{error, info};
 
-use crate::{core::state_machine::{FlightStateMachine, states::{Armed, PreArmed}}, interfaces::DeploymentSystem, sync::LATEST_ALTITUDE_SIGNAL};
+use crate::{core::state_machine::{FlightStateMachine, states::{Armed, PreArmed}}, interfaces::{ArmingSystem, DeploymentSystem}, sync::LATEST_ALTITUDE_SIGNAL};
 
-impl<WS, D> FlightStateMachine<WS, D, PreArmed>
+impl<A, D> FlightStateMachine<A, D, PreArmed>
 where
-    WS: WaitSwitch + 'static,
-    <WS as WaitSwitch>::Error: core::fmt::Debug,
+    A: ArmingSystem,
     D: DeploymentSystem,
 {
     pub const fn new(
-        arm_button: WS,
+        arm_button: A,
         deployment_system: D,
     ) -> Self {
         Self {
@@ -26,19 +24,15 @@ where
         }
     }
 
-    async fn await_arm_button(&mut self) {
+    pub async fn wait_arm(mut self) -> FlightStateMachine<A, D, Armed> {
         loop {
-            if self.arm_button.wait_active().await.is_ok() {
+            if self.arm_button.wait_arm().await.is_ok() {
                 info!("Arm button pressed");
-                return;
+                break;
             }
             error!("Failed to wait for button press");
             Timer::after_secs(1).await;
         }
-    }
-
-    pub async fn wait_arm(mut self) -> FlightStateMachine<WS, D, Armed> {
-        self.await_arm_button().await;
 
         let launchpad_altitude = LATEST_ALTITUDE_SIGNAL.wait().await;
         info!("Launchpad Altitude: {} m", launchpad_altitude.get::<meter>());

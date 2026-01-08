@@ -27,7 +27,7 @@ where
 {
     type Error = O::Error;
 
-    fn deploy(&mut self) -> Result<(), Self::Error> {
+    async fn deploy(&mut self) -> Result<(), Self::Error> {
         self.switch.on()
     }
 }

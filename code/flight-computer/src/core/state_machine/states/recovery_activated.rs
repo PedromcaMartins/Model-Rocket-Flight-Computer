@@ -1,16 +1,14 @@
-use switch_hal::WaitSwitch;
 use proto::uom::si::length::meter;
 use defmt_or_log::info;
 
-use crate::{core::state_machine::{detectors::{TouchdownDetector}, states::{RecoveryActivated, Touchdown}, FlightStateMachine}, interfaces::DeploymentSystem};
+use crate::{core::state_machine::{FlightStateMachine, detectors::TouchdownDetector, states::{RecoveryActivated, Touchdown}}, interfaces::{ArmingSystem, DeploymentSystem}};
 
-impl<WS, D> FlightStateMachine<WS, D, RecoveryActivated>
+impl<A, D> FlightStateMachine<A, D, RecoveryActivated>
 where
-    WS: WaitSwitch + 'static,
-    <WS as WaitSwitch>::Error: core::fmt::Debug,
+    A: ArmingSystem,
     D: DeploymentSystem,
 {
-    pub async fn wait_touchdown(self) -> FlightStateMachine<WS, D, Touchdown> {
+    pub async fn wait_touchdown(self) -> FlightStateMachine<A, D, Touchdown> {
         let altitude = TouchdownDetector::new()
         .await
         .await_touchdown()

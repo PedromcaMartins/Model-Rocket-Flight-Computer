@@ -1,7 +1,7 @@
-use embassy_time::Instant;
 use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
+use proto::uom::si::angle::degree;
 use static_cell::ConstStaticCell;
-use proto::{GpsCoordinates, GpsMessage, Altitude};
+use proto::sensor_data::{Altitude, Angle, GpsData};
 use proto::uom::si::length::meter;
 
 use crate::interfaces::SensorDevice;
@@ -57,11 +57,11 @@ impl<U> SensorDevice for GpsDevice<U>
 where
     U: embedded_io_async::Read,
 {
-    type DataMessage = GpsMessage;
-    type DeviceError = GpsError;
+    type Data = GpsData;
+    type Error = GpsError;
 
     #[allow(clippy::cast_possible_truncation)]
-    async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
+    async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {
         self.buf.fill(0);
 
         let len = self.uart
@@ -84,17 +84,17 @@ where
             return Err(GpsError::UnimplementedSentenceType(sentence_type));
         }
 
-        Ok(GpsMessage {
-            coordinates: GpsCoordinates {
-                latitude: self.nmea
-                    .latitude()
-                    .map(|l| l as f32)
-                    .ok_or(GpsError::MissingFields)?,
-                longitude: self.nmea
-                    .longitude()
-                    .map(|l| l as f32)
-                    .ok_or(GpsError::MissingFields)?,
-            },
+        Ok(GpsData {
+            latitude: self.nmea
+                .latitude()
+                .map(|l| l as f32)
+                .map(Angle::new::<degree>)
+                .ok_or(GpsError::MissingFields)?,
+            longitude: self.nmea
+                .longitude()
+                .map(|l| l as f32)
+                .map(Angle::new::<degree>)
+                .ok_or(GpsError::MissingFields)?,
             altitude: self.nmea
                 .altitude()
                 .map(Altitude::new::<meter>)
@@ -111,7 +111,6 @@ where
                 .fix_satellites()
                 .ok_or(GpsError::MissingFields)?
                 as u8,
-            timestamp: Instant::now().as_micros(),
         })
     }
 }

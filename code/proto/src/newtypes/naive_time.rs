@@ -1,26 +1,12 @@
-use core::ops::Deref;
-
 use chrono::NaiveTime;
+use derive_more::{Deref, From, Into};
 
 use crate::{Serialize, Deserialize, Schema};
 use crate::schema;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, From, Into, Deref)]
 pub struct NaiveTimeWrapper(NaiveTime);
-
-impl Deref for NaiveTimeWrapper {
-    type Target = NaiveTime;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<NaiveTime> for NaiveTimeWrapper {
-    fn from(value: NaiveTime) -> Self {
-        Self(value)
-    }
-}
 
 impl Schema for NaiveTimeWrapper {
     const SCHEMA: &'static schema::NamedType = &schema::NamedType {

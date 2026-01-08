@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use proto::{AltimeterMessage, GpsMessage, ImuMessage};
+use proto::sensor_data::{AltimeterData, GpsData, ImuData};
 use tokio::{select, sync::{Mutex, mpsc, watch}, time::{Duration, Instant, sleep, sleep_until}};
 use uom::si::time::second;
 
@@ -23,9 +23,9 @@ pub struct Simulator {
     deployment_rx: watch::Receiver<bool>,
 
     // this is received from physics simulator (sensors)
-    alt_tx: mpsc::Sender<AltimeterMessage>,
-    gps_tx: mpsc::Sender<GpsMessage>,
-    imu_tx: mpsc::Sender<ImuMessage>,
+    alt_tx: mpsc::Sender<AltimeterData>,
+    gps_tx: mpsc::Sender<GpsData>,
+    imu_tx: mpsc::Sender<ImuData>,
 
     // scripted_events
     arm_button_tx: watch::Sender<bool>,
@@ -36,9 +36,9 @@ pub struct Simulator {
 impl Simulator {
     pub fn new(
         deployment_rx: watch::Receiver<bool>,
-        alt_tx: mpsc::Sender<AltimeterMessage>,
-        gps_tx: mpsc::Sender<GpsMessage>,
-        imu_tx: mpsc::Sender<ImuMessage>,
+        alt_tx: mpsc::Sender<AltimeterData>,
+        gps_tx: mpsc::Sender<GpsData>,
+        imu_tx: mpsc::Sender<ImuData>,
         arm_button_tx: watch::Sender<bool>,
         config: SimulatorConfig,
     ) -> Self {
@@ -102,9 +102,9 @@ impl Simulator {
     }
 
     async fn sensor_loop(
-        alt_tx: mpsc::Sender<AltimeterMessage>,
-        gps_tx: mpsc::Sender<GpsMessage>,
-        imu_tx: mpsc::Sender<ImuMessage>,
+        alt_tx: mpsc::Sender<AltimeterData>,
+        gps_tx: mpsc::Sender<GpsData>,
+        imu_tx: mpsc::Sender<ImuData>,
         physics: Arc<Mutex<PhysicsSimulator>>,
     ) {
         loop {
@@ -113,19 +113,19 @@ impl Simulator {
                     let physics = physics.lock().await;
                     let state = physics.current_state();
                     permit.send(state.into());
-                    tracing::debug!("Altimeter message sent");
+                    tracing::debug!("Altimeter data sent");
                 },
                 Ok(permit) = gps_tx.reserve() => {
                     let physics = physics.lock().await;
                     let state = physics.current_state();
                     permit.send(state.into());
-                    tracing::debug!("GPS message sent");
+                    tracing::debug!("GPS data sent");
                 },
                 Ok(permit) = imu_tx.reserve() => {
                     let physics = physics.lock().await;
                     let state = physics.current_state();
                     permit.send(state.into());
-                    tracing::debug!("IMU message sent");
+                    tracing::debug!("IMU data sent");
                 },
             }
         }
@@ -139,12 +139,12 @@ impl Simulator {
             select! {
                 res = deployment_rx.changed() => {
                     if res.is_err() {
-                        tracing::error!("Parachute deployment channel closed");
+                        tracing::error!("Recovery deployment channel closed");
                         return;
                     }
 
                     let deployed = *deployment_rx.borrow_and_update();
-                    tracing::info!("Parachute deployment event triggered: {}", if deployed { "deployed" } else { "not deployed" });
+                    tracing::info!("Recovery deployment event triggered: {}", if deployed { "deployed" } else { "not deployed" });
 
                     if deployed {
                         let mut physics = physics.lock().await;

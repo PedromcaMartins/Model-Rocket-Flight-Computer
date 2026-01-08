@@ -1,19 +1,12 @@
 use defmt_or_log::info;
-use switch_hal::WaitSwitch;
-use proto::FlightState;
+use proto::flight_state::FlightState;
 
-use crate::{core::state_machine::FlightStateMachine, interfaces::DeploymentSystem, sync::FLIGHT_STATE_WATCH};
+use crate::{core::state_machine::FlightStateMachine, interfaces::{ArmingSystem, DeploymentSystem}, sync::FLIGHT_STATE_WATCH};
 
 #[inline]
-pub async fn finite_state_machine_task<
-    WS, D,
-> (
-    arm_button: WS,
-    deployment_system: D,
-)
+pub async fn finite_state_machine_task<A, D>(arm_button: A, deployment_system: D)
 where
-    WS: WaitSwitch + 'static,
-    <WS as WaitSwitch>::Error: core::fmt::Debug,
+    A: ArmingSystem,
     D: DeploymentSystem,
 {
     let flight_state_sender = FLIGHT_STATE_WATCH.sender();
@@ -22,7 +15,7 @@ where
         arm_button, 
         deployment_system, 
     );
-    flight_state_sender.send(FlightState::PreArmed);
+    flight_state_sender.send(FlightState::default());
     info!("Flight Computer Pre-Armed");
 
     let fsm = fsm.wait_arm().await;

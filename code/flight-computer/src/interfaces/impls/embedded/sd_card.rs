@@ -1,9 +1,8 @@
 use core::fmt::Debug;
 
 use embedded_sdmmc::{Mode, RawDirectory, RawFile, VolumeManager};
-use proto::LogDataType;
 
-use crate::interfaces::{FileSystem, Filename};
+use crate::interfaces::FileSystem;
 
 pub struct DummyTimeSource;
 impl embedded_sdmmc::TimeSource for DummyTimeSource {
@@ -21,15 +20,23 @@ pub enum SdCardError<E: Debug> {
     Serialize(#[from] serde_json_core::ser::Error),
 }
 
-const MAX_DIRS_OPEN: usize = 2;
-const MAX_VOLUMES: usize = 1;
-
-pub struct SdCardFatFS<D: embedded_sdmmc::BlockDevice> {
-    volume_manager: VolumeManager<D, DummyTimeSource, MAX_DIRS_OPEN, { LogDataType::LENGTH }, MAX_VOLUMES>,
+pub struct SdCardFatFS<
+    D,
+    const MAX_DIRS: usize = 1,
+    const MAX_FILES: usize = 1,
+    const MAX_VOLUMES: usize = 1,
+> where
+    D: embedded_sdmmc::BlockDevice,
+{
+    volume_manager: VolumeManager<D, DummyTimeSource, MAX_DIRS, MAX_FILES, MAX_VOLUMES>,
     raw_root_dir: RawDirectory,
 }
 
-impl<D: embedded_sdmmc::BlockDevice> SdCardFatFS<D> {
+impl<D, const MAX_DIRS: usize, const MAX_FILES: usize, const MAX_VOLUMES: usize>
+    SdCardFatFS<D, MAX_DIRS, MAX_FILES, MAX_VOLUMES>
+where
+    D: embedded_sdmmc::BlockDevice,
+{
     pub fn init<const ID_OFFSET: u32> (sd_card: D) -> Result<Self, SdCardError<D::Error>> {
         let volume_manager = VolumeManager::new_with_limits(sd_card, DummyTimeSource, ID_OFFSET);
         let raw_volume = volume_manager.open_raw_volume(embedded_sdmmc::VolumeIdx(0))?;
@@ -46,7 +53,7 @@ impl<D: embedded_sdmmc::BlockDevice> FileSystem for SdCardFatFS<D> {
     type File = RawFile;
     type Error = SdCardError<D::Error>;
 
-    fn exist_file(&mut self, filename: Filename) -> Result<bool, Self::Error> {
+    async fn exist_file(&mut self, filename: &str) -> Result<bool, Self::Error> {
         match self.volume_manager.find_directory_entry(self.raw_root_dir, filename) {
             Ok(_) => Ok(true),
             Err(embedded_sdmmc::Error::NotFound) => Ok(false),
@@ -54,7 +61,7 @@ impl<D: embedded_sdmmc::BlockDevice> FileSystem for SdCardFatFS<D> {
         }
     }
 
-    fn create_file(&mut self, filename: Filename) -> Result<Self::File, Self::Error> {
+    async fn create_file(&mut self, filename: &str) -> Result<Self::File, Self::Error> {
         self.volume_manager.open_file_in_dir(
             self.raw_root_dir,
             filename,
@@ -62,7 +69,7 @@ impl<D: embedded_sdmmc::BlockDevice> FileSystem for SdCardFatFS<D> {
         ).map_err(SdCardError::FileSystem)
     }
 
-    fn open_file_append(&mut self, filename: Filename) -> Result<Self::File, Self::Error> {
+    async fn open_file_append(&mut self, filename: &str) -> Result<Self::File, Self::Error> {
         self.volume_manager.open_file_in_dir(
             self.raw_root_dir,
             filename,
@@ -70,18 +77,18 @@ impl<D: embedded_sdmmc::BlockDevice> FileSystem for SdCardFatFS<D> {
         ).map_err(SdCardError::FileSystem)
     }
 
-    fn close_file(&mut self, file: Self::File) -> Result<(), Self::Error> {
+    async fn close_file(&mut self, file: Self::File) -> Result<(), Self::Error> {
         self.volume_manager.close_file(file).map_err(SdCardError::FileSystem)
     }
 
-    fn write_file(&mut self, file: &mut Self::File, data: &[u8]) -> Result<(), Self::Error> {
+    async fn write_file(&mut self, file: &mut Self::File, data: &[u8]) -> Result<(), Self::Error> {
         self.volume_manager.write(
             *file, 
             data,
         ).map_err(SdCardError::FileSystem)
     }
 
-    fn flush_file(&mut self, file: &mut Self::File) -> Result<(), Self::Error> {
+    async fn flush_file(&mut self, file: &mut Self::File) -> Result<(), Self::Error> {
         self.volume_manager.flush_file(
             *file
         ).map_err(SdCardError::FileSystem)

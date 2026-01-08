@@ -1,6 +1,6 @@
 pub trait SensorDevice {
-    type DataMessage: core::fmt::Debug + proto::Serialize;
-    type DeviceError: core::fmt::Debug;
+    type Data: core::fmt::Debug + proto::Serialize;
+    type Error: core::fmt::Debug;
 
-    async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError>;
+    async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error>;
 }

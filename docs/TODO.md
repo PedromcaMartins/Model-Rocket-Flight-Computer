@@ -32,7 +32,7 @@
     - [ ] Physics Engine + config (1D)
     - [ ] Manual triggers
         - [ ] Fire Ignitor
-        - [ ] Deploy Parachute
+        - [ ] Deploy Recovery (Parachute)
         - [ ] Trigger Arm
     - [ ] Automatic triggers (Scripted Events)
     - [ ] Fault Engine + config
@@ -53,3 +53,22 @@
 - [ ] Implement Trace Parser that can generate somewhat flame-graphs
 - [ ] Store all data locally on disk/ memory
 - [ ] Use REST API with JSON serialization for communication between backend and frontend
+
+# New Tasks
+
+- [ ] Improve error handling -> ThisError
+- [ ] Implement Events, Errors, and Stats! -> Add Stats struct, stats task, event/error channel, ...
+    - [ ] Standerdize `type Error: core::fmt::Debug` in traits!
+    - [ ] Errors + Events should have a severity level
+    - [ ] Move GPS Error to proto + adapt it
+- [ ] Create Config that can be changed at runtime via Ground Station: Add struct RuntimeConfig + postcard endpoints + atomic watch + change config to add this
+- [ ] Crate `broadcast_record(Record)` / `broadcast_error/event` global functions -> send to Storage + send to Ground Station
+    - [ ] Storage should store all data, compression allowed (for events, errors)
+    - [ ] Ground Station should receive sparse data (e.g. only critical errors, events)
+- [ ] Check core/state_machine
+- [ ] Decouple Postcard from core!: Should only require Value to send + Topic!
+    - [ ] Postcard Sender needs to be static + set in runtime globally!
+    - [ ] global function `send_to_ground_station<T: Topic>(value: &T::Message)`
+    - [ ] Contains atomic seq number
+- [ ] Implement Read from Storage -> Groundstation command activates it! Implement Iterator over Record
+- [ ] Make `sim_filesystem_led` generic to any Led!

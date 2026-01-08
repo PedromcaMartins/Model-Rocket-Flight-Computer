@@ -4,7 +4,7 @@ use defmt_or_log::info;
 use embassy_futures::{select::select6, select::Either6};
 use postcard_rpc::server::{Dispatch, Sender, Server, WireRx, WireTx};
 
-use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arm_button::SimButton, deployment_system::SimParachute, gps::SimGps, imu::SimImu, sd_card_led::SimSdCardLed}}, tasks::{altimeter_task, finite_state_machine_task, gps_task, imu_task, postcard_server_task, sd_card_task}};
+use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arming_system::SimArming, deployment_system::SimRecovery, gps::SimGps, imu::SimImu, filesystem_led::SimFileSystemLed}}, tasks::{altimeter_task, finite_state_machine_task, gps_task, imu_task, postcard_server_task, storage_task}};
 
 pub async fn start_software_flight_computer<
     SdCard,
@@ -30,8 +30,8 @@ where
     );
 
     let finite_state_machine_task = finite_state_machine_task(
-        SimButton, 
-        SimParachute::new(&postcard_sender), 
+        SimArming, 
+        SimRecovery::new(&postcard_sender), 
     );
 
     let gps_task = gps_task(
@@ -44,9 +44,9 @@ where
         &postcard_sender,
     );
 
-    let sd_card_task = sd_card_task(
+    let storage_task = storage_task(
         sd_card, 
-        SimSdCardLed::new(&postcard_sender), 
+        SimFileSystemLed::new(&postcard_sender), 
     );
 
     let postcard_task = postcard_server_task(server);
@@ -59,14 +59,14 @@ where
         finite_state_machine_task, 
         gps_task, 
         imu_task,
-        sd_card_task,
+        storage_task,
         postcard_task,
     ).await {
         Either6::First(_) => { info!("Altimeter task ended") },
         Either6::Second(_) => { info!("Finite State Machine task ended") },
         Either6::Third(_) => { info!("GPS task ended") },
         Either6::Fourth(_) => { info!("IMU task ended") },
-        Either6::Fifth(_) => { info!("SD Card task ended") },
+        Either6::Fifth(_) => { info!("Storage task ended") },
         Either6::Sixth(_) => { info!("Postcard Server task ended") },
     }
 

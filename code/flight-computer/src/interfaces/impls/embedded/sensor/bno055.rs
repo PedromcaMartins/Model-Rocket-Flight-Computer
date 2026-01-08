@@ -3,9 +3,9 @@ use core::fmt::Debug;
 use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
 use embassy_time::{Delay, Instant, Timer};
 use embedded_hal::i2c::{I2c, SevenBitAddress};
-use proto::{nalgebra::{Quaternion, Vector3, Vector4}, EulerAngles, ImuMessage};
-use proto::uom::si::{acceleration::meter_per_second_squared, angle::degree, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, thermodynamic_temperature::degree_celsius};
-use proto::{Acceleration, Angle, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature};
+use proto::sensor_data::{Vector3, ImuData};
+use proto::uom::si::{acceleration::meter_per_second_squared, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, thermodynamic_temperature::degree_celsius};
+use proto::sensor_data::{Acceleration, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature};
 
 use crate::interfaces::SensorDevice;
 
@@ -51,44 +51,15 @@ where
     I: I2c<SevenBitAddress, Error = E>,
     E: Debug,
 {
-    type DataMessage = ImuMessage;
-    type DeviceError = bno055::Error<E>;
+    type Data = ImuData;
+    type Error = bno055::Error<E>;
 
-    async fn parse_new_message(&mut self) -> Result<Self::DataMessage, Self::DeviceError> {
-        let euler_angles = self.bno055.euler_angles()?;
-        let quaternion = self.bno055.quaternion()?;
-        let linear_acceleration = self.bno055.linear_acceleration()?;
-        let gravity = self.bno055.gravity()?;
+    async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {
         let acceleration = self.bno055.accel_data()?;
         let gyro = self.bno055.gyro_data()?;
         let mag = self.bno055.mag_data()?;
         let temperature = self.bno055.temperature()?;
 
-        let euler_angles = EulerAngles {
-            roll: Angle::new::<degree>(euler_angles.c),
-            pitch: Angle::new::<degree>(euler_angles.a),
-            yaw: Angle::new::<degree>(euler_angles.b),
-        };
-
-        let quaternion = Quaternion::from_vector(
-            Vector4::new(
-                quaternion.v.x,
-                quaternion.v.y,
-                quaternion.v.z,
-                quaternion.s, 
-            )
-        );
-
-        let linear_acceleration = Vector3::new(
-            Acceleration::new::<meter_per_second_squared>(linear_acceleration.x), 
-            Acceleration::new::<meter_per_second_squared>(linear_acceleration.y),
-            Acceleration::new::<meter_per_second_squared>(linear_acceleration.z) 
-        );
-        let gravity = Vector3::new(
-            Acceleration::new::<meter_per_second_squared>(gravity.x), 
-            Acceleration::new::<meter_per_second_squared>(gravity.y),
-            Acceleration::new::<meter_per_second_squared>(gravity.z) 
-        );
         let acceleration = Vector3::new(
             Acceleration::new::<meter_per_second_squared>(acceleration.x), 
             Acceleration::new::<meter_per_second_squared>(acceleration.y),
@@ -107,16 +78,11 @@ where
         let temperature = 
             ThermodynamicTemperature::new::<degree_celsius>(temperature.into());
 
-        Ok(ImuMessage {
-            euler_angles,
-            quaternion,
-            linear_acceleration,
-            gravity,
+        Ok(ImuData {
             acceleration,
             gyro,
             mag,
             temperature,
-            timestamp: Instant::now().as_micros(),
         })
     }
 }

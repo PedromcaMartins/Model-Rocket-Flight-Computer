@@ -2,7 +2,7 @@ use core::cmp::Ordering;
 
 use embassy_time::{Instant, Ticker};
 use heapless::HistoryBuf;
-use proto::{Altitude, Time, Velocity};
+use proto::sensor_data::{Altitude, Time, Velocity};
 use proto::uom::si::time::microsecond;
 
 use crate::config::TouchdownDetectorConfig;

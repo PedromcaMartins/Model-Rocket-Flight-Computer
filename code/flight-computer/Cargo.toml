@@ -74,7 +74,7 @@ serial_test = "3.2.0"
 # afl = "0.15.20"
 
 [features]
-default = ["log", "impl_hardware", "impl_software"]
+default = ["log", "impl_embedded", "impl_software"]
 log = [
     "dep:log",
     "defmt-or-log/log",
@@ -97,5 +97,5 @@ defmt = [
     "heapless/defmt",
     "serde-json-core/defmt",
 ]
-impl_hardware = []
+impl_embedded = []
 impl_software = []

@@ -37,7 +37,7 @@ pub async fn main() {
             for _ in 0..10 {
                 ticker.tick().await;
                 let msg = subscription_altimeter.recv().await;
-                println!("Got altimeter message: {msg:#?}");
+                println!("Got altimeter data: {msg:#?}");
             }
         } => {}
         _ = async move {
@@ -46,7 +46,7 @@ pub async fn main() {
             for _ in 0..10 {
                 ticker.tick().await;
                 let msg = subscription_imu.recv().await;
-                println!("Got imu message: {msg:#?}");
+                println!("Got imu data: {msg:#?}");
             }
         } => {}
         _ = async move {
@@ -55,7 +55,7 @@ pub async fn main() {
             for _ in 0..10 {
                 ticker.tick().await;
                 let msg = subscription_gps.recv().await;
-                println!("Got gps message: {msg:#?}");
+                println!("Got gps data: {msg:#?}");
             }
         } => {}
     }

@@ -5,7 +5,7 @@ use tokio::sync::{mpsc, watch};
 
 use crate::sim_devices::postcard_server::{LocalServer, postcard_local_setup};
 use crate::simulator::{Simulator, SimulatorConfig};
-use crate::sim_devices::{altimeter::SimAltimeter, arm_button::SimButton, deployment_system::SimParachute, gps::SimGps, imu::SimImu, sd_card::{SimSdCard, SimSdCardDetect, SimSdCardStatusLed}};
+use crate::sim_devices::{altimeter::SimAltimeter, arm_button::SimArming, deployment_system::SimRecovery, gps::SimGps, imu::SimImu, sd_card::{SimSdCard, SimSdCardDetect, SimSdCardStatusLed}};
 use crate::simulator_ui::SimulatorUi;
 
 pub struct SimBoardConfig {
@@ -40,8 +40,8 @@ impl Default for SimBoardConfig {
 
 pub struct SimBoard {
     pub simulator: Simulator,
-    pub arm_button: SimButton,
-    pub deployment_system: SimParachute,
+    pub arm_button: SimArming,
+    pub deployment_system: SimRecovery,
     pub altimeter: SimAltimeter,
     pub gps: SimGps,
     pub imu: SimImu,
@@ -90,8 +90,8 @@ impl SimBoard {
 
         SimBoard {
             simulator,
-            arm_button: SimButton::new(button_rx),
-            deployment_system: SimParachute::new(deployment_tx),
+            arm_button: SimArming::new(button_rx),
+            deployment_system: SimRecovery::new(deployment_tx),
             altimeter: SimAltimeter::new(alt_rx),
             gps: SimGps::new(gps_rx),
             imu: SimImu::new(imu_rx),

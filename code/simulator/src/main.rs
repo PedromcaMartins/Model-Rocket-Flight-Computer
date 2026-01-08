@@ -1,4 +1,4 @@
-use flight_computer::{config::FlightComputerConfig, sync::{ALTIMETER_SD_CARD_CHANNEL, FLIGHT_STATE_WATCH, GPS_SD_CARD_CHANNEL, IMU_SD_CARD_CHANNEL, LATEST_ALTITUDE_SIGNAL}, tasks::{altimeter_task, finite_state_machine_task, gps_task, imu_task, postcard::postcard_server_task, sd_card_task}};
+use flight_computer::{config::FlightComputerConfig, sync::{FLIGHT_STATE_WATCH, RECORD_TO_STORAGE_CHANNEL, LATEST_ALTITUDE_SIGNAL}, tasks::{altimeter_task, finite_state_machine_task, gps_task, imu_task, postcard::postcard_server_task, storage_task}};
 use tokio::select;
 
 use crate::{board::{SimBoard, SimBoardConfig}, logging::{Logging, LoggingConfig}, simulator::SimulatorConfig};
@@ -7,7 +7,7 @@ mod board;
 mod logging;
 mod simulator;
 mod postcard_server;
-mod sim_sd_card;
+mod sim_filesystem;
 mod simulator_ui;
 
 #[derive(Default)]
@@ -35,7 +35,6 @@ async fn main() {
         postcard_server,
         postcard_client,
         sd_card,
-        sd_card_detect,
         sd_card_status_led,
         ui,
     } = SimBoard::init(config.sim_board, config.simulator).await;
@@ -64,9 +63,8 @@ async fn main() {
         postcard_server.sender()
     ));
 
-    let sd_card_task = tokio::spawn(sd_card_task(
+    let storage_task = tokio::spawn(storage_task(
         sd_card, 
-        sd_card_detect, 
         sd_card_status_led, 
     ));
 
@@ -89,7 +87,7 @@ async fn main() {
         _ = finite_state_machine_task => tracing::info!("Finite State Machine task exited"),
         _ = gps_task => tracing::info!("GPS task exited"),
         _ = imu_task => tracing::info!("IMU task exited"),
-        _ = sd_card_task => tracing::info!("SD Card task exited"),
+        _ = storage_task => tracing::info!("Storage task exited"),
         _ = postcard_server_task => tracing::info!("Postcard Server task exited"),
         _ = tokio::signal::ctrl_c() => tracing::info!("Received Ctrl-C, shutting down"),
         res = ground_station_backend_task => match res {
