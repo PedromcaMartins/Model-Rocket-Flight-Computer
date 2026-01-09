@@ -56,7 +56,7 @@ impl TouchdownDetector {
     }
 
     pub async fn await_touchdown(&mut self) -> Altitude {
-        let mut ticker = Ticker::every(TouchdownDetectorConfig::DETECTOR_TICK_PERIOD);
+        let mut ticker = Ticker::every(TouchdownDetectorConfig::DETECTOR_TICK_INTERVAL);
 
         loop {
             let mut trace = TraceAsync::start("imu_task_loop");

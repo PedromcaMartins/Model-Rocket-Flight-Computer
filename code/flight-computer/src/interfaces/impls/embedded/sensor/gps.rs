@@ -62,7 +62,7 @@ where
     type Error = GpsError;
 
     const NAME: &'static str = "GPS";
-    const TICKER_PERIOD_MS: embassy_time::Duration = DataAcquisitionConfig::GPS_TICKER_PERIOD;
+    const TICK_INTERVAL: embassy_time::Duration = DataAcquisitionConfig::GPS_TICK_INTERVAL;
 
     #[allow(clippy::cast_possible_truncation)]
     async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {

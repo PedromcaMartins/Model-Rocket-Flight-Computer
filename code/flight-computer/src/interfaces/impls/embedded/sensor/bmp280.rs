@@ -50,7 +50,7 @@ where
     type Error = E;
 
     const NAME: &'static str = "BMP280 Altimeter";
-    const TICKER_PERIOD_MS: embassy_time::Duration = DataAcquisitionConfig::ALTIMETER_TICKER_PERIOD;
+    const TICK_INTERVAL: embassy_time::Duration = DataAcquisitionConfig::ALTIMETER_TICK_INTERVAL;
 
     #[allow(clippy::cast_possible_truncation)]
     async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {

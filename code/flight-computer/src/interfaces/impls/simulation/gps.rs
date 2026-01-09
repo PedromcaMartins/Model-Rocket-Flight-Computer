@@ -17,7 +17,7 @@ impl SensorDevice for SimGps {
     type Error = ();
 
     const NAME: &'static str = "Simulated GPS";
-    const TICKER_PERIOD_MS: embassy_time::Duration = DataAcquisitionConfig::GPS_TICKER_PERIOD;
+    const TICK_INTERVAL: embassy_time::Duration = DataAcquisitionConfig::GPS_TICK_INTERVAL;
 
     async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {
         Ok(LATEST_DATA.wait().await)

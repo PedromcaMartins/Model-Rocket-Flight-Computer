@@ -17,7 +17,7 @@ impl SensorDevice for SimImu {
     type Error = ();
 
     const NAME: &'static str = "Simulated IMU";
-    const TICKER_PERIOD_MS: embassy_time::Duration = DataAcquisitionConfig::IMU_TICKER_PERIOD;
+    const TICK_INTERVAL: embassy_time::Duration = DataAcquisitionConfig::IMU_TICK_INTERVAL;
 
     async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {
         Ok(LATEST_DATA.wait().await)

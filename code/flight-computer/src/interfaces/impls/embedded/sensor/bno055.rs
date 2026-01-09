@@ -56,7 +56,7 @@ where
     type Error = bno055::Error<E>;
 
     const NAME: &'static str = "BNO055 IMU";
-    const TICKER_PERIOD_MS: embassy_time::Duration = DataAcquisitionConfig::IMU_TICKER_PERIOD;
+    const TICK_INTERVAL: embassy_time::Duration = DataAcquisitionConfig::IMU_TICK_INTERVAL;
 
     async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {
         let acceleration = self.bno055.accel_data()?;

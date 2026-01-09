@@ -66,7 +66,7 @@ impl ApogeeDetector {
     }
 
     pub async fn await_apogee(&mut self) -> Altitude {
-        let mut ticker = Ticker::every(ApogeeDetectorConfig::DETECTOR_TICK_PERIOD);
+        let mut ticker = Ticker::every(ApogeeDetectorConfig::DETECTOR_TICK_INTERVAL);
 
         loop {
             let mut trace = TraceAsync::start("imu_task_loop");

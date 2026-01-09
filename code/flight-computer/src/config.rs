@@ -7,7 +7,7 @@ impl ApogeeDetectorConfig {
     pub const ALTITUDE_BUFFER_SIZE: usize = 5;
     pub const VELOCITY_BUFFER_SIZE: usize = 5;
 
-    pub const DETECTOR_TICK_PERIOD: Duration = Duration::from_hz(2);
+    pub const DETECTOR_TICK_INTERVAL: Duration = Duration::from_hz(2);
 
     #[inline]
     pub fn max_descent_velocity() -> Velocity { Velocity::new::<meter_per_second>(-1.0) }
@@ -17,9 +17,9 @@ impl ApogeeDetectorConfig {
 
 pub struct DataAcquisitionConfig;
 impl DataAcquisitionConfig {
-    pub const ALTIMETER_TICKER_PERIOD: Duration = Duration::from_hz(50);
-    pub const IMU_TICKER_PERIOD: Duration = Duration::from_hz(50);
-    pub const GPS_TICKER_PERIOD: Duration = Duration::from_hz(50);
+    pub const ALTIMETER_TICK_INTERVAL: Duration = Duration::from_hz(50);
+    pub const IMU_TICK_INTERVAL: Duration = Duration::from_hz(50);
+    pub const GPS_TICK_INTERVAL: Duration = Duration::from_hz(50);
 }
 
 pub struct TasksConfig;
@@ -34,7 +34,7 @@ impl TouchdownDetectorConfig {
     pub const ALTITUDE_BUFFER_SIZE: usize = 10;
     pub const VELOCITY_BUFFER_SIZE: usize = 10;
 
-    pub const DETECTOR_TICK_PERIOD: Duration = Duration::from_hz(1);
+    pub const DETECTOR_TICK_INTERVAL: Duration = Duration::from_hz(1);
 
     #[inline]
     pub fn touchdown_stability_threshold() -> Altitude { Altitude::new::<meter>(1.0) }
@@ -47,5 +47,5 @@ impl StorageConfig {
     pub const WRITE_BUFFER_SIZE: usize = 576;
     pub const MAX_FILENAME_LENGTH: usize = 8;
 
-    pub const FLUSH_FILES_TICKER_PERIOD: Duration = Duration::from_millis(500);
+    pub const FLUSH_FILES_TICK_INTERVAL: Duration = Duration::from_millis(500);
 }

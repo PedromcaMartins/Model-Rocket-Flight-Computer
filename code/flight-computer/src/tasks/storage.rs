@@ -17,7 +17,7 @@ where
         .await.expect("Storage: Initialization failed");
     info!("Storage: Created unique log files");
 
-    let mut flush_files_ticker = Ticker::every(StorageConfig::FLUSH_FILES_TICKER_PERIOD);
+    let mut flush_files_ticker = Ticker::every(StorageConfig::FLUSH_FILES_TICK_INTERVAL);
 
     drop(trace);
     loop {
