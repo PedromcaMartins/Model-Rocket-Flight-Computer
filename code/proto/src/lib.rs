@@ -56,5 +56,13 @@ topics! {
     | EventTopic                | Event             | "event"               |                           |
     | ErrorTopic                | Error             | "error"               |                           |
     | SimDeploymentTopic        | ActuatorStatus    | "sim_deployment"      |                           |
-    | SimFileSystemLedTopic     | LedStatus         | "sim_file_sytem_led"  |                           |
+    /* ------------------------------------------ LEDs ----------------------------------------------- */
+    | SimPostcardLedTopic       | LedStatus         | "sim_postcard_led"    |                           |
+    | SimAltimeterLedTopic      | LedStatus         | "sim_altimeter_led"   |                           |
+    | SimGpsLedTopic            | LedStatus         | "sim_gps_led"         |                           |
+    | SimImuLedTopic            | LedStatus         | "sim_imu_led"         |                           |
+    | SimArmLedTopic            | LedStatus         | "sim_arm_led"         |                           |
+    | SimFileSystemLedTopic     | LedStatus         | "sim_file_system_led" |                           |
+    | SimDeploymentLedTopic     | LedStatus         | "sim_deployment_led"  |                           |
+    | SimGroundStationLedTopic  | LedStatus         |"sim_groundstation_led"|                           |
 }

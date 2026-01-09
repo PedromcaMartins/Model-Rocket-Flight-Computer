@@ -54,3 +54,13 @@ pub struct GroundStationConfig;
 impl GroundStationConfig {
     pub const SEND_SENSOR_DATA_TICK_INTERVAL: Duration = Duration::from_hz(10);
 }
+
+pub struct PostcardConfig;
+impl PostcardConfig {
+    pub const RECONNECT_INTERVAL: Duration = Duration::from_secs(2);
+}
+
+pub struct FiniteStateMachineConfig;
+impl FiniteStateMachineConfig {
+    pub const WAITING_ARM_INTERVAL: Duration = Duration::from_hz(10);
+}

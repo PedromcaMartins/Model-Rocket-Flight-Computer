@@ -14,6 +14,7 @@ where
 {
     tx: &'a PostcardSender<Tx>,
     seq: Wrapping<u32>,
+    state: LedStatus,
     _topic: core::marker::PhantomData<T>,
 }
 
@@ -26,6 +27,7 @@ where
         Self {
             tx,
             seq: Wrapping::default(),
+            state: LedStatus::default(),
             _topic: core::marker::PhantomData,
         }
     }
@@ -62,6 +64,20 @@ where
             self.seq += 1;
         } else {
             error!("SimLed: Failed to send led status (On)");
+        }
+        Ok(())
+    }
+
+    async fn toggle(&mut self) -> Result<(), Self::Error> {
+        match self.state {
+            LedStatus::On => {
+                self.off().await?;
+                self.state = LedStatus::Off;
+            }
+            LedStatus::Off => {
+                self.on().await?;
+                self.state = LedStatus::On;
+            }
         }
         Ok(())
     }

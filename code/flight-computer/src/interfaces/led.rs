@@ -3,4 +3,5 @@ pub trait Led {
 
     async fn on(&mut self) -> Result<(), Self::Error>;
     async fn off(&mut self) -> Result<(), Self::Error>;
+    async fn toggle(&mut self) -> Result<(), Self::Error>;
 }

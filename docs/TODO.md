@@ -62,6 +62,7 @@
     - [ ] Errors + Events should have a severity level
     - [ ] Move GPS Error to proto + adapt it
 - [ ] Create Config that can be changed at runtime via Ground Station: Add struct RuntimeConfig + postcard endpoints + atomic watch + change config to add this
+    - [ ] Improve Config struct naming
 - [ ] Crate `broadcast_record(Record)` global function -> send to Storage + send to Ground Station
     - [ ] Storage should store all data, compression allowed (for events, errors)
     - [ ] FC should send to Ground Station sparse data (e.g. only critical errors, events, latest sensor data + stats every n milliseconds) to minimize bandwidth use

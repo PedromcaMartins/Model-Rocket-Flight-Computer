@@ -3,7 +3,7 @@ use core::ops::DerefMut;
 use defmt_or_log::info;
 use embassy_futures::select::{Either, Either6, select, select6};
 use postcard_rpc::server::{Dispatch, Sender, Server, WireRx, WireTx};
-use proto::SimFileSystemLedTopic;
+use proto::{SimAltimeterLedTopic, SimArmLedTopic, SimDeploymentLedTopic, SimFileSystemLedTopic, SimGpsLedTopic, SimGroundStationLedTopic, SimImuLedTopic, SimPostcardLedTopic};
 
 use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arming_system::SimArming, deployment_system::SimRecovery, led::SimLed, gps::SimGps, imu::SimImu}}, tasks::{finite_state_machine_task, groundstation_task, postcard_server_task, sensor_task, storage_task}};
 
@@ -25,14 +25,29 @@ where
     PostcardBuf: DerefMut<Target = [u8]>,
     PostcardD: Dispatch<Tx = PostcardTx>,
 {
-    let postcard_task = postcard_server_task(server);
-    let altimeter_task = sensor_task(SimAltimeter);
-    let gps_task = sensor_task(SimGps);
-    let imu_task = sensor_task(SimImu);
+    let postcard_task = postcard_server_task(
+        server,
+        SimLed::<_, SimPostcardLedTopic>::new(&postcard_sender),
+    );
+
+    let altimeter_task = sensor_task(
+        SimAltimeter,
+        SimLed::<_, SimAltimeterLedTopic>::new(&postcard_sender),
+    );
+    let gps_task = sensor_task(
+        SimGps,
+        SimLed::<_, SimGpsLedTopic>::new(&postcard_sender),
+    );
+    let imu_task = sensor_task(
+        SimImu,
+        SimLed::<_, SimImuLedTopic>::new(&postcard_sender),
+    );
 
     let finite_state_machine_task = finite_state_machine_task(
         SimArming, 
+        SimLed::<_, SimArmLedTopic>::new(&postcard_sender),
         SimRecovery::new(&postcard_sender), 
+        SimLed::<_, SimDeploymentLedTopic>::new(&postcard_sender),
     );
 
     let storage_task = storage_task(
@@ -40,7 +55,10 @@ where
         SimLed::<_, SimFileSystemLedTopic>::new(&postcard_sender), 
     );
 
-    let groundstation_task = groundstation_task(&postcard_sender);
+    let groundstation_task = groundstation_task(
+        &postcard_sender,
+        SimLed::<_, SimGroundStationLedTopic>::new(&postcard_sender),
+    );
 
     #[allow(clippy::ignored_unit_patterns)]
     match select(
