@@ -49,3 +49,8 @@ impl StorageConfig {
 
     pub const FLUSH_FILES_TICK_INTERVAL: Duration = Duration::from_millis(500);
 }
+
+pub struct GroundStationConfig;
+impl GroundStationConfig {
+    pub const SEND_SENSOR_DATA_TICK_INTERVAL: Duration = Duration::from_hz(10);
+}

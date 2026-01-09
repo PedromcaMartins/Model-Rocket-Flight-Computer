@@ -1,10 +1,10 @@
 use core::ops::DerefMut;
 
 use defmt_or_log::info;
-use embassy_futures::{select::select6, select::Either6};
+use embassy_futures::select::{Either, Either6, select, select6};
 use postcard_rpc::server::{Dispatch, Sender, Server, WireRx, WireTx};
 
-use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arming_system::SimArming, deployment_system::SimRecovery, gps::SimGps, imu::SimImu, filesystem_led::SimFileSystemLed}}, tasks::{finite_state_machine_task, sensor_task, postcard_server_task, storage_task}};
+use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arming_system::SimArming, deployment_system::SimRecovery, filesystem_led::SimFileSystemLed, gps::SimGps, imu::SimImu}}, tasks::{finite_state_machine_task, groundstation_task, postcard_server_task, sensor_task, storage_task}};
 
 pub async fn start_software_flight_computer<
     SdCard,
@@ -24,21 +24,14 @@ where
     PostcardBuf: DerefMut<Target = [u8]>,
     PostcardD: Dispatch<Tx = PostcardTx>,
 {
-    let altimeter_task = sensor_task(
-        SimAltimeter, 
-    );
+    let postcard_task = postcard_server_task(server);
+    let altimeter_task = sensor_task(SimAltimeter);
+    let gps_task = sensor_task(SimGps);
+    let imu_task = sensor_task(SimImu);
 
     let finite_state_machine_task = finite_state_machine_task(
         SimArming, 
         SimRecovery::new(&postcard_sender), 
-    );
-
-    let gps_task = sensor_task(
-        SimGps,
-    );
-
-    let imu_task = sensor_task(
-        SimImu, 
     );
 
     let storage_task = storage_task(
@@ -46,25 +39,27 @@ where
         SimFileSystemLed::new(&postcard_sender), 
     );
 
-    let postcard_task = postcard_server_task(server);
-
-    defmt_or_log::trace!("TICK_HZ: {:?}", embassy_time::TICK_HZ);
+    let groundstation_task = groundstation_task(&postcard_sender);
 
     #[allow(clippy::ignored_unit_patterns)]
-    match select6(
-        altimeter_task, 
-        finite_state_machine_task, 
-        gps_task, 
-        imu_task,
-        storage_task,
-        postcard_task,
+    match select(
+        select6(
+            postcard_task,
+            altimeter_task, 
+            gps_task, 
+            imu_task,
+            finite_state_machine_task, 
+            storage_task,
+        ),
+        groundstation_task,
     ).await {
-        Either6::First(_) => { info!("Altimeter task ended") },
-        Either6::Second(_) => { info!("Finite State Machine task ended") },
-        Either6::Third(_) => { info!("GPS task ended") },
-        Either6::Fourth(_) => { info!("IMU task ended") },
-        Either6::Fifth(_) => { info!("Storage task ended") },
-        Either6::Sixth(_) => { info!("Postcard Server task ended") },
+        Either::First(Either6::First(_))  => { info!("Postcard Server task ended") },
+        Either::First(Either6::Second(_)) => { info!("Altimeter task ended") },
+        Either::First(Either6::Third(_))  => { info!("GPS task ended") },
+        Either::First(Either6::Fourth(_)) => { info!("IMU task ended") },
+        Either::First(Either6::Fifth(_))  => { info!("Finite State Machine task ended") },
+        Either::First(Either6::Sixth(_))  => { info!("Storage task ended") },
+        Either::Second(_)                 => { info!("Groundstation task ended") },
     }
 
     info!("Flight Computer finished!");

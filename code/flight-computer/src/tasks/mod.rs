@@ -4,6 +4,8 @@ mod sensor;
 pub use sensor::sensor_task;
 mod storage;
 pub use storage::storage_task;
+mod groundstation;
+pub use groundstation::groundstation_task;
 pub mod postcard;
 pub use postcard::postcard_server_task;
 
