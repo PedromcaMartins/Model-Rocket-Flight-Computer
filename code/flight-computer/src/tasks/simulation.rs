@@ -4,7 +4,7 @@ use defmt_or_log::info;
 use embassy_futures::{select::select6, select::Either6};
 use postcard_rpc::server::{Dispatch, Sender, Server, WireRx, WireTx};
 
-use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arming_system::SimArming, deployment_system::SimRecovery, gps::SimGps, imu::SimImu, filesystem_led::SimFileSystemLed}}, tasks::{altimeter_task, finite_state_machine_task, gps_task, imu_task, postcard_server_task, storage_task}};
+use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arming_system::SimArming, deployment_system::SimRecovery, gps::SimGps, imu::SimImu, filesystem_led::SimFileSystemLed}}, tasks::{finite_state_machine_task, sensor_task, postcard_server_task, storage_task}};
 
 pub async fn start_software_flight_computer<
     SdCard,
@@ -24,9 +24,8 @@ where
     PostcardBuf: DerefMut<Target = [u8]>,
     PostcardD: Dispatch<Tx = PostcardTx>,
 {
-    let altimeter_task = altimeter_task(
+    let altimeter_task = sensor_task(
         SimAltimeter, 
-        &postcard_sender,
     );
 
     let finite_state_machine_task = finite_state_machine_task(
@@ -34,14 +33,12 @@ where
         SimRecovery::new(&postcard_sender), 
     );
 
-    let gps_task = gps_task(
+    let gps_task = sensor_task(
         SimGps,
-        &postcard_sender,
     );
 
-    let imu_task = imu_task(
+    let imu_task = sensor_task(
         SimImu, 
-        &postcard_sender,
     );
 
     let storage_task = storage_task(

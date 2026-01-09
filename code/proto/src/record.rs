@@ -41,8 +41,8 @@ impl Record {
         self.uid
     }
 
-    pub const fn into_payload(self) -> RecordData {
-        self.payload
+    pub const fn payload(&self) -> &RecordData {
+        &self.payload
     }
 
     pub const fn into_inner(self) -> (u64, u32, RecordData) {

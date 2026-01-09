@@ -4,6 +4,7 @@ use static_cell::ConstStaticCell;
 use proto::sensor_data::{Altitude, Angle, GpsData};
 use proto::uom::si::length::meter;
 
+use crate::config::DataAcquisitionConfig;
 use crate::interfaces::SensorDevice;
 
 #[defmt_or_log::maybe_derive_format]
@@ -59,6 +60,9 @@ where
 {
     type Data = GpsData;
     type Error = GpsError;
+
+    const NAME: &'static str = "GPS";
+    const TICKER_PERIOD_MS: embassy_time::Duration = DataAcquisitionConfig::GPS_TICKER_PERIOD;
 
     #[allow(clippy::cast_possible_truncation)]
     async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {

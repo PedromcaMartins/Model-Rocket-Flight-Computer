@@ -62,13 +62,18 @@
     - [ ] Errors + Events should have a severity level
     - [ ] Move GPS Error to proto + adapt it
 - [ ] Create Config that can be changed at runtime via Ground Station: Add struct RuntimeConfig + postcard endpoints + atomic watch + change config to add this
-- [ ] Crate `broadcast_record(Record)` / `broadcast_error/event` global functions -> send to Storage + send to Ground Station
+- [ ] Crate `broadcast_record(Record)` global function -> send to Storage + send to Ground Station
     - [ ] Storage should store all data, compression allowed (for events, errors)
-    - [ ] Ground Station should receive sparse data (e.g. only critical errors, events)
+    - [ ] FC should send to Ground Station sparse data (e.g. only critical errors, events, latest sensor data + stats every n milliseconds) to minimize bandwidth use
 - [ ] Check core/state_machine
 - [ ] Decouple Postcard from core!: Should only require Value to send + Topic!
-    - [ ] Postcard Sender needs to be static + set in runtime globally!
-    - [ ] global function `send_to_ground_station<T: Topic>(value: &T::Message)`
+    - ~~[ ] Postcard Sender needs to be static + set in runtime globally!~~
+    - ~~[ ] global function `send_to_ground_station<T: Topic>(value: &T::Message)`~~
+    - [ ] Groundstation thread receives records!
     - [ ] Contains atomic seq number
 - [ ] Implement Read from Storage -> Groundstation command activates it! Implement Iterator over Record
 - [ ] Make `sim_filesystem_led` generic to any Led!
+- [ ] Use select in sensor reading to wait at the same time for sensor data and for next iter signal! -> that way every tick, new data is read if available!
+- [ ] Use TraceSync + Async for benchmarks in functions!
+- [X] Make sensor tasks generic over sensor devices!
+- [ ] write! -> uwrite!

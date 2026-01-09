@@ -2,10 +2,11 @@
 #![deny(unsafe_code)]
 #![deny(unused_must_use)]
 
-use postcard_schema::{Schema, schema};
+use postcard_schema::schema;
 use postcard_rpc::{endpoints, topics, TopicDirection};
 
 pub use serde::{Deserialize, Serialize};
+pub use postcard_schema::Schema;
 pub use uom;
 
 pub mod sensor_data;

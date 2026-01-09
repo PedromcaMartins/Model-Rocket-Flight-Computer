@@ -7,6 +7,7 @@ use proto::sensor_data::{Vector3, ImuData};
 use proto::uom::si::{acceleration::meter_per_second_squared, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, thermodynamic_temperature::degree_celsius};
 use proto::sensor_data::{Acceleration, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature};
 
+use crate::config::DataAcquisitionConfig;
 use crate::interfaces::SensorDevice;
 
 pub struct Bno055Device<I, E>
@@ -53,6 +54,9 @@ where
 {
     type Data = ImuData;
     type Error = bno055::Error<E>;
+
+    const NAME: &'static str = "BNO055 IMU";
+    const TICKER_PERIOD_MS: embassy_time::Duration = DataAcquisitionConfig::IMU_TICKER_PERIOD;
 
     async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {
         let acceleration = self.bno055.accel_data()?;

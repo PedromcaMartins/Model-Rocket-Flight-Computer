@@ -5,6 +5,7 @@ use embedded_hal::i2c::{I2c, SevenBitAddress};
 use proto::sensor_data::{AltimeterData, Pressure, ThermodynamicTemperature};
 use proto::uom::si::{pressure::pascal, thermodynamic_temperature::degree_celsius};
 
+use crate::config::DataAcquisitionConfig;
 use crate::{interfaces::SensorDevice, core::sensors::altimeter::altitude_from_pressure};
 
 pub struct Bmp280Device<I, E>
@@ -47,6 +48,9 @@ where
 {
     type Data = AltimeterData;
     type Error = E;
+
+    const NAME: &'static str = "BMP280 Altimeter";
+    const TICKER_PERIOD_MS: embassy_time::Duration = DataAcquisitionConfig::ALTIMETER_TICKER_PERIOD;
 
     #[allow(clippy::cast_possible_truncation)]
     async fn parse_new_data(&mut self) -> Result<Self::Data, Self::Error> {

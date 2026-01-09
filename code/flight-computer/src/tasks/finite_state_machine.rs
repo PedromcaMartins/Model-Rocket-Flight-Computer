@@ -1,7 +1,7 @@
 use defmt_or_log::info;
 use proto::flight_state::FlightState;
 
-use crate::{core::state_machine::FlightStateMachine, interfaces::{ArmingSystem, DeploymentSystem}, sync::FLIGHT_STATE_WATCH};
+use crate::{core::state_machine::FlightStateMachine, interfaces::{ArmingSystem, DeploymentSystem}, sync::broadcast_record};
 
 #[inline]
 pub async fn finite_state_machine_task<A, D>(arm_button: A, deployment_system: D)
@@ -9,26 +9,25 @@ where
     A: ArmingSystem,
     D: DeploymentSystem,
 {
-    let flight_state_sender = FLIGHT_STATE_WATCH.sender();
-
     let fsm = FlightStateMachine::new(
         arm_button, 
         deployment_system, 
     );
-    flight_state_sender.send(FlightState::default());
-    info!("Flight Computer Pre-Armed");
+    update_flight_state(FlightState::default());
 
     let fsm = fsm.wait_arm().await;
-    flight_state_sender.send(FlightState::Armed);
-    info!("Flight Computer Armed");
+    update_flight_state(FlightState::Armed);
 
     let fsm = fsm.wait_activate_recovery().await;
-    flight_state_sender.send(FlightState::RecoveryActivated);
-    info!("Recovery System Activated");
+    update_flight_state(FlightState::RecoveryActivated);
 
     let fsm = fsm.wait_touchdown().await;
-    flight_state_sender.send(FlightState::Touchdown);
-    info!("Touchdown Detected");
+    update_flight_state(FlightState::Touchdown);
 
     fsm.shutdown().await;
+}
+
+fn update_flight_state(state: FlightState) {
+    broadcast_record(state.into());
+    info!("Flight Computer {state}");
 }

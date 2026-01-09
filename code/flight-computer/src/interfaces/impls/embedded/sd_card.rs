@@ -37,7 +37,7 @@ impl<D, const MAX_DIRS: usize, const MAX_FILES: usize, const MAX_VOLUMES: usize>
 where
     D: embedded_sdmmc::BlockDevice,
 {
-    pub fn init<const ID_OFFSET: u32> (sd_card: D) -> Result<Self, SdCardError<D::Error>> {
+    pub fn init<const ID_OFFSET: u32>(sd_card: D) -> Result<Self, SdCardError<D::Error>> {
         let volume_manager = VolumeManager::new_with_limits(sd_card, DummyTimeSource, ID_OFFSET);
         let raw_volume = volume_manager.open_raw_volume(embedded_sdmmc::VolumeIdx(0))?;
         let raw_root_dir = volume_manager.open_root_dir(raw_volume)?;

@@ -79,6 +79,7 @@ log = [
     "dep:log",
     "defmt-or-log/log",
     "embedded-sdmmc/log",
+    "proto/log",
 ]
 defmt = [
     "dep:defmt",
@@ -96,6 +97,7 @@ defmt = [
     "nmea/defmt-03",
     "heapless/defmt",
     "serde-json-core/defmt",
+    "proto/defmt",
 ]
 impl_embedded = []
 impl_software = []
