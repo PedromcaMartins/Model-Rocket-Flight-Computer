@@ -32,7 +32,7 @@ defmt-or-log-macros = "0.1.2"
 
 [features]
 
-default = ["log"]
+default = ["log", "embassy-time", "timestamp-into-duration"]
 log = [
     "dep:log",
     "defmt-or-log/log",
@@ -46,3 +46,4 @@ defmt = [
 ]
 
 embassy-time = ["dep:embassy-time"]
+timestamp-into-duration = []

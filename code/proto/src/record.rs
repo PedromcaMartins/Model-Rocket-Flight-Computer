@@ -1,6 +1,9 @@
 use derive_more::From;
 
-use crate::{Serialize, Deserialize, Schema, error::Error, event::Event, flight_state::FlightState, sensor_data::{AltimeterData, GpsData, ImuData}};
+use crate::{Serialize, Deserialize, Schema, error::Error, event::Event, flight_state::FlightState, sensor_data::{AltimeterData, GpsData, ImuData}, record::{tick_hz::Timestamp, uid::Uid}};
+
+pub mod tick_hz;
+pub mod uid;
 
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq, From)]
 pub enum RecordData {
@@ -15,20 +18,20 @@ pub enum RecordData {
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct Record {
     /// Timestamp in ticks.
-    timestamp: u64,
+    timestamp: Timestamp,
     /// Unique ID.
-    uid: u32,
+    uid: Uid,
     /// The recorded data.
     payload: RecordData,
 }
 
 #[allow(clippy::must_use_candidate)]
 impl Record {
-    pub const fn timestamp_ticks(&self) -> u64 {
+    pub const fn timestamp(&self) -> Timestamp {
         self.timestamp
     }
 
-    pub const fn uid(&self) -> u32 {
+    pub const fn uid(&self) -> Uid {
         self.uid
     }
 
@@ -36,36 +39,22 @@ impl Record {
         &self.payload
     }
 
-    pub const fn into_inner(self) -> (u64, u32, RecordData) {
+    pub const fn into_inner(self) -> (Timestamp, Uid, RecordData) {
         (self.timestamp, self.uid, self.payload)
     }
 }
 
 #[cfg(feature = "embassy-time")]
 mod impls {
-    use core::sync::atomic::{AtomicU32, Ordering};
-
-    use embassy_time::Instant;
+    use crate::record::{tick_hz::Timestamp, uid::Uid};
 
     use super::{Record, RecordData, AltimeterData, GpsData, ImuData, FlightState, Event, Error};
-
-    static UID_COUNTER: AtomicU32 = AtomicU32::new(0);
-
-    impl Record {
-        fn new_id() -> u32 {
-            UID_COUNTER.fetch_add(1, Ordering::SeqCst)
-        }
-
-        fn current_timestamp() -> u64 {
-            Instant::now().as_ticks()
-        }
-    }
 
     impl From<AltimeterData> for Record {
         fn from(value: AltimeterData) -> Self {
             Self {
-                timestamp: Self::current_timestamp(),
-                uid: Self::new_id(),
+                timestamp: Timestamp::now(),
+                uid: Uid::generate_id(),
                 payload: RecordData::from(value),
             }
         }
@@ -74,8 +63,8 @@ mod impls {
     impl From<GpsData> for Record {
         fn from(value: GpsData) -> Self {
             Self {
-                timestamp: Self::current_timestamp(),
-                uid: Self::new_id(),
+                timestamp: Timestamp::now(),
+                uid: Uid::generate_id(),
                 payload: RecordData::from(value),
             }
         }
@@ -84,8 +73,8 @@ mod impls {
     impl From<ImuData> for Record {
         fn from(value: ImuData) -> Self {
             Self {
-                timestamp: Self::current_timestamp(),
-                uid: Self::new_id(),
+                timestamp: Timestamp::now(),
+                uid: Uid::generate_id(),
                 payload: RecordData::from(value),
             }
         }
@@ -94,8 +83,8 @@ mod impls {
     impl From<FlightState> for Record {
         fn from(value: FlightState) -> Self {
             Self {
-                timestamp: Self::current_timestamp(),
-                uid: Self::new_id(),
+                timestamp: Timestamp::now(),
+                uid: Uid::generate_id(),
                 payload: RecordData::from(value),
             }
         }
@@ -104,8 +93,8 @@ mod impls {
     impl From<Event> for Record {
         fn from(value: Event) -> Self {
             Self {
-                timestamp: Self::current_timestamp(),
-                uid: Self::new_id(),
+                timestamp: Timestamp::now(),
+                uid: Uid::generate_id(),
                 payload: RecordData::from(value),
             }
         }
@@ -114,8 +103,8 @@ mod impls {
     impl From<Error> for Record {
         fn from(value: Error) -> Self {
             Self {
-                timestamp: Self::current_timestamp(),
-                uid: Self::new_id(),
+                timestamp: Timestamp::now(),
+                uid: Uid::generate_id(),
                 payload: RecordData::from(value),
             }
         }

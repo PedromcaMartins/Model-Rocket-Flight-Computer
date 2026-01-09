@@ -18,10 +18,10 @@ pub mod error;
 mod newtypes;
 pub use newtypes::*;
 
-mod record;
-pub use record::*;
+pub mod record;
+pub use record::{Record, RecordData};
 
-use crate::{actuator_data::{ActuatorStatus, LedStatus}, error::Error, event::Event, flight_state::FlightState, sensor_data::{AltimeterData, GpsData, ImuData}};
+use crate::{actuator_data::{ActuatorStatus, LedStatus}, error::Error, event::Event, flight_state::FlightState, sensor_data::{AltimeterData, GpsData, ImuData}, record::tick_hz::GlobalTickHz};
 
 
 /* ------------------- Postcard RPC Endpoint Configuration ------------------ */
@@ -32,7 +32,7 @@ endpoints! {
     | EndpointTy                | RequestTy         | ResponseTy            | Path                      |
     | ------------------------- | ----------------- | --------------------- | ------------------------- |
     | PingEndpoint              | PingRequest       | PingResponse          | "ping"                    |
-    | EmbassyTimeTickHzEndpoint | ()                | u64                   | "embassy_time_tick_hz"    |
+    | GlobalTickHzEndpoint      | ()                | GlobalTickHz          | "embassy_time_tick_hz"    |
 }
 
 topics! {
