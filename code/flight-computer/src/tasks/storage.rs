@@ -5,7 +5,7 @@ use defmt_or_log::{debug, error, info};
 use crate::{config::StorageConfig, core::{storage::Storage, trace::{TraceAsync, TraceSync}}, interfaces::{FileSystem, Led}, sync::RECORD_TO_STORAGE_CHANNEL};
 
 #[inline]
-pub async fn storage_task<FS, LED>(filesystem: FS, mut filesystem_led: LED) -> !
+pub async fn storage_task<FS, LED>(filesystem: FS, mut led: LED) -> !
 where
     FS: FileSystem,
     LED: Led,
@@ -30,7 +30,7 @@ where
         ).await;
         trace.after_await();
 
-        if filesystem_led.on().await.is_err() { error!("Storage: Status Led error") }
+        if led.on().await.is_err() { error!("Storage: Status Led error") }
 
         match result {
             Either::First(record) => {
@@ -43,6 +43,6 @@ where
             },
         }
 
-        if filesystem_led.off().await.is_err() { error!("Storage: Status Led error") }
+        if led.off().await.is_err() { error!("Storage: Status Led error") }
     }
 }

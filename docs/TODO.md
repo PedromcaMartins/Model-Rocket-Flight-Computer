@@ -71,9 +71,9 @@
     - ~~[ ] global function `send_to_ground_station<T: Topic>(value: &T::Message)`~~
     - [X] Groundstation thread receives records!
     - [X] Contains atomic seq number
-- [ ] Implement Read from Storage -> Groundstation command activates it! Implement Iterator over Record
-- [ ] Make `sim_filesystem_led` generic to any Led!
-- [ ] Use select in sensor reading to wait at the same time for sensor data and for next iter signal! -> that way every tick, new data is read if available!
+- [ ] Implement Read from Storage -> Groundstation command activates it! ~~Implement Iterator over Record~~
+- [X] Make `sim_filesystem_led` generic to any Led!
+- [X] Use select in sensor reading to wait at the same time for sensor data and for next iter signal! -> that way every tick, new data is read if available!
 - [ ] Use TraceSync + Async for benchmarks in functions!
 - [X] Make sensor tasks generic over sensor devices!
-- [ ] write! -> uwrite!
+- ~~[ ] write! -> uwrite!~~
