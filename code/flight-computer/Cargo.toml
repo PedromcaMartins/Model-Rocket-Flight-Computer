@@ -19,7 +19,7 @@ nursery = "warn"
 unwrap_used = "warn"
 
 [dependencies]
-proto = { version = "*", path = "../proto" }
+proto = { version = "*", path = "../proto", features = ["embassy-time"] }
 chrono = { version = "^0.4", default-features = false}
 
 embassy-sync = "0.6.2"

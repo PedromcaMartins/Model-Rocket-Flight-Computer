@@ -29,31 +29,32 @@ use crate::{actuator_data::{ActuatorStatus, LedStatus}, error::Error, event::Eve
 endpoints! {
     list = ENDPOINT_LIST;
     omit_std = true;
-    | EndpointTy                | RequestTy         | ResponseTy            | Path          |
-    | ----------                | ---------         | ----------            | ----          |
-    | PingEndpoint              | PingRequest       | PingResponse          | "ping"        |
+    | EndpointTy                | RequestTy         | ResponseTy            | Path                      |
+    | ------------------------- | ----------------- | --------------------- | ------------------------- |
+    | PingEndpoint              | PingRequest       | PingResponse          | "ping"                    |
+    | EmbassyTimeTickHzEndpoint | ()                | u64                   | "embassy_time_tick_hz"    |
 }
 
 topics! {
     list = TOPICS_IN_LIST;
     direction = TopicDirection::ToServer;
-    | TopicTy                   | MessageTy         | Path                  | Cfg           |
-    | -------                   | ---------         | ----                  | ---           |
-    | SimAltimeterTopic         | AltimeterData     | "sim_altimeter"       |               |
-    | SimGpsTopic               | GpsData           | "sim_gps"             |               |
-    | SimImuTopic               | ImuData           | "sim_imu"             |               |
-    | SimArmTopic               | ActuatorStatus    | "sim_arm"             |               |
+    | TopicTy                   | MessageTy         | Path                  | Cfg                       |
+    | ------------------------- | ----------------- | --------------------- | ------------------------- |
+    | SimAltimeterTopic         | AltimeterData     | "sim_altimeter"       |                           |
+    | SimGpsTopic               | GpsData           | "sim_gps"             |                           |
+    | SimImuTopic               | ImuData           | "sim_imu"             |                           |
+    | SimArmTopic               | ActuatorStatus    | "sim_arm"             |                           |
 }
 
 topics! {
     list = TOPICS_OUT_LIST;
     direction = TopicDirection::ToClient;
-    | TopicTy                   | MessageTy         | Path                  | Cfg           |
-    | -------                   | ---------         | ----                  | ---           |
-    | RecordTopic               | Record            | "record"              |               |
-    | FlightStateTopic          | FlightState       | "flight_state"        |               |
-    | EventTopic                | Event             | "event"               |               |
-    | ErrorTopic                | Error             | "error"               |               |
-    | SimDeploymentTopic        | ActuatorStatus    | "sim_deployment"      |               |
-    | SimFileSystemLedTopic     | LedStatus         | "sim_file_sytem_led"  |               |
+    | TopicTy                   | MessageTy         | Path                  | Cfg                       |
+    | ------------------------- | ----------------- | --------------------- | ------------------------- |
+    | RecordTopic               | Record            | "record"              |                           |
+    | FlightStateTopic          | FlightState       | "flight_state"        |                           |
+    | EventTopic                | Event             | "event"               |                           |
+    | ErrorTopic                | Error             | "error"               |                           |
+    | SimDeploymentTopic        | ActuatorStatus    | "sim_deployment"      |                           |
+    | SimFileSystemLedTopic     | LedStatus         | "sim_file_sytem_led"  |                           |
 }

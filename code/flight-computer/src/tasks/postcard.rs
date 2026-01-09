@@ -22,6 +22,10 @@ pub fn ping_handler(_context: &mut Context, _header: VarHeader, rqst: PingReques
     (*rqst).into()
 }
 
+pub const fn embassy_time_tick_hz_handler(_context: &mut Context, _header: VarHeader, _rqst: ()) -> u64 {
+    embassy_time::TICK_HZ
+}
+
 /// This handles the server management
 pub async fn postcard_server_task<Tx, Rx, Buf, D>(mut server: Server<Tx, Rx, Buf, D>) -> !
 where

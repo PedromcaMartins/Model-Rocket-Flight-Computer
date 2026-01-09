@@ -19,7 +19,7 @@ uom = { version = "0.37.0", default-features = false, features = ["f32", "si", "
 nalgebra = { version = "0.33.2", default-features = false, features = ["serde-serialize-no-std"] }
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 derive_more = { version = "2", default-features = false, features = ["from", "into", "deref", "display"] }
-embassy-time = "0.4"
+embassy-time = { version = "0.4", optional = true }
 
 # postcard-schema = { version = "0.2", features = ["derive", "nalgebra-v0_33", "chrono-v0_4"] }
 postcard-schema = { version = "0.2", features = ["derive", "nalgebra-v0_33", "chrono-v0_4", "uom-v0_37"] }
@@ -44,3 +44,5 @@ defmt = [
     "postcard-schema/defmt-v0_3",
     "postcard-rpc/defmt",
 ]
+
+embassy-time = ["dep:embassy-time"]
