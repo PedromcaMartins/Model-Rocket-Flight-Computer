@@ -28,7 +28,7 @@ where
             arm_button_led,
             deployment_system,
             deployment_system_led,
-            phantom_data: PhantomData,
+            _state: PhantomData,
 
             launchpad_altitude: None,
         }

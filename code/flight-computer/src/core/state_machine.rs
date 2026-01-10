@@ -19,7 +19,7 @@ where
     arm_button_led: LedA,
     deployment_system: D,
     deployment_system_led: LedD,
-    phantom_data: PhantomData<S>,
+    _state: PhantomData<S>,
 
     /// The following attributes describe 
     launchpad_altitude: Option<Altitude>,
@@ -41,7 +41,7 @@ where
             deployment_system: self.deployment_system,
             deployment_system_led: self.deployment_system_led,
             launchpad_altitude: self.launchpad_altitude,
-            phantom_data: PhantomData,
+            _state: PhantomData,
         }
     }
 }

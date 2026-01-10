@@ -6,7 +6,6 @@ use proto::sensor_data::{Altitude, Time, Velocity};
 use proto::uom::si::time::microsecond;
 
 use crate::config::TouchdownDetectorConfig;
-use crate::core::trace::TraceAsync;
 use crate::sync::LATEST_ALTITUDE_SIGNAL;
 
 pub struct TouchdownDetector {
@@ -59,12 +58,8 @@ impl TouchdownDetector {
         let mut ticker = Ticker::every(TouchdownDetectorConfig::DETECTOR_TICK_INTERVAL);
 
         loop {
-            let mut trace = TraceAsync::start("imu_task_loop");
-
-            trace.before_await();
             ticker.next().await;
             self.wait_new_data_and_update_buffers().await;
-            trace.after_await();
 
             // Check if buffers are full before evaluating conditions
             if self.are_buffers_full() {
