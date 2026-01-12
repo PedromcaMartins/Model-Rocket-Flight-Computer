@@ -1,7 +1,7 @@
 use proto::Record;
 
 pub trait SensorDevice {
-    type Data: Into<Record>;
+    type Data: Into<Record> + Clone + PartialEq + core::fmt::Debug + 'static;
     type Error: core::fmt::Debug;
 
     const NAME: &'static str;

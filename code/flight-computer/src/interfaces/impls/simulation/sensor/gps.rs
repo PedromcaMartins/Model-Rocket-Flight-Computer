@@ -1,14 +1,14 @@
-use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice};
+use crate::{config::DataAcquisitionConfig, interfaces::{SensorDevice, impls::simulation::sensor::SimSensor}};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use proto::sensor_data::GpsData;
 
 static LATEST_DATA: Signal<CriticalSectionRawMutex, GpsData> = Signal::new();
 
+#[derive(Default)]
 pub struct SimGps;
-impl SimGps {
-
-    pub async fn update_data(data: GpsData) {
-        LATEST_DATA.signal(data);
+impl SimSensor for SimGps {
+    fn signal() -> &'static Signal<CriticalSectionRawMutex, Self::Data> {
+        &LATEST_DATA
     }
 }
 

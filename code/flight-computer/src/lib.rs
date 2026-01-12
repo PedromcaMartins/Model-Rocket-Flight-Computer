@@ -19,3 +19,6 @@ pub(crate) mod sync;
 
 pub mod interfaces;
 pub mod tasks;
+
+#[cfg(test)]
+pub mod test_utils;

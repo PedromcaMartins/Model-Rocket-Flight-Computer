@@ -5,7 +5,7 @@ use embassy_futures::select::{Either, Either6, select, select6};
 use postcard_rpc::server::{Dispatch, Sender, Server, WireRx, WireTx};
 use proto::{SimAltimeterLedTopic, SimArmLedTopic, SimDeploymentLedTopic, SimFileSystemLedTopic, SimGpsLedTopic, SimGroundStationLedTopic, SimImuLedTopic, SimPostcardLedTopic};
 
-use crate::{interfaces::{FileSystem, impls::simulation::{altimeter::SimAltimeter, arming_system::SimArming, deployment_system::SimRecovery, led::SimLed, gps::SimGps, imu::SimImu}}, tasks::{finite_state_machine_task, groundstation_task, postcard_server_task, sensor_task, storage_task}};
+use crate::{interfaces::{FileSystem, impls::simulation::{sensor::{SimAltimeter, SimGps, SimImu}, arming_system::SimArming, deployment_system::SimRecovery, led::SimLed}}, tasks::{finite_state_machine_task, groundstation_task, postcard_server_task, sensor_task, storage_task}};
 
 pub async fn start_software_flight_computer<
     SdCard,

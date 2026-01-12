@@ -1,13 +1,14 @@
-use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice};
+use crate::{config::DataAcquisitionConfig, interfaces::{SensorDevice, impls::simulation::sensor::SimSensor}};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use proto::sensor_data::AltimeterData;
 
 static LATEST_DATA: Signal<CriticalSectionRawMutex, AltimeterData> = Signal::new();
 
+#[derive(Default)]
 pub struct SimAltimeter;
-impl SimAltimeter {
-    pub async fn update_data(data: AltimeterData) {
-        LATEST_DATA.signal(data);
+impl SimSensor for SimAltimeter {
+    fn signal() -> &'static Signal<CriticalSectionRawMutex, Self::Data> {
+        &LATEST_DATA
     }
 }
 

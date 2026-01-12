@@ -1,14 +1,14 @@
-use crate::{config::DataAcquisitionConfig, interfaces::SensorDevice};
+use crate::{config::DataAcquisitionConfig, interfaces::{SensorDevice, impls::simulation::sensor::SimSensor}};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use proto::sensor_data::ImuData;
 
 static LATEST_DATA: Signal<CriticalSectionRawMutex, ImuData> = Signal::new();
 
+#[derive(Default)]
 pub struct SimImu;
-impl SimImu {
-
-    pub async fn update_data(data: ImuData) {
-        LATEST_DATA.signal(data);
+impl SimSensor for SimImu {
+    fn signal() -> &'static Signal<CriticalSectionRawMutex, Self::Data> {
+        &LATEST_DATA
     }
 }
 

@@ -13,7 +13,7 @@ path = "src/lib.rs"
 unsafe_code = "forbid"
 
 [lints.clippy]
-enum_glob_use = "deny"
+enum_glob_use = "warn"
 pedantic = "warn"
 nursery = "warn"
 unwrap_used = "warn"
@@ -55,23 +55,30 @@ serde-json-core = { version = "0.6", features = ["custom-error-messages"] }
 # micromath = "2.1.0"
 
 [dev-dependencies]
-# Support `log` crate only (default).
-test-log = { version = "0.2" }
-async-std = { version = "1.13", features = ["attributes"] }
-rstest = "=0.24"
-futures = "0.3.31"
+# assert and test logs!
+logtest = "2.0"
 
+# replaces embassy-time in tests with mock - assert timers, delays, etc.
 embassy-time = { version = "0.4", features = ["mock-driver", "generic-queue-64"] }
-critical-section = { version = "1.1", features = ["std"] }
+
+# framework async test
+async-std = { version = "1.13", features = ["attributes"] }
+futures = "0.3.31"
 serial_test = "3.2.0"
+# prints logs to stdout during tests
+test-log = { version = "0.2" }
+# improve test complexity
+rstest = "=0.24"
+# provide random data for tests
+rand = { version = "0.9", features = ["std"] }
+
+# required for lib to compile
+critical-section = { version = "1.1", features = ["std"] }
 
 # Testing
 # proptest = "1.7.0"
 # quickcheck = "1.0.3"
 # mockall = "0.13.1"
-# serial_test = "*"
-# float-cmp = "0.10.0"
-# afl = "0.15.20"
 
 [features]
 default = ["log", "impl_embedded", "impl_software"]

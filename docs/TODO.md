@@ -78,3 +78,14 @@
 - [ ] Use TraceSync + Async for benchmarks in functions!
 - [X] Make sensor tasks generic over sensor devices!
 - ~~[ ] write! -> uwrite!~~
+- [X] Add tests for core modules!
+- [ ] If test, dont use `must_use`!
+- [ ] TraceAsync - linter config
+- [ ] Trace - parser to get info back! uder feature wall
+    ```Rust
+    pub enum Stage {
+        Sync(u64),
+        Await(u64),
+    }
+    ```
+- [ ] 
