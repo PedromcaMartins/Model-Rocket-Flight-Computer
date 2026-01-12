@@ -88,4 +88,4 @@
         Await(u64),
     }
     ```
-- [ ] 
+- [X] Rename `SensorDevice` trait to Sensor

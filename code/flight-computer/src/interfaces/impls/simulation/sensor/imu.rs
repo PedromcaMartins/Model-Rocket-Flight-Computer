@@ -1,4 +1,4 @@
-use crate::{config::DataAcquisitionConfig, interfaces::{SensorDevice, impls::simulation::sensor::SimSensor}};
+use crate::{config::DataAcquisitionConfig, interfaces::{Sensor, impls::simulation::sensor::SimSensor}};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use proto::sensor_data::ImuData;
 
@@ -12,7 +12,7 @@ impl SimSensor for SimImu {
     }
 }
 
-impl SensorDevice for SimImu {
+impl Sensor for SimImu {
     type Data = ImuData;
     type Error = ();
 

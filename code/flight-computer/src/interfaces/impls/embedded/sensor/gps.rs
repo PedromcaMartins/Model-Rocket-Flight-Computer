@@ -5,7 +5,7 @@ use proto::sensor_data::{Altitude, Angle, GpsData};
 use proto::uom::si::length::meter;
 
 use crate::config::DataAcquisitionConfig;
-use crate::interfaces::SensorDevice;
+use crate::interfaces::Sensor;
 
 #[defmt_or_log::maybe_derive_format]
 #[derive(thiserror::Error, Debug, PartialEq, Eq, Clone)]
@@ -54,7 +54,7 @@ where
     }
 }
 
-impl<U> SensorDevice for GpsDevice<U>
+impl<U> Sensor for GpsDevice<U>
 where
     U: embedded_io_async::Read,
 {

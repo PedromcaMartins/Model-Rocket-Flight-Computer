@@ -8,7 +8,7 @@ use proto::uom::si::{acceleration::meter_per_second_squared, angular_velocity::d
 use proto::sensor_data::{Acceleration, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature};
 
 use crate::config::DataAcquisitionConfig;
-use crate::interfaces::SensorDevice;
+use crate::interfaces::Sensor;
 
 pub struct Bno055Device<I, E>
 where
@@ -47,7 +47,7 @@ where
     }
 }
 
-impl<I, E> SensorDevice for Bno055Device<I, E>
+impl<I, E> Sensor for Bno055Device<I, E>
 where
     I: I2c<SevenBitAddress, Error = E>,
     E: Debug,

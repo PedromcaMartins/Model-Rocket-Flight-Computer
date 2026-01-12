@@ -1,12 +1,12 @@
 use defmt_or_log::{debug, error};
 use embassy_futures::join::join;
 
-use crate::{interfaces::{Led, SensorDevice}, sync::broadcast_record};
+use crate::{interfaces::{Led, Sensor}, sync::broadcast_record};
 
 #[inline]
 pub async fn sensor_task<S, LED>(mut sensor: S, mut led: LED) -> !
 where
-    S: SensorDevice,
+    S: Sensor,
     LED: Led,
 {
     let mut sensor_ticker = sensor.ticker();

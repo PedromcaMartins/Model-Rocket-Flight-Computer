@@ -1,6 +1,6 @@
 use proto::Record;
 
-pub trait SensorDevice {
+pub trait Sensor {
     type Data: Into<Record> + Clone + PartialEq + core::fmt::Debug + 'static;
     type Error: core::fmt::Debug;
 

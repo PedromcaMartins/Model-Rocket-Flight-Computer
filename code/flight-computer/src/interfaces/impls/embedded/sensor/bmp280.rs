@@ -6,7 +6,7 @@ use proto::sensor_data::{AltimeterData, Pressure, ThermodynamicTemperature};
 use proto::uom::si::{pressure::pascal, thermodynamic_temperature::degree_celsius};
 
 use crate::config::DataAcquisitionConfig;
-use crate::{interfaces::SensorDevice, core::sensors::altimeter::altitude_from_pressure};
+use crate::{interfaces::Sensor, core::sensors::altimeter::altitude_from_pressure};
 
 pub struct Bmp280Device<I, E>
 where
@@ -41,7 +41,7 @@ where
     }
 }
 
-impl<I, E> SensorDevice for Bmp280Device<I, E>
+impl<I, E> Sensor for Bmp280Device<I, E>
 where
     I: I2c<SevenBitAddress, Error = E>,
     E: Debug,

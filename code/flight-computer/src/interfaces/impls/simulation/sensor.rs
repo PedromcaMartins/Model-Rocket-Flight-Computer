@@ -1,4 +1,4 @@
-use crate::interfaces::SensorDevice;
+use crate::interfaces::Sensor;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 
 mod altimeter;
@@ -8,7 +8,7 @@ pub use gps::SimGps;
 mod imu;
 pub use imu::SimImu;
 
-pub trait SimSensor : SensorDevice + Default {
+pub trait SimSensor : Sensor + Default {
     fn signal() -> &'static Signal<CriticalSectionRawMutex, Self::Data>;
 
     fn update_data(data: Self::Data) {
