@@ -23,6 +23,7 @@ mod tests {
 
     use super::*;
 
+    /// Cases from https://www.digitaldutch.com/atmoscalc/US_Standard_Atmosphere_1976.pdf, page 52
     #[rstest::rstest]
     #[case(1013.25, 0.0)]
     #[case(1007.2, 50.0)]
