@@ -7,7 +7,33 @@ use proto::{SimAltimeterLedTopic, SimArmLedTopic, SimDeploymentLedTopic, SimFile
 
 use crate::{interfaces::{FileSystem, impls::simulation::{sensor::{SimAltimeter, SimGps, SimImu}, arming_system::SimArming, deployment_system::SimRecovery, led::SimLed}}, tasks::{finite_state_machine_task, groundstation_task, postcard_server_task, sensor_task, storage_task}};
 
-pub async fn start_software_flight_computer<
+#[cfg(feature = "impl_host")]
+pub async fn start_sil_flight_computer<
+    PostcardTx,
+    PostcardRx,
+    PostcardBuf,
+    PostcardD,
+> (
+    postcard_sender: Sender<PostcardTx>,
+    server: Server<PostcardTx, PostcardRx, PostcardBuf, PostcardD>,
+)
+where 
+    PostcardTx: WireTx + Clone,
+    PostcardRx: WireRx,
+    PostcardBuf: DerefMut<Target = [u8]>,
+    PostcardD: Dispatch<Tx = PostcardTx>,
+{
+    use crate::{config::host::HostConfig, interfaces::impls::host::filesystem::HostFileSystem};
+    let dir_path = HostConfig::default();
+
+    start_pil_flight_computer(
+        HostFileSystem::new(dir_path.storage_path).await,
+        postcard_sender,
+        server,
+    ).await;
+}
+
+pub async fn start_pil_flight_computer<
     SdCard,
     PostcardTx,
     PostcardRx,

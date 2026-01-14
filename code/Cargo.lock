@@ -956,6 +956,7 @@ dependencies = [
  "switch-hal",
  "test-log",
  "thiserror 2.0.12",
+ "tokio",
 ]
 
 [[package]]

@@ -1,7 +1,6 @@
-use std::{convert::Infallible, path::PathBuf};
+use std::path::PathBuf;
 use tokio::fs::{self, OpenOptions, File};
 use tokio::io::AsyncWriteExt;
-use tokio::sync::watch;
 
 use crate::interfaces::FileSystem;
 
@@ -9,11 +8,11 @@ use crate::interfaces::FileSystem;
 /*                                 File System                                */
 /* -------------------------------------------------------------------------- */
 
-pub struct SimFileSystem {
+pub struct HostFileSystem {
     dir_path: PathBuf,
 }
 
-impl SimFileSystem {
+impl HostFileSystem {
     pub async fn new(dir_path: PathBuf) -> Self {
         tokio::fs::create_dir_all(&dir_path).await.expect("Failed to create log directory");
         Self { dir_path }
@@ -24,12 +23,12 @@ impl SimFileSystem {
     }
 }
 
-impl FileSystem for SimFileSystem {
+impl FileSystem for HostFileSystem {
     type File = File;
     type Error = std::io::Error;
 
     async fn exist_file(&mut self, filename: &str) -> Result<bool, Self::Error> {
-        let path = self.full_path(&filename);
+        let path = self.full_path(filename);
 
         fs::try_exists(path).await
     }
@@ -38,7 +37,7 @@ impl FileSystem for SimFileSystem {
         OpenOptions::new()
             .write(true)
             .create_new(true)
-            .open(self.full_path(&filename))
+            .open(self.full_path(filename))
             .await
     }
 
@@ -46,7 +45,7 @@ impl FileSystem for SimFileSystem {
         OpenOptions::new()
             .append(true)
             .create(false)
-            .open(self.full_path(&filename))
+            .open(self.full_path(filename))
             .await
     }
 

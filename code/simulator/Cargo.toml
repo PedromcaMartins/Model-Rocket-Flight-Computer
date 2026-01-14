@@ -6,7 +6,7 @@ edition = "2024"
 
 [dependencies]
 proto = { version = "*", path = "../proto" }
-flight-computer = { version = "*", path = "../flight-computer", default-features = false, features = ["log", "impl_software"] }
+flight-computer = { version = "*", path = "../flight-computer", default-features = false, features = ["log", "impl_software", "impl_host"] }
 
 log = { version = "*" }
 chrono = "0.4.42"

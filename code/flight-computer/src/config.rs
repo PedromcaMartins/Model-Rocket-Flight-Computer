@@ -64,3 +64,28 @@ pub struct FiniteStateMachineConfig;
 impl FiniteStateMachineConfig {
     pub const WAITING_ARM_INTERVAL: Duration = Duration::from_hz(10);
 }
+
+#[cfg(test)]
+pub mod test {
+    pub struct TestConfig;
+    #[cfg(test)]
+    impl TestConfig {
+    }
+}
+
+#[cfg(feature = "impl_host")]
+pub mod host {
+    use std::path::PathBuf;
+
+    pub struct HostConfig {
+        pub storage_path: PathBuf,
+    }
+
+    impl Default for HostConfig {
+        fn default() -> Self {
+            Self {
+                storage_path: PathBuf::from("host_storage"),
+            }
+        }
+    }
+}

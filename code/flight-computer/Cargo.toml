@@ -54,6 +54,8 @@ serde-json-core = { version = "0.6", features = ["custom-error-messages"] }
 # fugit = "0.3.7"
 # micromath = "2.1.0"
 
+tokio = { version = "1.36", optional = true, features = ["fs", "io-util"] }
+
 [dev-dependencies]
 # assert and test logs!
 logtest = "2.0"
@@ -81,7 +83,7 @@ critical-section = { version = "1.1", features = ["std"] }
 # mockall = "0.13.1"
 
 [features]
-default = ["log", "impl_embedded", "impl_software"]
+default = ["log", "impl_embedded", "impl_software", "impl_host", "std"]
 log = [
     "dep:log",
     "defmt-or-log/log",
@@ -107,4 +109,6 @@ defmt = [
     "proto/defmt",
 ]
 impl_embedded = []
-impl_software = []
+impl_software = ["std"]
+impl_host = ["dep:tokio", "impl_software", "std"]
+std = []
