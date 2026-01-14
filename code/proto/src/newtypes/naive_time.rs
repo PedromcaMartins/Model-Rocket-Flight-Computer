@@ -26,7 +26,7 @@ impl Schema for NaiveTimeWrapper {
 
 #[test]
 fn fix_type_wrapping() {
-    let time = NaiveTime::from_hms_micro_opt(12, 34, 56, 789012).unwrap();
+    let time = NaiveTime::from_hms_micro_opt(12, 34, 56, 789_012).expect("Failed to create NaiveTime");
     let wrapped = NaiveTimeWrapper::from(time);
     assert_eq!(time, *wrapped);
 }

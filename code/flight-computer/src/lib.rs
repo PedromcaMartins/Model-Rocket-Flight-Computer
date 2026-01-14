@@ -1,5 +1,4 @@
-// make `std` available when testing
-#![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(any(test, feature = "std")), no_std)]
 #![deny(unsafe_code)]
 #![deny(unused_must_use)]
 

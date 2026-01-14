@@ -1,7 +1,7 @@
 use proto::uom::si::{length::meter, pressure::pascal};
 use proto::sensor_data::{Altitude, Pressure};
 
-#[must_use]
+#[allow(dead_code)]
 pub fn altitude_from_pressure(pressure: Pressure) -> Altitude {
     #[allow(unused_imports)]
     use proto::uom::num_traits::Float;

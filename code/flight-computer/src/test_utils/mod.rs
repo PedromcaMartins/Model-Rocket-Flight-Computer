@@ -5,10 +5,6 @@ use rstest::fixture;
 
 pub mod sensor_data;
 
-pub struct TestConfig;
-impl TestConfig {
-}
-
 pub fn ms(ms: u32) -> std::time::Duration {
     std::time::Duration::from_millis(ms.into())
 }

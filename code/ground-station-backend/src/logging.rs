@@ -9,29 +9,6 @@ use tracing_subscriber::{fmt, registry, EnvFilter};
 
 pub struct Logging;
 
-pub struct LoggingConfig {
-    pub system_log_path: PathBuf,
-    pub system_json_log_level: LevelFilter,
-    pub system_stdout_log_level: LevelFilter,
-    pub flight_computer_log_name: &'static str,
-    pub log_dir_path: PathBuf,
-}
-
-impl Default for LoggingConfig {
-    fn default() -> Self {
-        let ts = Local::now();
-        let ts = ts.format("%Y_%m_%d_%H_%M_%S").to_string();
-        let log_dir_path: PathBuf = PathBuf::from("logs").join(&ts);
-        Self {
-            system_log_path: log_dir_path.join("system.log"),
-            system_json_log_level: LevelFilter::DEBUG,
-            system_stdout_log_level: LevelFilter::INFO,
-            flight_computer_log_name: "flight_computer",
-            log_dir_path,
-        }
-    }
-}
-
 impl Logging {
     pub async fn init(config: LoggingConfig) {
         // Capture log::info! messages
@@ -57,9 +34,6 @@ impl Logging {
             .with_writer(std::io::stdout)
             .with_filter(config.system_stdout_log_level);
     
-        // Console-subscriber layer
-        let console_layer = console_subscriber::spawn();
-
         // Flight computer specific logging - trace
         let fc_trace_log_file_path = config.log_dir_path.join(format!("{}_TRACE.log", config.flight_computer_log_name));
         let fc_trace_log_file = File::create_new(&fc_trace_log_file_path).expect("Failed to create flight computer log file");
@@ -129,7 +103,6 @@ impl Logging {
         let subscriber = registry()
             .with(system_json_layer)
             .with(stdout_layer)
-            .with(console_layer)
             .with(fc_trace_layer)
             .with(fc_debug_layer)
             .with(fc_info_layer)

@@ -21,7 +21,7 @@ pub use newtypes::*;
 pub mod record;
 pub use record::{Record, RecordData};
 
-use crate::{actuator_data::{ActuatorStatus, LedStatus}, error::Error, event::Event, flight_state::FlightState, sensor_data::{AltimeterData, GpsData, ImuData}, record::tick_hz::GlobalTickHz};
+use crate::{actuator_data::{ActuatorStatus, LedStatus}, sensor_data::{AltimeterData, GpsData, ImuData}, record::tick_hz::GlobalTickHz};
 
 
 /* ------------------- Postcard RPC Endpoint Configuration ------------------ */
@@ -52,9 +52,6 @@ topics! {
     | TopicTy                   | MessageTy         | Path                  | Cfg                       |
     | ------------------------- | ----------------- | --------------------- | ------------------------- |
     | RecordTopic               | Record            | "record"              |                           |
-    | FlightStateTopic          | FlightState       | "flight_state"        |                           |
-    | EventTopic                | Event             | "event"               |                           |
-    | ErrorTopic                | Error             | "error"               |                           |
     | SimDeploymentTopic        | ActuatorStatus    | "sim_deployment"      |                           |
     /* ------------------------------------------ LEDs ----------------------------------------------- */
     | SimPostcardLedTopic       | LedStatus         | "sim_postcard_led"    |                           |

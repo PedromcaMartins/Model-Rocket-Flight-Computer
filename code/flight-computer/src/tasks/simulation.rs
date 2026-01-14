@@ -2,29 +2,54 @@ use core::ops::DerefMut;
 
 use defmt_or_log::info;
 use embassy_futures::select::{Either, Either6, select, select6};
-use postcard_rpc::server::{Dispatch, Sender, Server, WireRx, WireTx};
+use postcard_rpc::server::{Dispatch, Server, WireRx, WireTx};
 use proto::{SimAltimeterLedTopic, SimArmLedTopic, SimDeploymentLedTopic, SimFileSystemLedTopic, SimGpsLedTopic, SimGroundStationLedTopic, SimImuLedTopic, SimPostcardLedTopic};
 
 use crate::{interfaces::{FileSystem, impls::simulation::{sensor::{SimAltimeter, SimGps, SimImu}, arming_system::SimArming, deployment_system::SimRecovery, led::SimLed}}, tasks::{finite_state_machine_task, groundstation_task, postcard_server_task, sensor_task, storage_task}};
 
-pub async fn start_software_flight_computer<
-    SdCard,
+#[cfg(feature = "impl_host")]
+pub async fn start_sil_flight_computer<
     PostcardTx,
     PostcardRx,
     PostcardBuf,
     PostcardD,
 > (
-    sd_card: SdCard, 
-    postcard_sender: Sender<PostcardTx>,
     server: Server<PostcardTx, PostcardRx, PostcardBuf, PostcardD>,
 )
 where 
-    SdCard: FileSystem,
     PostcardTx: WireTx + Clone,
     PostcardRx: WireRx,
     PostcardBuf: DerefMut<Target = [u8]>,
     PostcardD: Dispatch<Tx = PostcardTx>,
 {
+    use crate::{config::host::HostConfig, interfaces::impls::host::filesystem::HostFileSystem};
+    let dir_path = HostConfig::default();
+
+    start_pil_flight_computer(
+        HostFileSystem::new(dir_path.storage_path).await,
+        server,
+    ).await;
+}
+
+pub async fn start_pil_flight_computer<
+    FS,
+    PostcardTx,
+    PostcardRx,
+    PostcardBuf,
+    PostcardD,
+> (
+    filesystem: FS, 
+    server: Server<PostcardTx, PostcardRx, PostcardBuf, PostcardD>,
+)
+where 
+    FS: FileSystem,
+    PostcardTx: WireTx + Clone,
+    PostcardRx: WireRx,
+    PostcardBuf: DerefMut<Target = [u8]>,
+    PostcardD: Dispatch<Tx = PostcardTx>,
+{
+    let postcard_sender = server.sender();
+
     let postcard_task = postcard_server_task(
         server,
         SimLed::<_, SimPostcardLedTopic>::new(&postcard_sender),
@@ -51,7 +76,7 @@ where
     );
 
     let storage_task = storage_task(
-        sd_card, 
+        filesystem, 
         SimLed::<_, SimFileSystemLedTopic>::new(&postcard_sender), 
     );
 

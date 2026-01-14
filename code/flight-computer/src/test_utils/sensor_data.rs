@@ -1,5 +1,5 @@
 use nmea::sentences::FixType;
-use proto::{uom, sensor_data::{Acceleration, AltimeterData, Altitude, Angle, AngularVelocity, GpsData, ImuData, Pressure, ThermodynamicTemperature, Vector3}};
+use proto::{sensor_data::{Acceleration, AltimeterData, Altitude, AngularVelocity, GpsCoordinates, GpsData, ImuData, Pressure, ThermodynamicTemperature, Vector3}, uom};
 use rstest::fixture;
 
 #[fixture]
@@ -20,8 +20,10 @@ pub fn random_gps_data() -> GpsData {
             rand::random_range(0..60), 
             rand::random_range(0..60),
         ).expect("Failed to create NaiveTime").into(),
-        latitude: Angle::new::<uom::si::angle::degree>(rand::random()),
-        longitude: Angle::new::<uom::si::angle::degree>(rand::random()),
+        coordinates: GpsCoordinates {
+            latitude: rand::random(),
+            longitude: rand::random(),
+        },
         altitude: Altitude::new::<uom::si::length::meter>(rand::random()),
         num_of_fix_satellites: rand::random_range(0..20),
     }

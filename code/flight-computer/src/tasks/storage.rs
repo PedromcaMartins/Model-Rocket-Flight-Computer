@@ -1,6 +1,6 @@
 use embassy_futures::select::{select, Either};
 use embassy_time::Ticker;
-use defmt_or_log::{debug, error, info};
+use defmt_or_log::{trace, error, info};
 
 use crate::{config::StorageConfig, core::storage::Storage, interfaces::{FileSystem, Led}, sync::RECORD_TO_STORAGE_CHANNEL};
 
@@ -29,11 +29,11 @@ where
         match result {
             Either::First(record) => {
                 let res = storage.append_record(&record).await;
-                debug!("Storage: Logged record: {:?}", res);
+                trace!("Storage: Logged record: {:?}", res);
             },
             Either::Second(()) => {
                 let res = storage.flush().await;
-                debug!("Storage: Flushed file: {:?}", res);
+                trace!("Storage: Flushed file: {:?}", res);
             },
         }
 

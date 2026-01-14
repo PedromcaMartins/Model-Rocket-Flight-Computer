@@ -4,22 +4,31 @@ version = "0.0.0"
 edition = "2024"
 
 [[bin]]
-name = "debug"
-path = "src/bin/debug.rs"
+name = "sitl"
+path = "src/bin/sitl/main.rs"
 
 [[bin]]
 name = "serial"
-path = "src/bin/serial.rs"
+path = "src/bin/serial/main.rs"
 
 [dependencies]
-proto = { version = "*", path = "../proto" }
+proto = { version = "*", path = "../proto", default-features = false, features = ["log", "timestamp-into-duration"] }
+flight-computer = { version = "*", path = "../flight-computer", default-features = false, features = ["log", "impl_software", "impl_host"] }
+simulator = { version = "*", path = "../simulator" }
+embassy-time = { version = "0.4", features = ["std", "generic-queue-128"] }
+critical-section = { version = "1.1", features = ["std"] }
 
-postcard-rpc = { version = "0.11", features = ["use-std", "raw-nusb"] }
+postcard ={ version = "1.1" }
+postcard-schema = { version = "0.2", features = ["derive"] }
+postcard-rpc = { version = "0.11", features = ["use-std", "raw-nusb", "test-utils"] }
+serde = { version = "1.0" }
+
 tokio = { version = "1.37.0", features = ["rt-multi-thread", "macros", "time"] }
 rocket = { version = "0.5.1", features = ["json"] }
+derive_more = { version = "2", default-features = false, features = ["from"] }
+chrono = { version = "0.4", features = ["serde"] }
 
-[dev-dependencies]
-test-log = { version = "0.2" }
-rstest = "=0.24"
-futures = "0.3.31"
-
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter", "json"] }
+tracing-appender = "0.2"
+tracing-log = "0.2"
