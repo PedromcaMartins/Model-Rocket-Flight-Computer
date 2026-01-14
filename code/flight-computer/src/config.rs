@@ -19,7 +19,7 @@ pub struct DataAcquisitionConfig;
 impl DataAcquisitionConfig {
     pub const ALTIMETER_TICK_INTERVAL: Duration = Duration::from_hz(50);
     pub const IMU_TICK_INTERVAL: Duration = Duration::from_hz(50);
-    pub const GPS_TICK_INTERVAL: Duration = Duration::from_hz(50);
+    pub const GPS_TICK_INTERVAL: Duration = Duration::from_hz(10);
 }
 
 pub struct TasksConfig;

@@ -25,15 +25,22 @@ pub struct AltimeterData {
 
 #[defmt_or_log_macros::maybe_derive_format]
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
+pub struct GpsCoordinates {
+    /// Latitude in degrees.
+    pub latitude: f32,
+    /// Longitude in degrees.
+    pub longitude: f32,
+}
+
+#[defmt_or_log_macros::maybe_derive_format]
+#[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct GpsData {
     /// Timestamp
     pub fix_time: NaiveTimeWrapper,
     /// Type of GPS Fix
     pub fix_type: FixTypeWrapper,
-    /// Latitude in degrees.
-    pub latitude: Angle,
-    /// Longitude in degrees.
-    pub longitude: Angle,
+    /// Coordinates
+    pub coordinates: GpsCoordinates,
     /// MSL Altitude in meters
     pub altitude: Altitude,
     /// Number of satellites used for fix.

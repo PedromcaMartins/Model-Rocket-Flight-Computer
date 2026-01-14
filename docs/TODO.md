@@ -79,7 +79,6 @@
 - [X] Make sensor tasks generic over sensor devices!
 - ~~[ ] write! -> uwrite!~~
 - [X] Add tests for core modules!
-- [ ] If test, dont use `must_use`!
 - [ ] TraceAsync - linter config
 - [ ] Trace - parser to get info back! uder feature wall
     ```Rust
@@ -89,3 +88,7 @@
     }
     ```
 - [X] Rename `SensorDevice` trait to Sensor
+- [ ] Add test functions for interfaces/impl/embedded/... for testing if the embedded sensors work as expected!
+    - [ ] Should create a fn test_...() without #[test]! that should be public!
+    - [ ] Should provide a capability for users to call these functions from core during normal use!
+    - [ ] all embedded binaries that use FC library should call these test functions in their component testing!

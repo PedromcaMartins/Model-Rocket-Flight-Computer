@@ -1,7 +1,6 @@
 use nmea::{Nmea, SentenceType, SENTENCE_MAX_LEN};
-use proto::uom::si::angle::degree;
 use static_cell::ConstStaticCell;
-use proto::sensor_data::{Altitude, Angle, GpsData};
+use proto::sensor_data::{Altitude, GpsCoordinates, GpsData};
 use proto::uom::si::length::meter;
 
 use crate::config::DataAcquisitionConfig;
@@ -89,16 +88,16 @@ where
         }
 
         Ok(GpsData {
-            latitude: self.nmea
-                .latitude()
-                .map(|l| l as f32)
-                .map(Angle::new::<degree>)
-                .ok_or(GpsError::MissingFields)?,
-            longitude: self.nmea
-                .longitude()
-                .map(|l| l as f32)
-                .map(Angle::new::<degree>)
-                .ok_or(GpsError::MissingFields)?,
+            coordinates: GpsCoordinates {
+                latitude: self.nmea
+                    .latitude()
+                    .map(|l| l as f32)
+                    .ok_or(GpsError::MissingFields)?,
+                longitude: self.nmea
+                    .longitude()
+                    .map(|l| l as f32)
+                    .ok_or(GpsError::MissingFields)?,
+            },
             altitude: self.nmea
                 .altitude()
                 .map(Altitude::new::<meter>)
