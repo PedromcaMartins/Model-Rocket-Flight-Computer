@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 
 use postcard_rpc::{header::VarSeqKind, host_client::{HostClient, HostErr, SubscribeError, Subscription}, standard_icd::{WireError, ERROR_PATH}};
-use proto::sensor_data::{AltimeterData, AltimeterTopic, GpsData, GpsTopic, ImuData, ImuTopic, PingEndpoint, PingRequest, PingResponse};
+use proto::{Record, RecordTopic, sensor_data::{AltimeterData, AltimeterTopic, GpsData, GpsTopic, ImuData, ImuTopic, PingEndpoint, PingRequest, PingResponse}};
 
 
 pub struct PostcardClient {
@@ -57,15 +57,7 @@ impl PostcardClient {
         self.client.send_resp::<PingEndpoint>(&id.into()).await.map_err(PostcardError::from)
     }
 
-    pub async fn subscription_altimeter(&self) -> Result<Subscription<AltimeterData>, PostcardError<Infallible>> {
-        self.client.subscribe_exclusive::<AltimeterTopic>(u16::MAX.into()).await.map_err(PostcardError::from)
-    }
-
-    pub async fn subscription_imu(&self) -> Result<Subscription<ImuData>, PostcardError<Infallible>> {
-        self.client.subscribe_exclusive::<ImuTopic>(u16::MAX.into()).await.map_err(PostcardError::from)
-    }
-
-    pub async fn subscription_gps(&self) -> Result<Subscription<GpsData>, PostcardError<Infallible>> {
-        self.client.subscribe_exclusive::<GpsTopic>(u16::MAX.into()).await.map_err(PostcardError::from)
+    pub async fn subscription_record(&self) -> Result<Subscription<Record>, PostcardError<Infallible>> {
+        self.client.subscribe_exclusive::<RecordTopic>(u16::MAX.into()).await.map_err(PostcardError::from)
     }
 }
