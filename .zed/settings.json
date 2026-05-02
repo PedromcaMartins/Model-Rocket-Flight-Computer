@@ -23,6 +23,27 @@
         // Use `-p` instead of `--workspace` for cargo check
         "check": {
           "workspace": false
+        },
+        "linkedProjects": [
+            "code/Cargo.toml",
+            "code/flight-computer/Cargo.toml",
+            "code/ground-station-backend/Cargo.toml",
+            "code/proto/Cargo.toml",
+            "code/simulator/Cargo.toml",
+            "code/xtask/Cargo.toml",
+        ],
+        "inlayHints": {
+          "maxLength": null,
+          "lifetimeElisionHints": {
+            "enable": "skip_trivial",
+            "useParameterNames": true
+          },
+          "closureReturnTypeHints": {
+            "enable": "always"
+          }
+        },
+        "rust": {
+          "analyzerTargetDir": true
         }
       }
     }

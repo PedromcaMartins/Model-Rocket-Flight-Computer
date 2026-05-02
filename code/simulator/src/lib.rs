@@ -1,27 +1,37 @@
-pub mod api;
-pub mod physics;
+
 pub mod runtime;
 pub mod scripted_scenario;
-pub mod config;
 
+use crate::config::SimulatorConfig;
+use crate::{
+    physics::{engine::PhysicsEngine, state::PhysicsState},
+    runtime::commands::{FlightComputerCommand, SimulatorCommand},
+    scripted_scenario::{scripted_arm_command, scripted_ignition_command},
+};
+use log::error;
 use tokio::sync::{broadcast, mpsc};
 
 use crate::{config::SimulatorConfig, runtime::orchestrator};
 
-pub fn start() -> api::ApiHandle {
-    let (sim_tx, sim_rx) = mpsc::channel(SimulatorConfig::SIMULATOR_COMMAND_CAPACITY);
-    let (fc_tx, fc_rx) = broadcast::channel(SimulatorConfig::FLIGHT_COMPUTER_COMMAND_CAPACITY);
-    let (state_tx, state_rx) = broadcast::channel(SimulatorConfig::PHYSICS_STATE_CAPACITY);
+pub async fn simulator_loop(
+    mut sim_rx: mpsc::Receiver<SimulatorCommand>,
+    state_tx: broadcast::Sender<PhysicsState>,
+) {
+    let mut engine = PhysicsEngine::default();
+    let config = SimulatorConfig::default();
 
-    tokio::spawn(orchestrator::simulator_loop(
-        sim_rx,
-        state_tx,
-    ));
+    let mut physics_ticker = config.time_step_interval;
+    let mut data_acquisition_ticker = config.data_acquisition_interval;
 
-    tokio::spawn(orchestrator::scripted_scenario(
-        sim_tx.clone(), 
-        fc_tx
-    ));
+    loop {
+        tokio::select! {
+            _ = physics_ticker.tick() => {
+                engine.step();
+            },
 
-    api::ApiHandle::new(sim_tx, fc_rx, state_rx)
+            _ = data_acquisition_ticker.tick() => {
+                if state_tx.send(engine.state()).is_err() { error!("Failed to broadcast PhysicsState"); }
+            },
+        }
+    }
 }
