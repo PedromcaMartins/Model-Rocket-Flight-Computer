@@ -92,3 +92,9 @@
     - [ ] Should create a fn test_...() without #[test]! that should be public!
     - [ ] Should provide a capability for users to call these functions from core during normal use!
     - [ ] all embedded binaries that use FC library should call these test functions in their component testing!
+
+# Documentation
+
+- [ ] Consolidate and migrate `Parts.xlsx`: rename, refactor, and move to `docs/` to track all parts (not just structural). Organize by subsystem (structure, avionics, recovery, …) and include links to datasheets and CAD models for traceability.
+- [ ] Consolidate and migrate `Parts.xlsx`: rename, refactor, and move to `docs/` to track all parts (not just structural). Organize by subsystem (structure, avionics, recovery, …) and include links to datasheets and CAD models for traceability.
+- [ ] Backfill all requirements in `docs/REQUIREMENTS.md` with `Rationale` and `Verification` fields per the [Traceability Policy](README.md#traceability-policy).
