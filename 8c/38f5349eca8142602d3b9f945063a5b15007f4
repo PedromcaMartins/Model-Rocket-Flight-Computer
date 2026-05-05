@@ -1,0 +1,57 @@
+docs/software/README.md
+  cdc127dcc90e1cce 11-17
+docs/ADR/ADR-001-fc-simulator-ipc-split.md
+  cdc127dcc90e1cce 1-43
+docs/software/fc-simulator-interface.md
+  cdc127dcc90e1cce 3-64
+docs/README.md
+  cdc127dcc90e1cce 25,33,76
+docs/software/deployment-modes.md
+  cdc127dcc90e1cce 3-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8c38f5349eca8142602d3b9f945063a5b15007f4",
+  "prompts": {
+    "49997f71d1115fab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9d564cf4-8c81-427e-b2f5-24589d3383c4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "PedromcaMartins",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 7,
+      "accepted_lines": 38,
+      "overriden_lines": 0
+    },
+    "5335b2f2f334d1c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "96b8cdd0-34f1-42ed-a2f9-d83195719d35",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "PedromcaMartins",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "cdc127dcc90e1cce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "704db621-392f-48da-ae72-988fcd3c623d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "PedromcaMartins",
+      "messages": [],
+      "total_additions": 224,
+      "total_deletions": 198,
+      "accepted_lines": 90,
+      "overriden_lines": 1
+    }
+  }
+}
