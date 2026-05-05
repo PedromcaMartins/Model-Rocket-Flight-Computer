@@ -23,6 +23,29 @@ Rules of thumb:
 
 When proposing a non-trivial change, sketch the architecture / interface impact in `docs/` first; sketch the detailed design in the affected subsystem's folder second.
 
+## Spec & ADR policy
+
+Two lightweight artifacts gate non-trivial changes:
+
+| Artifact | Answers | Written when | Required for |
+|---|---|---|---|
+| **Spec** (interface contract) | *What* must this interface do? What does it guarantee? | Before changing or adding an interface | Any architectural or interface change |
+| **ADR** (Architecture Decision Record) | *Why* this approach? What did we reject? | At or after the decision point | Any significant design decision — architectural or implementation-level |
+
+Rules:
+
+- **An architectural change requires a spec first.** "Architectural" means: a new or changed interface between subsystems, a new subsystem, or a change to a system-level constraint. A spec can be code (type definitions, trait signatures) or prose. It must exist — or be updated — before the implementation lands.
+- **A significant decision requires an ADR.** "Significant" means: a choice between two or more real alternatives, or a decision that would surprise a future engineer. Trivial choices do not need ADRs.
+- Both artifacts follow the same architecture / detailed-design split:
+
+  | Scope | Spec lives in | ADR lives in |
+  |---|---|---|
+  | Cross-subsystem interface or decision | `docs/software/` (existing subsystem doc or new file) | `docs/ADR/` |
+  | Single-crate / single-subsystem | `code/<crate>/README.md` or sibling file | inline in that crate's README or a sibling note |
+
+- An ADR without a traceable requirement is incomplete — see the Traceability policy.
+- A spec that no longer matches the code is a bug — update it when the interface changes.
+
 ## Traceability policy
 
 Every requirement in this project must be traceable end-to-end:

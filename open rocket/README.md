@@ -19,4 +19,3 @@ OpenRocket (`.ork`) project files used to evaluate flight profiles, sizing, stab
 
 - [`../structure/`](../structure/) — CAD models for printable parts of the same airframe.
 - [`../docs/REQUIREMENTS.md`](../docs/REQUIREMENTS.md) — `[ROCKET-*]` requirements that simulations validate.
-- [`../AGENTS.md`](../AGENTS.md) — when to update this README.

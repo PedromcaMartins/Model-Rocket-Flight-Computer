@@ -1,5 +1,8 @@
 - [ ] Change type of Ping Message to `PingRequest` and `PingResponse` in telemetry and the rest of the libs!
 - [ ] Use `xtask` crate to manage build and run tasks
+- [ ] Implement [ADR-001](ADR/ADR-001-fc-simulator-postcard-rpc-ipc.md): split the host build into four binaries (FC, simulator, GS backend, GS frontend) connected by postcard-rpc over [`interprocess`](https://crates.io/crates/interprocess) local sockets. Start with the `InterprocessWireTx`/`WireRx` adapter in `proto/`.
+    - [ ] **Deferred (ADR-001):** Specify FC / simulator reset semantics (reconnect behavior, state rewind policy). See `docs/ADR/ADR-001-fc-simulator-postcard-rpc-ipc.md#deferred-work`.
+    - [ ] **Deferred (ADR-001):** Pin incremental testing strategy during migration (which tests stay on in-process `Signal` harness vs. migrate to IPC clients first, how to avoid regression gap). See `docs/ADR/ADR-001-fc-simulator-postcard-rpc-ipc.md#deferred-work`.
 
 # Flight Computer lib
 

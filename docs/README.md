@@ -10,6 +10,7 @@ This folder is the home for documentation that is **not specific to one subsyste
 - **Constraints** — system-level rules (cost, mass, regulatory, methodology) and *why* they exist.
 - **Requirements** — testable statements derived from the above.
 - **System-level architecture** — how subsystems fit together; the interfaces between flight computer, simulator, and ground station.
+- **Specs** — interface contracts for cross-subsystem boundaries (what a boundary guarantees, not how it is built).
 - **ADRs** — decisions that affect more than one subsystem.
 - **Progress & media** — status snapshots, photos, flight logs.
 
@@ -22,16 +23,42 @@ Detailed design lives next to its artifact: [`../code/README.md`](../code/README
 | `how-we-work.md` | Project-wide policies: docs split, traceability, TODO placement. |
 | `GLOSSARY.md` | Project vocabulary — read before writing prose. |
 | `REQUIREMENTS.md` | Numbered, testable requirements (`[DEV-*]`, `[ROCKET-*]`, `[SW-*]`). The contract the system is built against. |
-| `Architecture/` | Subsystem-level architecture documents (interfaces, goals/non-goals/constraints per subsystem). Start here. |
-| `software.md` | *Superseded.* Old single-page block diagram, kept only as a pointer into [`Architecture/`](Architecture/). |
+| `software/` | Subsystem-level architecture documents (interfaces, goals/non-goals/constraints per subsystem). |
 | `ADR/` | Architecture Decision Records — one file per decision, capturing context, options, and the chosen trade-off. |
 | `TODO.md` | Pending work across the whole system. Crate-internal TODOs live with the crate. |
+| `ROADMAP.md` | Planned host-stack milestones (tasks 1–7): proto feature gating → split binaries → TUI. Each task links to its ADR or spec. Read before picking up any host-stack work. |
 
 When this list goes stale, fix it.
 
 ## Writing new architecture docs
 
-Use this skeleton for a new subsystem doc in `Architecture/`:
+Use this skeleton for a spec in `software/` (cross-subsystem) or `code/<crate>/` (single-crate):
+
+```markdown
+# <interface or component name> — Spec
+
+- **Status:** draft | accepted | superseded
+- **Date:** YYYY-MM-DD
+
+## Purpose
+What does this interface / component do? What guarantees does it provide?
+
+## Scope
+What is in scope? What is explicitly out of scope?
+
+## Interface contract
+<type definitions, trait signatures, message formats, protocol description, or prose>
+
+## Invariants
+What must always be true? What can callers assume?
+
+## Open questions
+- ...
+```
+
+A spec must exist (or be updated) before any architectural or interface change lands. A spec that diverges from the code is a bug.
+
+Use this skeleton for a new subsystem doc in `software/`:
 
 ```markdown
 # <subsystem name>
@@ -74,10 +101,4 @@ The chosen option and *why*.
 What this enables, what it costs, what becomes harder.
 ```
 
-Number ADRs sequentially (`ADR-0001-…`, `ADR-0002-…`).
-
-## See also
-
-- [`GLOSSARY.md`](GLOSSARY.md) — project vocabulary.
-- [`../README.md`](../README.md) — human-facing motivation, repo layout, and how the project is organized.
-- [`../AGENTS.md`](../AGENTS.md) — instructions for AI agents (documentation maintenance protocol, agent-flavored cheat sheet).
+Number ADRs sequentially (`ADR-001-…`, `ADR-002-…`).

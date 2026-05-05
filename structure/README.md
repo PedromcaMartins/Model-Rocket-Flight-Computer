@@ -34,4 +34,3 @@ Every structural decision must be traceable to a requirement in `docs/REQUIREMEN
 
 - [`../open rocket/`](../open%20rocket/) — flight simulations that constrain mass, dimensions, and CG.
 - [`../hardware/`](../hardware/) — electronics that this structure must house.
-- [`../AGENTS.md`](../AGENTS.md) — documentation maintenance rules.

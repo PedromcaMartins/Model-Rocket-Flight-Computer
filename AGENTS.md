@@ -39,6 +39,8 @@ The list below is your quick reference for *which folder* matches *which discipl
 
 When proposing a non-trivial change, sketch the architecture/interface impact in `docs/` first; sketch the detailed design in the affected subsystem's folder second.
 
+**Before any architectural or interface change, a spec must exist (or be updated).** Before any significant design decision, an ADR must be written. Both follow the same architecture/detailed-design split as all other docs — see `docs/how-we-work.md` §*Spec & ADR policy* for the full rules.
+
 ## 4. Project map
 
 ```
@@ -79,13 +81,17 @@ If you create a new top-level folder that is not pure reference material, add a 
 | A new requirement (any discipline) | `docs/REQUIREMENTS.md` |
 | A goal or non-goal for a rocket subsystem or software subsystem | `docs/` (existing or new architecture doc) |
 | A system-level or cross-subsystem interface contract / diagram | `docs/` |
+| A spec for a cross-subsystem interface | `docs/software/` (existing subsystem doc or new file) |
+| A spec for a single-crate interface | `code/<crate>/README.md` or a sibling file |
 | An ADR for a cross-cutting decision | `docs/ADR/` |
+| An ADR for a single-crate or single-subsystem decision | `code/<crate>/README.md` or a sibling note |
 | A crate-level README, module overview, or pattern note | `code/<crate>/README.md` or rustdoc |
 | A choice of dependency, encoding, async runtime, error type, etc. | next to the code that uses it |
 | An avionics-electronics decision (part choice, footprint rationale, layout note) | `hardware/README.md` or a sibling note |
 | A mechanical / structural decision (material, print orientation, tolerances) | `structure/README.md` or a sibling note |
 | A flight-simulation parameter choice or scenario rationale | `open rocket/README.md` or a sibling note |
 | A pending implementation task | `docs/TODO.md` (system-wide) or the subsystem's own TODO/issues |
+| A milestone plan or sequenced work breakdown | `docs/ROADMAP.md` |
 | Vendor datasheets / external papers | `datasheets/` or `papers/` (do not paraphrase, link) |
 
 ## 6. Working conventions

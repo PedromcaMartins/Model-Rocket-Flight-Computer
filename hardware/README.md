@@ -36,4 +36,3 @@ Datasheets are in [`../datasheets/`](../datasheets/). GPS configuration artifact
 
 - [`../structure/`](../structure/) — mechanical envelope this PCB has to fit.
 - [`../code/`](../code/) — firmware that drives this hardware. The flight-computer crate is hardware-agnostic; per-target board bring-up lives in the embedded binary crates.
-- [`../AGENTS.md`](../AGENTS.md) — documentation maintenance rules.
