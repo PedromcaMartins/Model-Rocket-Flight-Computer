@@ -20,6 +20,7 @@
 - [ ] Add state to flight computer! 
 - [ ] Document and reduce use of Panics in functions
 - [ ] postcard task that receives a server and executes in loop the postcard server run method!
+- [ ] Rename `impl_software` to `impl_sitl` or `impl_pil` or something like that!
 
 # Host Flight Computer lib
 

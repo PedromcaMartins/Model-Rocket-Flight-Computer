@@ -1,65 +1,178 @@
 # ADR-001: Split host build into per-role binaries with postcard-rpc as unified RPC layer
 
-- **Status:** Accepted (with resolved follow-ups and deferred work — see below)
+- **Status:** Accepted
 - **Date:** 2026-05-05
+- **Revised:** 2026-05-07 — added Option 4 (hub topology) and expanded each option to a full sub-chapter.
+
+> The contract this decision produced — three-socket triangle, server/client roles, transport adapter, startup order — lives in [`../software/spec.md` §8](../software/spec.md#8-host-ipc). This ADR captures only *why* this approach was chosen over the alternatives.
+
+---
 
 ## Context
 
-Today the HOST deployment mode is a single binary that wires the flight-computer (FC) library, the simulator, and the ground-station backend together with in-process Embassy channels and direct library calls. This causes three problems:
+The HOST deployment mode was a single binary that wired the flight-computer (FC) library, the simulator, and the ground-station backend together with in-process Embassy channels and direct library calls. This caused three problems:
 
-- The simulator and the FC cannot be run independently. `cargo run -p simulator` and `cargo run -p flight-computer` exist as crates but cannot talk to each other.
-- PIL (FC firmware on the prod board, simulator on host) has no implementation. It needs the same simulated-peripheral surface the host build uses, but routed over USB to the MCU.
-- The FC library has to drag the simulator's wiring along even when the consumer doesn't want it.
+- The simulator and the FC could not be run independently. `cargo run -p simulator` and `cargo run -p flight-computer` existed as crates but could not talk to each other.
+- PIL (FC firmware on the prod board, simulator on host) had no implementation. It needed the same simulated-peripheral surface the host build uses, but routed over USB to the MCU.
+- The FC library had to drag the simulator's wiring along even when the consumer didn't want it.
 
-The simulator drives more than just sensors. The FC's peripheral surface is multi-trait: [`Sensor`](../../code/flight-computer/src/interfaces/sensor.rs), [`ArmingSystem`](../../code/flight-computer/src/interfaces/arming_system.rs), [`DeploymentSystem`](../../code/flight-computer/src/interfaces/deployment_system.rs), [`Led`](../../code/flight-computer/src/interfaces/led.rs). The [`FileSystem`](../../code/flight-computer/src/interfaces/filesystem.rs) is the only peripheral with a real I/O even in HOST and PIL — every other peripheral has a simulated implementation. Any IPC scheme must carry all of them, in both directions.
+The simulator drives more than just sensors. The FC's peripheral surface is multi-trait: [`Sensor`](../../code/flight-computer/src/interfaces/sensor.rs), [`ArmingSystem`](../../code/flight-computer/src/interfaces/arming_system.rs), [`DeploymentSystem`](../../code/flight-computer/src/interfaces/deployment_system.rs), [`Led`](../../code/flight-computer/src/interfaces/led.rs). The [`FileSystem`](../../code/flight-computer/src/interfaces/filesystem.rs) is the only peripheral with a real I/O even in HOST and PIL — every other peripheral has a simulated implementation. Any IPC scheme had to carry all of them, in both directions.
+
+The key structural asymmetry that any topology must respect:
+
+- **FC ↔ Sim** is a *tight, bidirectional, high-cadence* link. The simulator drives sensor Topics into FC at every physics tick (~10 Hz); FC drives deployment and LED Endpoints back into the simulator. Both sides are run-lifecycle peers — if one dies, the run is over.
+- **FC ↔ GS** and **Sim ↔ GS** are *observational and control links*, not peripheral links. GS reads telemetry, issues operator commands, manages scenario config, and surfaces status to the operator. It is not in the physics tick path.
+
+---
 
 ## Options considered
 
-- **Stay in-process (status quo).** Cheapest. Keeps everything blocking-fast in tests. Does not solve PIL, does not let the simulator run as a separate binary, and forces the simulator wiring into every FC consumer.
-- **Single transport for everything (one wire format on host and over USB).** Uniform. But the host case wants a host-local IPC primitive (Unix sockets / named pipes) and the USB case wants a framed serial codec; sharing one stack means picking one and adapting it to the other, both of which lose properties.
-- **One RPC framework (postcard-rpc), two transport media.** `postcard-rpc` is used for both the FC ↔ simulator link on host (over [`interprocess`](https://crates.io/crates/interprocess) local sockets) and the FC ↔ ground-station link (over USB / radio). Both reuse the `proto/` types and the same Topic/Endpoint primitives. The transport medium swaps; the RPC model and message vocabulary do not. PIL becomes expressible by reusing the same postcard-rpc server the ground station already talks to, with no second server or second link. Deployment on HW does not include the simulator endpoints, removing overhead.
+### Option 1 — Stay in-process (status quo)
+
+**Description.** The single-binary model: FC library, simulator, and GS backend all live in one process, wired together via in-process Embassy channels and direct function calls. No sockets, no IPC. `cargo run -p simulator` and `cargo run -p flight-computer` exist as crates but cannot communicate without the monolith entry point.
+
+**Pros:**
+- Zero IPC overhead. Sensor ticks, peripheral calls, and telemetry are all blocking-fast in-process.
+- Simplest possible deployment: one process to start, one to kill.
+- Unit tests that write to a static `Signal` continue to work unchanged.
+- No socket startup ordering, no reconnect semantics, no transport adapters to write.
+
+**Cons:**
+- **Does not solve PIL.** PIL requires the FC firmware to run on the production MCU while the simulator runs on host. There is no in-process path for this; a second interface would need to be invented anyway.
+- **Binaries cannot be run independently.** Neither `cargo run -p simulator` nor the FC library is independently exercisable without the whole monolith wiring.
+- **FC library drags simulator types into every consumer.** Code that only wants FC must still compile against simulator wiring.
+- **FC and GS concerns bleed together.** Sim control, telemetry, and peripheral data all share the same in-process call graph; there are no explicit boundaries to enforce separation.
+- **No path to production topology.** HW mode has no simulator at all. Modeling that is artificial if everything is in-process.
+
+**Verdict:** Cheapest to maintain in the short term, but blocks PIL and violates the "one FC library, three deployment targets" goal from day one.
+
+---
+
+### Option 2 — Single transport for everything (one wire format, host and USB)
+
+**Description.** Extract the binaries but unify transport: one wire protocol runs over both host-local IPC and USB. Either the host case adapts to the USB framing (e.g. a virtual serial port), or the USB case adapts to a host-local primitive (e.g. a Unix socket tunnelled over USB). A single `proto/` vocabulary; a single codec path shared by all links.
+
+**Pros:**
+- Uniform stack: one codec crate, one set of tests, one mental model for all links.
+- PIL is expressible without a conceptually different interface.
+- Simulator and FC can each run as standalone binaries.
+
+**Cons:**
+- **Transport impedance mismatch.** Host-local IPC wants low-latency, kernel-buffered, byte-stream sockets. USB wants framed serial with line discipline, COBS encoding, and a flow-control protocol. Making one codec serve both without losing properties (latency on host, framing correctness on USB) forces either artificial overhead on the host path or lossy adaptation on the USB path.
+- **Multiplexing is non-trivial on USB.** In PIL, FC telemetry to GS and simulator peripheral data to FC must share one USB wire. A shared codec needs explicit mux/demux logic; this is the one new component Option 3 avoids by keeping the transport adapter thin.
+- **Simulation-only traffic enters the USB vocabulary.** If everything is one wire format, deployment LED commands and sensor Topics must be expressible over USB even when the HW binary has no simulator. That either pollutes the `proto/` with simulator-only types or adds a feature-gated vocabulary split that erodes the "single wire vocabulary" goal.
+- **Effectively reimplements postcard-rpc's transport layer.** `postcard-rpc` already provides the Topic / Endpoint model and handles the message framing; adapting it to two physical media is precisely what its transport adapter interface is designed for. Bypassing it loses the design without gaining anything.
+
+**Verdict:** Uniform in principle, but the transport mismatch requires more code than Option 3 and degrades at least one deployment medium.
+
+---
+
+### Option 3 — Three-socket triangle: FC ↔ Sim direct, both ↔ GS (adopted)
+
+**Description.** Split HOST into four binaries (FC, simulator, GS backend, GS frontend). Three sockets:
+
+```
+   FC ──── fc-sim.sock ────► Sim      (peripheral surface: sensors, arm, deploy, LED)
+   FC ──── fc-gs.sock  ────► GS-BE    (telemetry, commands)
+  Sim ──── sim-gs.sock ────► GS-BE    (lifecycle, config-hash, triggers, status)
+```
+
+`postcard-rpc` runs over all three. The transport adapter (`InterprocessWireTx`/`Rx`) is the only new component. On USB (PIL) the same postcard-rpc vocabulary runs over a framed serial link; only the `WireTx`/`WireRx` adapter swaps.
+
+**Pros:**
+- **FC ↔ Sim link is direct and dedicated.** No third process is in the tick path. Sensor Topics flow at physics cadence without an intermediary that could buffer, slow down, or fail independently.
+- **PIL maps cleanly.** `impl_host` → `impl_software` by swapping the interprocess socket adapter for a USB adapter. The same peripheral traits, the same postcard-rpc server code, the same `proto/` vocabulary.
+- **GS is genuinely observational.** It is not a hub; it cannot become a bottleneck or single point of failure for the physics loop. FC and Sim continue running if GS crashes (spec §10 crash policy).
+- **Sim-control traffic stays off the FC entirely.** `sim-gs.sock` carries lifecycle, config-hash handshake, manual triggers, and physics status. FC has zero awareness of operator-only concerns.
+- **Single wire vocabulary.** `proto/` Topics and Endpoints are shared across all three links; only the transport adapter differs.
+- **Thin transport component.** `InterprocessWireTx`/`WireRx` is ~50 LOC over `tokio::io::split` halves of an `interprocess` stream.
+- **Crash semantics are clean.** FC ↔ Sim are peers (either dying ends the run); GS is optional (its absence is degraded but not fatal). The asymmetry is architecturally visible in the topology.
+
+**Cons:**
+- **Three sockets to manage.** Startup ordering matters (`fc-sim.sock` must exist before FC connects; `sim-gs.sock` and `fc-gs.sock` must exist before GS connects). `xtask` handles this, but it is more orchestration than a single-socket or hub design.
+- **GS has no direct Sim ↔ FC visibility.** GS cannot observe or intercept the peripheral surface traffic. If GS needs to log raw sensor publications for replay, it must get them indirectly via telemetry Topics from FC, not by intercepting `fc-sim.sock`.
+- **Unit tests that write to a static `Signal` need rework.** Deferred; tracked in [`../TODO.md`](../TODO.md). The migration does not change the peripheral trait contracts, only the implementation layer.
+
+**Verdict:** Adopted. The direct FC ↔ Sim link preserves the tight peripheral coupling without intermediary risk; the two GS sockets are both thin and well-scoped. PIL re-use requires no second server or second link.
+
+---
+
+### Option 4 — Hub topology: FC ↔ GS-BE ↔ Sim, GS-BE ↔ GS-FE
+
+**Description.** Remove the direct FC ↔ Sim socket. Route all traffic through GS-BE as a central hub. Two sockets:
+
+```
+   FC  ──── fc-gs.sock  ────► GS-BE ◄──── sim-gs.sock ──── Sim
+                              GS-BE ◄──── gs-fe.sock  ──── GS-FE
+```
+
+GS-BE becomes the broker for both telemetry/commands (FC ↔ GS-BE) and the peripheral surface (Sim ↔ GS-BE ↔ FC). It receives sensor Topics from Sim, forwards them to FC, and forwards FC's deployment/LED calls back to Sim.
+
+**Pros:**
+- **Single connectivity point.** GS-BE is the only process every other process connects to. No explicit `fc-sim.sock` startup ordering; both FC and Sim independently establish their connection to GS-BE.
+- **GS has full visibility into peripheral traffic.** Because all FC ↔ Sim data flows through GS-BE, GS can log raw sensor publications, replay them, and correlate peripheral state with telemetry in a single place without aggregating from multiple sources.
+- **Symmetric connection model for FC and Sim.** Both FC and Sim are pure clients of GS-BE. No server/client role asymmetry between FC and Sim; both point at the same hub.
+- **Sim and FC are fully decoupled from each other.** Neither binary has any knowledge of the other's socket address, identity, or lifecycle; both interact only with GS-BE.
+- **Fewer socket files.** Two sockets instead of three reduces filesystem artefacts and the manifest of socket paths that `xtask` and the operator must track.
+
+**Cons:**
+- **GS-BE is now in the physics tick path.** Every sensor Topic the simulator produces must pass through GS-BE before FC can read it. Every deployment or LED call FC makes must pass through GS-BE before Sim receives it. GS-BE becomes a required intermediary on the hot path. If GS-BE crashes, both FC and Sim lose their peer — the run is over. This inverts the crash semantics in spec §10: GS is no longer "optional and observational"; it is a run-lifecycle requirement.
+- **GS-BE must implement peripheral forwarding logic.** Today GS-BE only speaks the telemetry and command vocabulary. Under this option it must also implement correct forwarding of the peripheral surface: Topic fan-out timing, Endpoint round-trip latency, backpressure handling between the Sim→GS-BE leg and the GS-BE→FC leg. This is non-trivial; it introduces a new failure mode (GS-BE drops or re-orders a sensor tick) that does not exist when FC and Sim communicate directly.
+- **Additional latency on every sensor tick.** In the triangle topology, a sensor Topic travels one hop (Sim → FC). In the hub topology it travels two (Sim → GS-BE → FC). On host, this is probably unobservable in untimed testing, but it adds a gratuitous serialisation point.
+- **PIL breaks the topology.** In PIL, FC runs on the production MCU and communicates over USB. Under the hub model, the USB link connects FC to GS-BE (as it does today in HW mode), but Sim must also communicate with GS-BE over a separate host-local link, and GS-BE must now forward peripheral surface traffic between them. The USB multiplexing problem (two logical channels — peripheral surface and telemetry — over one physical wire) is solved in Option 3 by having the simulator connect directly to the MCU over USB; in the hub model, GS-BE must demux two streams coming from different processes and re-mux them onto the USB wire. This is significantly more complex than `impl_software`.
+- **`proto/` vocabulary must expose the peripheral surface as a GS-BE-facing API.** Today the peripheral Topics and Endpoints are strictly a Sim ↔ FC contract; GS-BE has no involvement. Under the hub topology, GS-BE must parse, route, and forward these messages. The clean boundary between "peripheral surface" and "telemetry/control" disappears.
+- **Violates the "sim-control stays off the FC" invariant.** Under this topology, GS-BE routes both peripheral surface traffic and sim-control traffic. While GS-BE can logically separate them internally, the FC's peripheral implementation now connects to the same process that handles lifecycle, config-hash handshake, and operator manual triggers. The separation that Option 3 enforces at the socket level must instead be enforced at the application level inside GS-BE — a weaker guarantee.
+
+**Verdict:** The hub model trades a direct Sim ↔ FC socket for centralised observability and a simpler connection model, but at the cost of making GS-BE load-bearing in the physics tick path. This directly contradicts the spec's crash policy (§10), which is predicated on GS being optional, and it complicates PIL by requiring GS-BE to mediate between two host-side processes and the USB wire. The observability gain (GS can see raw sensor publications) can be recovered in Option 3 by having Sim also publish a mirrored sensor-log Topic on `sim-gs.sock`; no hub is required for that.
+
+---
 
 ## Decision
 
-Adopt option 3. Concretely:
+Adopt **Option 3** (three-socket triangle).
 
-1. **Split HOST into four binaries** — flight computer, simulator, ground-station backend, ground-station frontend — each shipped from its own crate. **`xtask` is the orchestrator**: `cargo xtask run-host` builds all four, spawns them as OS processes in startup order (FC first — it is the postcard-rpc server and must be listening before any client connects; simulator and GS backend connect after), multiplexes their stdout with role labels, and tears them all down on Ctrl-C.
-2. **The FC is the postcard-rpc server on every link it participates in.** On host it runs two server instances over [`interprocess::local_socket::tokio`](https://docs.rs/interprocess/latest/interprocess/local_socket/tokio/index.html) — one per client — forming a three-socket triangle:
+The full topology — three sockets, server/client roles, startup order, transport adapter, reconnect semantics — is specified in [`../software/spec.md` §8](../software/spec.md#8-host-ipc). Other concerns the implementation depends on are split out:
 
-   | Socket | Server | Client | Traffic |
-   |---|---|---|---|
-   | `fc-sim.sock` | FC | Simulator | sensor Topics (sim→FC), deployment/LED Topics (FC→sim) |
-   | `fc-gs.sock` | FC | GS backend | telemetry Topics (FC→GS), command Endpoints (GS→FC) |
-   | `sim-gs.sock` | Simulator | GS backend | runtime config Endpoints and physics-status Topics (GS↔sim) |
+- Peripheral-trait contract carried over `fc-sim.sock` → [`../software/spec.md` §5.1](../software/spec.md#51-fc--simulator-peripheral-surface).
+- Simulator lifecycle, config ownership (GS-authoritative), and event model carried over `sim-gs.sock` → [`../software/spec.md` §7](../software/spec.md#7-simulator--lifecycle-config-events).
+- Crash and disconnect behaviour → [`../software/spec.md` §10](../software/spec.md#10-crash--disconnect-policy).
 
-   postcard-rpc's `Server` type handles one connection at a time; two focused server instances on FC are cleaner than one server fanning out to multiple clients. The GS backend holds two client connections; FC and Simulator each run two server instances (one each). A thin transport adapter (`InterprocessWireTx` / `InterprocessWireRx`) wraps the `tokio::io::split` halves of the `Stream` and implements postcard-rpc's `WireTx` / `WireRx` traits. Listener vs connector is purely a startup-ordering concern; once connected, both sides have a symmetric full-duplex byte stream and the postcard-rpc server/client role is the only asymmetry.
-3. **FC ↔ ground-station also uses postcard-rpc**, over USB / radio. Both host-local and GS links now share the same RPC framework and message vocabulary; only the `WireTx`/`WireRx` implementation differs.
-4. **Wire types live in [`proto/`](../../code/proto/)** and are shared across all links. The `InterprocessWireTx`/`WireRx` adapter lives in `proto/` (or a thin sibling crate) so neither the FC library nor the simulator crate depends on the other.
-5. **Two simulated-peripheral implementations**, both implementing the FC's peripheral traits (`Sensor`, `ArmingSystem`, `DeploymentSystem`, `Led`):
-   - **Host simulated peripherals** — postcard-rpc client calls over the interprocess socket to the simulator.
-   - **PIL simulated peripherals** — postcard-rpc client calls over USB to the host-side simulator, reusing the same server the ground station talks to.
-6. **The three-socket triangle satisfies the N-way traffic requirement.** Each link carries only the traffic that belongs to it: FC ↔ Sim for peripheral data and actuation, FC ↔ GS for telemetry and flight commands, Sim ↔ GS for runtime configuration and physics status. No link is a proxy for another. Ignition (GS operator → sim via `sim-gs.sock`) and parachute deployment (FC → sim via `fc-sim.sock`) flow on separate links without coupling.
-7. **Test ergonomics are deferred.** Reworking unit tests that today write to a static `Signal` is a future problem; it does not block the binary split.
+### Why Option 3 over Option 4 specifically
 
-## Open follow-ups (Resolved)
+The decisive factors, in order:
 
-- **Connect direction under bidirectional traffic.** One socket per peer pair; the postcard-rpc server listens, the client connects. FC listens on `fc-sim.sock` and `fc-gs.sock`; Simulator listens on `sim-gs.sock`. Both sides immediately call `tokio::io::split()` to get owned read and write halves moved into separate tasks. postcard-rpc owns the framing — no hand-rolled length prefix or type tag is needed. Head-of-line blocking is not a concern at sensor-tick frequencies. Two-socket topology (one per direction) was rejected: a single socket provides atomic reconnect on peer restart, matching run-lifecycle semantics (one peer crashing ends the scenario), and avoids partial-reconnect state with no compensating benefit at this traffic volume. Listener vs connector is symmetric at the transport level once connected; the server/client role in postcard-rpc is the only asymmetry.
-- **Topic granularity.** postcard-rpc's primitives map directly onto the traffic patterns: periodic sensor data (sim → FC, no response expected) uses Topics; commands that need an ack (FC → sim deployment, sim → FC arm trigger) use Endpoints. One multiplexed stream per peer pair; postcard-rpc handles the demultiplexing. No per-peripheral socket is needed.
-- **`impl_software` gating.** The host-IPC simulated peripherals stay gated behind a feature flag, and PIL peripherals are a sibling implementation (`impl_pil` or similar) gated for embedded targets — *not* a transport-conditional fork of the same type.
-- **Simulator runtime configuration.** The Simulator runs its own postcard-rpc server on `sim-gs.sock`; the GS backend connects to it as a client. Runtime config (change physics parameters, inject faults, retrigger ignition) and physics-status Topics flow directly between GS and Simulator without passing through FC. This keeps sim-config traffic off the FC entirely and avoids coupling simulator releases to GS releases. See Decision item 2 for the full three-socket triangle.
+1. **Crash semantics.** The spec's crash policy (§10) is built on a specific asymmetry: FC and Sim are run-lifecycle peers; GS is observational. Option 4 promotes GS-BE to a run-lifecycle requirement. Every sensor tick and every peripheral call flows through it; if it goes down, the run ends. This is not a minor operational inconvenience — it is an architectural regression that removes the ability to keep the run alive while the operator restarts the UI.
 
-## Deferred work
+2. **PIL feasibility.** Option 3 maps PIL cleanly: swap the interprocess socket adapter for a USB adapter, same postcard-rpc server, same `proto/` vocabulary. Option 4 requires GS-BE to demux two logical channels (peripheral surface traffic from Sim, telemetry from FC) arriving over different transports (host socket vs USB serial) and re-mux them correctly. This is a substantially larger implementation surface for PIL than Option 3 requires.
 
-The following questions do not block the binary split and are deferred to subsequent ADRs or implementation phases. Track progress in [`docs/TODO.md`](TODO.md).
+3. **Peripheral surface ownership.** The FC ↔ Sim peripheral boundary (`Sensor`, `ArmingSystem`, `DeploymentSystem`, `Led`) is a contract between the FC library's trait definitions and the simulator's implementations of those traits. Routing it through GS-BE forces GS-BE to understand and correctly forward a contract it has no architectural stake in. Option 3 keeps the peripheral contract where it belongs: between the two processes that define and implement it.
 
-- **FC / simulator reset semantics.** What happens when one peer restarts mid-scenario? Does the IPC reconnect transparently, or is the run aborted? Does the simulator rewind its physics state to match a fresh FC, or keep running and let the FC catch up? Specify before reset-spanning bugs become reproduce-only.
-- **Incremental testing during the migration.** Decision #7 defers the eventual test rework, but the application is under active development *while* the binaries are being split. Pin the interim story: which tests stay on the in-process `Signal` harness, which migrate to IPC clients first, and how the migration avoids a regression gap. This gates how fast the rest of this ADR can be implemented.
+4. **The observability gap is small and closeable.** Option 4's main structural advantage is that GS-BE can see raw sensor publications. Option 3 recovers this without a hub: the simulator can emit a mirrored sensor-log Topic on `sim-gs.sock` if post-run sensor replay is required. This adds one Topic to the sim→GS vocabulary; it does not require restructuring the topology.
+
+---
 
 ## Consequences
 
-- The FC library stops pulling simulator wiring into consumers. The `impl_software` flow becomes "postcard-rpc client calls over the interprocess socket"; no in-process simulator types compile in.
-- PIL becomes expressible without inventing a second conceptual interface. It is the same peripheral traits and the same postcard-rpc client code, with the interprocess socket swapped for USB.
-- One RPC framework (`postcard-rpc`) over two transport media (interprocess local socket on host, USB / radio for GS and PIL). The message vocabulary and the Topics/Endpoints API are single-sourced in `proto/`; only the `WireTx`/`WireRx` adapter differs per medium.
-- The `InterprocessWireTx`/`WireRx` adapter is the only new transport component. It is a thin wrapper (~50 LOC) over the `tokio::io::split` halves of an `interprocess::local_socket::tokio::Stream`; everything else reuses existing postcard-rpc infrastructure.
-- Existing FC unit tests that write to a static `Signal` will need rework. Deferred.
-- The current [`impl_host`](../../code/flight-computer/Cargo.toml) feature and the in-process `Sim*` types become a stopgap to retire as the binaries split.
+- The FC library stops pulling simulator wiring into consumers. `impl_host` becomes "postcard-rpc client over the interprocess socket"; no in-process simulator types compile in.
+- PIL becomes expressible without inventing a second conceptual interface. Same peripheral traits, same postcard-rpc client code; the interprocess socket is swapped for USB.
+- One RPC framework over two transport media. The message vocabulary and the Topics/Endpoints API are single-sourced in `proto/`; only the `WireTx`/`WireRx` adapter differs per medium.
+- The `InterprocessWireTx`/`WireRx` adapter is the only new transport component (~50 LOC over `tokio::io::split` halves of an `interprocess::local_socket::tokio::Stream`).
+- Existing FC unit tests that write to a static `Signal` will need rework. Deferred — tracked in [`../TODO.md`](../TODO.md).
+- Sim-config and sim-control traffic stays off the FC entirely (lives on `sim-gs.sock`). FC has no awareness of operator-only concerns.
+- Test ergonomics deferred. Reworking unit tests that today write to a static `Signal` is a future problem; it does not block the binary split.
+
+---
+
+## Deferred work
+
+The following do not block the binary split. Tracked in [`../TODO.md`](../TODO.md):
+
+- **FC / simulator reset semantics.** What happens when one peer restarts mid-scenario? The connection-level answer (single socket per pair, peer-crash ends the run) is in [`../software/spec.md` §8](../software/spec.md#8-host-ipc); the application-level question (does the simulator rewind physics state to match a fresh FC, or keep running?) is unresolved.
+- **Incremental testing during the migration.** Pin which tests stay on the in-process `Signal` harness, which migrate to IPC clients first, and how the migration avoids a regression gap.
+
+---
+
+## See also
+
+- [`../software/spec.md` §8](../software/spec.md#8-host-ipc) — the IPC topology and transport contract this decision produced.
+- [`../ROADMAP.md`](../ROADMAP.md) — implementation milestones for the binary split.

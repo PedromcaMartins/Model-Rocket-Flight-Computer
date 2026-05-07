@@ -8,6 +8,8 @@ The FC library — the software core of the rocket. Library crate only; no binar
 - **Runtime-agnostic async.** Uses `async fn` throughout with no dependency on a specific executor. Embassy runs it on HW and PIL; Tokio runs it on host.
 - **Architecture-agnostic.** Compiles for RISC-V (ESP32), ARM Cortex-M (STM32), and x86/x64 (host). Must stay `no_std`-clean for embedded targets.
 - **Single wire vocabulary.** All telemetry and commands use the types and postcard-rpc endpoint/topic definitions in `proto/`. The same definitions work across HW, PIL, and HOST — only the transport adapter differs.
+- **Event-driven FSM.** The flight state machine has no loop rate; transitions execute on incoming events only.
+- **No shutdown path on production targets.** Sim-control / orchestration shutdown logic is gated behind the `impl_host` / `impl_software` features or binaries, and must not appear in HW firmware artefacts. Production recovery is reset or watchdog only.
 - **Not a framework.** This is the flight software for this rocket, not a reusable domain library. Generalising it is out of scope.
 
 ## Features
@@ -31,6 +33,4 @@ The linking binary must provide:
 
 ## Architecture docs
 
-- [`docs/software/flight-computer.md`](../../docs/software/flight-computer.md) — design goals, trait system, postcard-rpc integration.
-- [`docs/software/fc-simulator-interface.md`](../../docs/software/fc-simulator-interface.md) — peripheral-trait contract and its postcard-rpc implementation across HOST and PIL.
-- [`docs/software/deployment-modes.md`](../../docs/software/deployment-modes.md) — HW / HOST / PIL topologies.
+- [`docs/software/spec.md`](../../docs/software/spec.md) — the consolidated software spec. FC library design goals and trait system in §6, FC ↔ Sim peripheral contract in §5.1, IPC topology (FC is server on `fc-sim.sock` and `fc-gs.sock`) in §8, deployment modes (HW / HOST / PIL) in §2, observability and crash policy in §9–§10.
