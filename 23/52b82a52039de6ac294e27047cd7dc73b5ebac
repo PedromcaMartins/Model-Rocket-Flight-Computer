@@ -1,0 +1,87 @@
+docs/software/spec.md
+  s_3ab2778182e66a::t_474f73294aac6b 19,28-29
+  5eae7c681909b8d4 40-42,44-72,79-123,172-202,253-292,294-295,363-383,504-538,555-570
+  s_3ab2778182e66a::t_12d6df455ca7f0 771
+  404a9bceda7b4e25 1-18,20-27,30-39,43,73-78,124-139,141-171,203-215,218-252,293,296-362,384-503,539-554,571-609,611-627,635-673,676-699,708-770,772-792
+  3ab2778182e66a7e 140,216-217,610,628-634,674-675,700-707
+code/flight-computer/README.md
+  s_3ab2778182e66a::t_5679430fe169fe 36
+  404a9bceda7b4e25 11
+docs/software/README.md
+  s_3ab2778182e66a::t_b205dbe3199882 3,7
+  s_3ab2778182e66a::t_706b92adf3504c 8
+  404a9bceda7b4e25 9
+docs/ADR/ADR-001-fc-simulator-postcard-rpc-ipc.md
+  s_3ab2778182e66a::t_8f11d6d4a04610 31
+  s_3ab2778182e66a::t_1507e2622014f6 30,32
+  c701b152f7f4c288 21,23-25,81-128,132,134,136-138,140,142,144,146-148,150,152,156-178
+  404a9bceda7b4e25 3,7-9,13-16,22,26,34-46,49-51,54
+  s_3ab2778182e66a::t_040c106e71c8ee 6
+  s_3ab2778182e66a::t_ec439dec29542f 48
+  s_3ab2778182e66a::t_f386db856498bf 53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "2352b82a52039de6ac294e27047cd7dc73b5ebac",
+  "prompts": {
+    "3ab2778182e66a7e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "39b1ea33-10f1-4bc9-a8b7-c12b3d09f5ee",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": null,
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    },
+    "404a9bceda7b4e25": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ffcbfe90-339a-4b3c-afcd-feb02c2c0a00",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": null,
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 566,
+      "overriden_lines": 0
+    },
+    "5eae7c681909b8d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "823d03ed-3468-4a3f-9b7a-63f0619dffd5",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": null,
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 222,
+      "overriden_lines": 0
+    },
+    "c701b152f7f4c288": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "938e8935-a197-41c7-8d32-4f265377c56d",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": null,
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 78,
+      "overriden_lines": 0
+    }
+  },
+  "sessions": {
+    "s_3ab2778182e66a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "39b1ea33-10f1-4bc9-a8b7-c12b3d09f5ee",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": null
+    }
+  }
+}
