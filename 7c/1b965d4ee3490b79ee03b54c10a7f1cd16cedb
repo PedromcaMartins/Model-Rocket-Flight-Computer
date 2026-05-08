@@ -1,0 +1,78 @@
+code/flight-computer/src/tasks/postcard.rs
+  s_32b6e3dec937f0::t_f35e15426baef6 5-6,8-10
+  s_fcd9e40e34395f::t_8ad95197aedead 12-13,16
+  s_fcd9e40e34395f::t_0a2f8850e35473 41
+code/flight-computer/src/tasks/finite_state_machine.rs
+  s_32b6e3dec937f0::t_4059c7735fb9c7 8,10,20-23
+docs/software/spec.md
+  s_fcd9e40e34395f::t_2a010d7466c754 325
+  s_fcd9e40e34395f::t_d9c2e53a2e1d06 723
+  s_10dde433c6951d::t_25fa43e549379c 165-166
+  s_10dde433c6951d::t_d7b4f74b650bc9 362-382,384-386,388-391
+  s_fcd9e40e34395f::t_5fd5c8c3202f8f 131
+  s_fcd9e40e34395f::t_fbf031684e48d3 163
+  s_fcd9e40e34395f::t_a2cf37dbbe5e5a 293-296
+  s_fcd9e40e34395f::t_98a458e3dbb994 141
+  s_fcd9e40e34395f::t_86a413cb08cd0d 336,339
+  s_32b6e3dec937f0::t_95b0151e228e04 337-338,343
+  s_fcd9e40e34395f::t_d3b6b9d1d0d999 115
+  s_10dde433c6951d::t_5aa0bae97416c3 360
+  s_10dde433c6951d::t_97891116f93dc4 844
+code/flight-computer/src/lib.rs
+  s_32b6e3dec937f0::t_e5bdc16c19624b 1-26,28,30-37
+code/flight-computer/README.md
+  s_fcd9e40e34395f::t_340870a2c7617e 12
+  s_10dde433c6951d::t_b1f134ad22fcbc 13-14
+  s_fcd9e40e34395f::t_e10fd75e953dc3 22-25
+code/flight-computer/Cargo.toml
+  s_32b6e3dec937f0::t_8bd178be77668a 113-114
+  s_fcd9e40e34395f::t_ab2c43144aab60 86
+  s_fcd9e40e34395f::t_186718b264997b 112
+docs/ADR/ADR-001-fc-simulator-postcard-rpc-ipc.md
+  s_fcd9e40e34395f::t_742a3e17b910ba 84
+  s_fcd9e40e34395f::t_21c46682aa0e11 122
+docs/TODO.md
+  s_fcd9e40e34395f::t_437ad5f3802a9f 23
+docs/ROADMAP.md
+  s_32b6e3dec937f0::t_1cb9da0fb73c94 74
+  s_32b6e3dec937f0::t_14bf0a2aff61de 121
+  s_32b6e3dec937f0::t_5167a3415f6195 210
+  s_32b6e3dec937f0::t_b54666c02f5da1 272
+  s_32b6e3dec937f0::t_c0c6127df74118 249,251
+code/flight-computer/src/tasks/mod.rs
+  s_fcd9e40e34395f::t_2122a1ec84eb2e 12
+code/flight-computer/src/interfaces/impls/mod.rs
+  s_fcd9e40e34395f::t_78164861af7ed0 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "7c1b965d4ee3490b79ee03b54c10a7f1cd16cedb",
+  "prompts": {},
+  "sessions": {
+    "s_10dde433c6951d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d2938633-87a0-4a0a-9f89-d06183b8be0c",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_32b6e3dec937f0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2cbc4c23-0d91-4785-9831-694baefa131f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_fcd9e40e34395f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "86e08da9-e4d1-4c85-b60c-3d93ba64b1aa",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
