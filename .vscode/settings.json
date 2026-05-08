@@ -8,4 +8,5 @@
         "code/xtask/Cargo.toml",
     ],
     "rust-analyzer.checkOnSave": false,
+    "rust-analyzer.check.command": "clippy",
 }

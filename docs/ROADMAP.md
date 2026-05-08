@@ -6,6 +6,8 @@ The target architecture is specified in [`docs/software/spec.md`](docs/software/
 
 Each task still requires a written artifact before implementation begins: an **ADR** for structural/design decisions, a **Spec** for full subsystem work.
 
+**Artifact convention.** follow [`AGENTS.md`](AGENTS.md) with a split between *architectural constraints* (which go in the spec) and *detailed design* (which goes in the crate).
+
 ---
 
 ## Architecture overview
@@ -73,9 +75,11 @@ host machine (HOST mode — target)
 
 Nothing runs end-to-end yet. This milestone is purely about getting the shared contract and the library right before building binaries against them.
 
-### M1.1 — Proto feature gating (ADR-002)
+### M1.1 — Proto feature gating
 
 Gate `proto`'s contents so embedded targets never compile host-only symbols, and host targets can opt into the IPC adapter.
+
+**Architectural constraint** (in `docs/software/spec.md §9`): `proto` stays `#![no_std]`; embedded targets never see sim-only or IPC symbols; IPC deps (`tokio`, `interprocess`) are opt-in. **Detailed design** (in `code/proto/`): exact feature flag names, `#[cfg]` on `topics!`/`endpoints!` blocks, `InterprocessWireTx`/`Rx` type signatures.
 
 | Feature | Contents |
 |---|---|
@@ -85,11 +89,13 @@ Gate `proto`'s contents so embedded targets never compile host-only symbols, and
 | `host` | `simulator-endpoints` + `ipc-adapter` |
 | `pil` | `simulator-endpoints` |
 
-**Status:** Not started — ADR-002 required first.
+**Status:** Not started.
 
-### M1.2 — FC library cleanup: `impl_software` → `impl_sim` rename (ADR-003)
+### M1.2 — FC library cleanup: `impl_software` → `impl_sim` rename
 
 Restructure `flight-computer`'s feature flags to reflect what has actually changed since the original split: the transport layer, not the peripheral model.
+
+**Architectural constraint** (in `docs/software/spec.md §10`): peripheral feature flags are mutually exclusive; `impl_host` is orthogonal and composes with `impl_sim`. **Detailed design** (in `code/flight-computer/`): exact feature names, `#[cfg]` on impl modules, `start_*` entry point signatures.
 
 #### Peripheral feature flags — rename and clarification
 
@@ -112,7 +118,7 @@ Verification gates: `cargo check` must pass independently for:
 - `--no-default-features --features impl_sim` (std, PIL)
 - `--no-default-features --features impl_sim,impl_host` (std, HOST binary combination)
 
-**Status:** Not started — ADR-003 required first.
+**Status:** Not started.
 
 ---
 
@@ -200,8 +206,8 @@ Architectural role of `xtask` in HOST:
 
 | Milestone | Task | Artifact | Status |
 |---|---|---|---|
-| M1.1 | Proto feature gating | ADR-002 | Not started |
-| M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename + `start_*` builder | ADR-003 | Not started |
+| M1.1 | Proto feature gating | `spec.md §9` + `proto` features | Not started |
+| M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename + `start_*` builder | `spec.md §10` + `flight-computer` features | Not started |
 | M2.1 | `flight-computer-host` binary | Spec | Blocked (M1 + connection diagram) |
 | M2.2 | Simulator binary | Spec | Blocked (M1 + connection diagram) |
 | M3.1 | GS backend: REST API + storage | Spec | Blocked (M2) |
@@ -215,9 +221,9 @@ Architectural role of `xtask` in HOST:
 ## Implementation order
 
 ```
-[M1.1] ADR-002: proto feature gating
+[M1.1] Proto feature gating (spec.md §9 + proto features)
           ↓
-[M1.2] ADR-003: FC library + impl_host IPC peripherals
+[M1.2] FC library cleanup (spec.md §10 + flight-computer features)
           ↓
    [Connection diagram confirmed]
           ↓
@@ -231,3 +237,36 @@ Architectural role of `xtask` in HOST:
                         ↓
               [M4] xtask run-host orchestration
 ```
+
+---
+
+## Progress
+
+<!-- Checkboxes track completion. Update as work progresses. -->
+
+### Milestone 1 — Wire vocabulary and FC library
+- [X] M1.1 — Proto feature gating
+- [ ] M1.2 — FC library cleanup: `impl_software` → `impl_sim` rename
+
+**M1 progress:** 1 / 2 (50%)
+
+### Milestone 2 — Independent binaries (FC-host + Simulator)
+- [ ] M2.1 — `flight-computer-host` binary
+- [ ] M2.2 — Simulator binary
+
+**M2 progress:** 0 / 2 (0%)
+
+### Milestone 3 — Ground station (GS backend + GS frontend)
+- [ ] M3.1 — GS backend: REST API + storage
+- [ ] M3.2 — GS frontend TUI
+
+**M3 progress:** 0 / 2 (0%)
+
+### Milestone 4 — Orchestration (`xtask run-host`)
+- [ ] M4 — `xtask run-host` orchestration
+
+**M4 progress:** 0 / 1 (0%)
+
+---
+
+**Overall progress:** 1 / 7 tasks (14%)

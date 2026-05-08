@@ -14,10 +14,13 @@ pub type Altitude = Length;
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct AltimeterData {
     /// Pressure in Pascal.
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub pressure: Pressure,
     /// Altitude in meters.
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub altitude: Altitude,
     /// Temperature in Celsius degrees.
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub temperature: ThermodynamicTemperature,
 }
 
@@ -36,12 +39,16 @@ pub struct GpsCoordinates {
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct GpsData {
     /// Timestamp
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub fix_time: NaiveTimeWrapper,
     /// Type of GPS Fix
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub fix_type: FixTypeWrapper,
     /// Coordinates
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub coordinates: GpsCoordinates,
     /// MSL Altitude in meters
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub altitude: Altitude,
     /// Number of satellites used for fix.
     pub num_of_fix_satellites: u8,
@@ -53,11 +60,15 @@ pub struct GpsData {
 #[derive(Serialize, Deserialize, Schema, Clone, Debug, PartialEq)]
 pub struct ImuData {
     /// Acceleration vector in m/s^2 units.
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub acceleration: Vector3<Acceleration>,
     /// Gyroscope vector in deg/s units.
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub gyro: Vector3<AngularVelocity>,
     /// Magnetometer vector in uT units.
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub mag: Vector3<MagneticFluxDensity>,
     /// Temperature of the chip in Celsius degrees.
+    #[cfg_attr(feature = "defmt", defmt(Debug2Format))]
     pub temperature: ThermodynamicTemperature,
 }

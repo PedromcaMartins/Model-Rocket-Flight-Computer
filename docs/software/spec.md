@@ -163,7 +163,7 @@ These properties hold across every component. Each is a deliberate design choice
 | **Production targets have no shutdown path** | A reachable shutdown on prod firmware is a safety regression | Sim/orchestration shutdown logic gated behind `impl_host` / `impl_software` features; CI verifies |
 | **Sim/HW strictly one-or-the-other** | Hybrid (e.g. real IMU + sim GPS) adds complexity with no current need | Mutually-exclusive feature flags at link time |
 | **GS is simulator-independent** | GS operates on FC telemetry and commands alone; removing the simulator leaves GS fully functional. No GS code path requires the simulator to be present or to have produced data. | GS backend imports no simulator type; `sim-gs.sock` connection is optional from GS's perspective — its absence is a degraded but valid state |
-| **Simulator is GS-independent for physics** | The simulator's physics loop, internal log, and TUI operate without a GS connection. GS connectivity is required only for lifecycle control and config-hash handshake; the absence of GS does not halt or corrupt the sim loop. | Sim TUI provides independent operator access; `sim-gs.sock` connection loss follows the crash policy in §10 |
+| **Simulator is GS-independent for physics** | The simulator's physics loop, internal log, and TUI operate without a GS connection. GS connectivity is required only for lifecycle control and config-hash handshake; the absence of GS does not halt or corrupt the sim loop. | Sim TUI provides independent operator access; `sim-gs.sock` connection loss follows the crash policy in §11 |
 
 ---
 
@@ -462,7 +462,7 @@ Only **scalar constants** that parameterise physics and event model:
 
 What does **not** live in config:
 - **Magnitude functions themselves** — shapes (constant thrust, exponential drag falloff) are code; config tunes parameters only.
-- **Vector directions** — deferred (see §11).
+- **Vector directions** — deferred (see §12).
 - **Magnitude time-series** — use scripted events instead.
 
 *Why scalar-only:* keeps config human-readable, auditable, trivially serialisable, and trivially hashable.
@@ -476,7 +476,7 @@ Two distinct event categories. Both are concepts inside the simulator; they are 
 ```
 ForceEvent {
     magnitude_fn,   // closure / function selected by event kind, parameterised by config scalars
-    direction,      // deferred — see §11
+    direction,      // deferred — see §12
     duration,       // sim-time duration
 }
 ```
@@ -676,15 +676,41 @@ This is an application-level constraint, not a named-pipe or OS-level one: the O
 
 ---
 
-## 9. Observability
+## 9. Proto vocabulary gating
 
-### 9.1 Framework
+### 9.1 Constraint
+
+`proto/` is `#![no_std]` and must remain so. No host-only, simulator-only, or IPC symbol may compile into an embedded firmware binary. IPC dependencies (`tokio`, `interprocess`) are opt-in at the crate level.
+
+### 9.2 Consumer feature map
+
+| Consumer | Proto features enabled | Why |
+|---|---|---|
+| **HW firmware** (`cross-*`, `impl_embedded`) | `default` only (Ping, tick-hz, Record) | No sim, no IPC — embedded target |
+| **PIL firmware** (`cross-*`, `impl_software`) | `default` + `simulator-endpoints` | Sim on host over USB; no IPC adapter |
+| **FC host binary** (`flight-computer-host`) | `default` + `host` | Sim over interprocess socket; `host` = `simulator-endpoints` + `ipc-adapter` |
+| **Simulator** | `default` + `host` | Same transport as FC host; publishes sim Topics, receives deploy/LED Endpoints |
+| **GS backend** | `default` + `ipc-adapter` | Connects to FC and sim over sockets; no sim endpoint publishing |
+
+### 9.3 Rationale
+
+The feature table in `code/proto/Cargo.toml` and `#[cfg]` gates in `code/proto/src/lib.rs` are the source of truth for which symbols live under each flag. This section captures only the architectural invariants those flags enforce:
+
+1. **Embedded targets cannot compile IPC glue.** The `ipc-adapter` feature brings `tokio` + `interprocess` — incompatible with `no_std` and too large for firmware even if `std` were available.
+2. **`simulator-endpoints` are bloat on HW.** The Sim* Topics (altimeter, GPS, IMU, arm, deployment, LEDs) are never compiled into real flight firmware — gating them saves code space and prevents accidental misuse.
+3. **Consumers compose features, not duplicate them.** The `host` and `pil` convenience features exist so that each binary enables a single feature alias rather than repeating the full list. The mapping is maintained in `code/proto/Cargo.toml`.
+
+---
+
+## 10. Observability
+
+### 10.1 Framework
 
 - **`tracing` + `tracing-subscriber`** for span emission and instrumentation across all host processes.
 - **OpenTelemetry (OTEL) export** for cross-process correlation. Each process exports spans to a host-local OTEL collector / file sink, sharing trace IDs across the three.
 - `#[instrument]` on async fn boundaries that matter (sensor parse, FSM transitions, scripted-event firing, postcard-rpc handlers).
 
-### 9.2 Cross-process trace correlation
+### 10.2 Cross-process trace correlation
 
 Trace ID propagation rule:
 1. The trace ID for a scenario is **established by GS** when the operator initiates a run (Start command on `sim-gs.sock`).
@@ -694,7 +720,7 @@ Trace ID propagation rule:
 
 This makes the operator click — "Start" — the natural root of every per-scenario trace tree. *Why GS as root:* the operator's intent is the causal entry point for everything that follows.
 
-### 9.3 Panic capture
+### 10.3 Panic capture
 
 Every host process must:
 - Install a panic hook before any work starts.
@@ -705,7 +731,7 @@ A panic that exits without flushing is a bug — fix the panic hook, do not work
 
 *Why:* the postcard-rpc disconnect that follows a panic gives the surviving peer (and operator) almost no information by itself. The trace + flushed log is what tells them *why*.
 
-### 9.4 Phasing
+### 10.4 Phasing
 
 | Phase | Scope | When |
 |---|---|---|
@@ -714,7 +740,7 @@ A panic that exits without flushing is a bug — fix the panic hook, do not work
 
 **Phase 2 embedded approach.** `tracing` is viable under `no_std` — spans emitted via `defmt` or a custom transport. A companion host-side process reads the embedded trace stream and forwards it into the host OTEL pipeline so embedded spans land in the same trace tree. Specific embedded transport (defmt-rtt, USB serial postcard, etc.) is decided in Phase 2 against measured behaviour, not now. If `tracing` under `no_std` proves impractical at that point, a fallback plan is reassessed.
 
-### 9.5 Sim-side logging
+### 10.5 Sim-side logging
 
 The simulator logs its own state (physics state per tick, force-event creation / expiry, scripted-event firing) using `tracing` at `debug` / `info` levels. Spans use the per-scenario trace ID so they correlate with FC and GS spans for the same run.
 
@@ -724,9 +750,9 @@ This is **separate from** FC storage logging (`Record`s to flash / SD via `FileS
 
 ---
 
-## 10. Crash & disconnect policy
+## 11. Crash & disconnect policy
 
-### 10.1 Per-component crash matrix
+### 11.1 Per-component crash matrix
 
 | Crashed | FC behaviour | Sim behaviour | GS behaviour |
 |---|---|---|---|
@@ -746,7 +772,7 @@ The matrix above is HOST-mode focused. **PIL inherits the same FC ↔ Sim policy
 | **HOST** | Sim shuts down (no peer); GS marks FC panel red with last-seen + last-known data. | FC shuts down (no input); GS marks Sim panel red. | FC and Sim continue; log comms failure. |
 | **PIL** | MCU reset; sim on host shuts down on USB drop. | FC firmware blocks waiting for sensor data; restart needed. | FC and Sim continue; log comms failure. |
 
-### 10.2 GS operator UX during disconnect
+### 11.2 GS operator UX during disconnect
 
 When GS loses one of its peer connections (`fc-gs.sock` or `sim-gs.sock`):
 1. **Within one UI refresh:** affected panel turns **red**.
@@ -760,14 +786,14 @@ The frontend UI surfaces the same red/last-seen state via REST poll on the backe
 
 *Why no auto-retry:* a peer that crashed once will likely crash the same way on restart; auto-retry hides root causes and produces noisy partially-progressed runs. Manual restart forces the operator to acknowledge.
 
-### 10.3 Reconnect
+### 11.3 Reconnect
 
 - For FC ↔ Sim: neither survives, so reconnect is moot — both are restarted by the orchestrator.
 - For GS ↔ FC and GS ↔ Sim: GS waits indefinitely for a fresh connection. There is no internal timeout. The operator decides when to give up.
 
 ---
 
-## 11. Known limitations (accepted)
+## 12. Known limitations (accepted)
 
 | Limitation | Decision | Why |
 |---|---|---|
@@ -779,7 +805,7 @@ The frontend UI surfaces the same red/last-seen state via REST poll on the backe
 
 ---
 
-## 12. Open questions
+## 13. Open questions
 
 - **Sim physics-state reset on FC restart.** When the FC reconnects to a still-running sim mid-scenario, does the sim rewind physics to t=0 or keep running? Tracked in [`../TODO.md`](../TODO.md). In current model, FC ↔ Sim survivor exits on peer crash, so mid-scenario reconnect is not reachable; this question only matters if that policy changes.
 - **Telemetry / sensor publish rate.** 10 Hz current target as estimate; actual rate is a tuning parameter, not an architectural commitment.
@@ -789,7 +815,7 @@ The frontend UI surfaces the same red/last-seen state via REST poll on the backe
 
 ---
 
-## 13. How a HOST scenario flows (walk-through)
+## 14. How a HOST scenario flows (walk-through)
 
 1. **Operator** edits the scenario config file held by the GS backend. GS computes its hash.
 2. **Operator** runs `cargo xtask run-host`. xtask spawns FC, simulator, GS backend, GS frontend in dependency order.
@@ -803,7 +829,7 @@ The frontend UI surfaces the same red/last-seen state via REST poll on the backe
 
 ---
 
-## 14. Where things live
+## 15. Where things live
 
 ```
 docs/

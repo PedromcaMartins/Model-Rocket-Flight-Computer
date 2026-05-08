@@ -41,6 +41,12 @@ When proposing a non-trivial change, sketch the architecture/interface impact in
 
 **Before any architectural or interface change, a spec must exist (or be updated).** Before any significant design decision, an ADR must be written. Both follow the same architecture/detailed-design split as all other docs — see `docs/how-we-work.md` §*Spec & ADR policy* for the full rules.
 
+**Tasks in [`docs/ROADMAP.md`](docs/ROADMAP.md) follow this same split.** Architectural constraints and cross-subsystem contracts go in `docs/software/spec.md`; detailed implementation lives in the crate's own code docs and `Cargo.toml`.
+Do not create ADRs for tasks that are purely architectural but do not involve a significant decision (e.g. "add a new sensor to the bus") — the spec is the right place for that. 
+Do create ADRs for architectural tasks that involve a non-obvious decision (e.g. "add a new sensor to the bus, and we have to choose between I2C and SPI") — the spec should link to the ADR, but the rationale and decision live in the ADR.
+Do create ADRs for detailed-design tasks that involve a non-obvious decision (e.g. "we need to choose a new async runtime for the FC, and there are three contenders") — the rationale and decision live in the ADR, which is linked from the crate's README or code docs. 
+Do not create ADRs for detailed-design tasks that are purely mechanical (e.g. "we need to choose a new async runtime for the FC, and we have already decided on Tokio") — the crate's README or code docs are the right place for that.
+
 ## 4. Project map
 
 ```
@@ -50,7 +56,8 @@ When proposing a non-trivial change, sketch the architecture/interface impact in
 │
 ├── docs/                  ← project-wide docs: goals, requirements, architecture, ADRs, progress, media
 │   ├── README.md          ← architecture vs. detailed-design philosophy
-│   └── GLOSSARY.md        ← project vocabulary
+│   ├── GLOSSARY.md        ← project vocabulary
+│   └── toolchain.md       ← installed Rust tools & targets reference
 │
 ├── code/                  ← Rust workspace (flight computer, ground station, proto, simulator, xtask)
 │   └── README.md          ← crates overview + detailed-design index
@@ -96,7 +103,7 @@ If you create a new top-level folder that is not pure reference material, add a 
 
 ## 6. Working conventions
 
-- **Rust workspace** lives under `code/`. Run `cargo` commands from that directory unless a crate's README says otherwise.
+- **Rust workspace** lives under `code/`. Run `cargo` commands from that directory unless a crate's README says otherwise. Prefer `cargo check`, `cargo clippy`, `cargo build`, and `cargo nextest run` for verifying code — these are pre-approved in the project's opencode config. See [`docs/toolchain.md`](docs/toolchain.md) for the full list of installed tools, targets, and toolchains.
 - **Do not invent URLs or crate versions.** If you need a reference, point at `datasheets/`, `papers/`, or the upstream docs that are already cited.
 - **Prefer editing existing docs** over creating new files. New files only when an existing doc would become incoherent.
 - **Match the architecture/detailed-design split** when *reading*, too: if the user asks about a public interface, start in `docs/`; if they ask why a specific crate was chosen, start in that crate's README.

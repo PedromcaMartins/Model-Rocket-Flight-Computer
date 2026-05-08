@@ -12,7 +12,7 @@ name = "serial"
 path = "src/bin/serial/main.rs"
 
 [dependencies]
-proto = { version = "*", path = "../proto", default-features = false, features = ["log", "timestamp-into-duration"] }
+proto = { version = "*", path = "../proto", default-features = false, features = ["log", "timestamp-into-duration", "simulator-endpoints"] }
 flight-computer = { version = "*", path = "../flight-computer", default-features = false, features = ["log", "impl_software", "impl_host"] }
 simulator = { version = "*", path = "../simulator" }
 embassy-time = { version = "0.4", features = ["std", "generic-queue-128"] }

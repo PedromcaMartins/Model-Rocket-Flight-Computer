@@ -109,6 +109,6 @@ defmt = [
     "proto/defmt",
 ]
 impl_embedded = []
-impl_software = ["std"]
+impl_software = ["std", "proto/simulator-endpoints"]
 impl_host = ["dep:tokio", "impl_software", "std"]
 std = []

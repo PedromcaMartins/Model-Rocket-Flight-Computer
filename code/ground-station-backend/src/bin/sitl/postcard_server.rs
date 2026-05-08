@@ -22,7 +22,7 @@ define_dispatch! {
         | GlobalTickHzEndpoint      | blocking  | embassy_time_tick_hz_handler  |
     };
     topics_in: {
-        list: TOPICS_IN_LIST;
+        list: TOPICS_SIM_IN_LIST;
 
         | TopicTy                   | kind      | handler                       |
         | ----------                | ----      | -------                       |
@@ -37,17 +37,12 @@ define_dispatch! {
 }
 
 pub fn postcard_local_setup(config: LocalPostcardConfig) -> (LocalServer, PostcardClient) {
-    let LocalPostcardConfig {
-        context,
-    } = config;
+    let LocalPostcardConfig { context } = config;
 
     let (client_tx, server_rx) = mpsc::channel(LocalPostcardConfig::SERVER_DEPTH);
     let (server_tx, client_rx) = mpsc::channel(LocalPostcardConfig::SERVER_DEPTH);
 
-    let app = App::new(
-        context,
-        ChannelWireSpawn {},
-    );
+    let app = App::new(context, ChannelWireSpawn {});
 
     let cwrx = ChannelWireRx::new(server_rx);
     let cwtx = ChannelWireTx::new(server_tx);

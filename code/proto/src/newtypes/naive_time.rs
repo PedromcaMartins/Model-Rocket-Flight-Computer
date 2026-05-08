@@ -6,7 +6,7 @@ use crate::schema;
 
 #[defmt_or_log_macros::maybe_derive_format]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, From, Into, Deref)]
-pub struct NaiveTimeWrapper(NaiveTime);
+pub struct NaiveTimeWrapper(#[cfg_attr(feature = "defmt", defmt(Debug2Format))] NaiveTime);
 
 impl Schema for NaiveTimeWrapper {
     const SCHEMA: &'static schema::NamedType = &schema::NamedType {

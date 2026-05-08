@@ -20,8 +20,8 @@
         "cargo": {
           "allTargets": false
         },
-        // Use `-p` instead of `--workspace` for cargo check
         "check": {
+          "command": "clippy",
           "workspace": false
         },
         "linkedProjects": [

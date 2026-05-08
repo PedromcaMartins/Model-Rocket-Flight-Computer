@@ -47,7 +47,8 @@ The split applies to every discipline, not just code. See [`docs/README.md`](doc
 
 - **Requirements as a contract.** [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) holds numbered, testable requirements (`[DEV-*]`, `[ROCKET-*]`, `[SW-*]`). New work should trace back to a requirement; if it doesn't, add one (with reasoning).
 - **Decisions get ADRs.** Cross-cutting choices that affect more than one subsystem are recorded in [`docs/ADR/`](docs/ADR/) (see [`docs/README.md`](docs/README.md) for the ADR skeleton). Decisions internal to one crate or one PCB belong with that artifact.
-- **Active TODOs.** [`docs/TODO.md`](docs/TODO.md) is the system-wide TODO list. Crate- or board-internal TODOs live with the crate or board.
+- **Active TODOs.** [`docs/TODO.md`](docs/TODO.md) is the system-wide task list with checkboxes. Crate- or board-internal tasks live with the crate or board.
+- **Progress tracked.** [`docs/ROADMAP.md`](docs/ROADMAP.md) tracks the multi-milestone plan to split the monolithic HOST binary into four processes. Its progress section is updated as milestones advance — tick a checkbox there when a task is done.
 - **Per-revision folders.** `hardware/v1/`, `structure/v1/`, etc. freeze the moment that revision is fabricated or printed. Any incompatible change forks a new revision (`v2/`) — don't edit a frozen one.
 - **Treat documentation drift as a bug.** If you change behavior and the docs don't match anymore, fix the docs in the same change.
 
