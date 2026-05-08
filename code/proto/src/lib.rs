@@ -29,7 +29,7 @@
 //!
 //! # Verification
 //!
-//! ```text
+//! ```bash
 //! # HW: no sim, no IPC
 //! cargo check --no-default-features --features hw -p proto
 //!

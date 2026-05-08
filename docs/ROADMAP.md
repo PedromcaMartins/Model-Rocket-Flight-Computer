@@ -71,7 +71,7 @@ host machine (HOST mode — target)
 
 ## Milestone 1 — Wire vocabulary and FC library (proto + flight-computer cleanup)
 
-**Goal:** `proto` carries the full shared wire vocabulary with correct feature gating; the FC library compiles cleanly for all three deployment targets (`impl_embedded`, `impl_software`, `impl_host`) without the monolithic host wiring.
+**Goal:** `proto` carries the full shared wire vocabulary with correct feature gating; the FC library compiles cleanly for all three deployment targets (`impl_embedded`, `impl_sim`, `impl_host`) without the monolithic host wiring.
 
 Nothing runs end-to-end yet. This milestone is purely about getting the shared contract and the library right before building binaries against them.
 
@@ -118,7 +118,7 @@ Verification gates: `cargo check` must pass independently for:
 - `--no-default-features --features impl_sim` (std, PIL)
 - `--no-default-features --features impl_sim,impl_host` (std, HOST binary combination)
 
-**Status:** Not started.
+**Status:** Done.
 
 ---
 
@@ -207,7 +207,7 @@ Architectural role of `xtask` in HOST:
 | Milestone | Task | Artifact | Status |
 |---|---|---|---|
 | M1.1 | Proto feature gating | `spec.md §9` + `proto` features | Not started |
-| M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename + `start_*` builder | `spec.md §10` + `flight-computer` features | Not started |
+| M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename + `start_*` builder | `spec.md §10` + `flight-computer` features | Done |
 | M2.1 | `flight-computer-host` binary | Spec | Blocked (M1 + connection diagram) |
 | M2.2 | Simulator binary | Spec | Blocked (M1 + connection diagram) |
 | M3.1 | GS backend: REST API + storage | Spec | Blocked (M2) |
@@ -246,9 +246,9 @@ Architectural role of `xtask` in HOST:
 
 ### Milestone 1 — Wire vocabulary and FC library
 - [X] M1.1 — Proto feature gating
-- [ ] M1.2 — FC library cleanup: `impl_software` → `impl_sim` rename
+- [X] M1.2 — FC library cleanup: `impl_software` → `impl_sim` rename
 
-**M1 progress:** 1 / 2 (50%)
+**M1 progress:** 2 / 2 (100%)
 
 ### Milestone 2 — Independent binaries (FC-host + Simulator)
 - [ ] M2.1 — `flight-computer-host` binary
@@ -269,4 +269,4 @@ Architectural role of `xtask` in HOST:
 
 ---
 
-**Overall progress:** 1 / 7 tasks (14%)
+**Overall progress:** 2 / 7 tasks (29%)

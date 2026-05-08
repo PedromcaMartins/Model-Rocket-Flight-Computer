@@ -83,7 +83,7 @@ critical-section = { version = "1.1", features = ["std"] }
 # mockall = "0.13.1"
 
 [features]
-default = ["log", "impl_embedded", "impl_software", "impl_host", "std"]
+default = ["log", "impl_embedded", "impl_sim", "impl_host", "std"]
 log = [
     "dep:log",
     "defmt-or-log/log",
@@ -109,6 +109,7 @@ defmt = [
     "proto/defmt",
 ]
 impl_embedded = []
-impl_software = ["std", "proto/simulator-endpoints"]
-impl_host = ["dep:tokio", "impl_software", "std"]
+impl_sim = ["std", "proto/simulator-endpoints"]
+impl_host = ["dep:tokio", "std"]
+host = ["impl_sim", "impl_host", "log", "proto/host"]
 std = []

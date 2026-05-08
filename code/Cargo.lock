@@ -1164,7 +1164,6 @@ dependencies = [
  "critical-section",
  "derive_more",
  "embassy-time",
- "flight-computer",
  "postcard",
  "postcard-rpc",
  "postcard-schema",

@@ -9,5 +9,5 @@ pub use groundstation::groundstation_task;
 pub mod postcard;
 pub use postcard::postcard_server_task;
 
-#[cfg(feature = "impl_software")]
+#[cfg(feature = "impl_sim")]
 pub mod simulation;

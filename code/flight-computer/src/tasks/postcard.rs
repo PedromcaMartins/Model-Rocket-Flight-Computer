@@ -2,12 +2,19 @@ use core::ops::DerefMut;
 
 use defmt_or_log::{debug, info, error};
 use embassy_time::Timer;
-use postcard_rpc::{header::VarHeader, server::{Sender, Server, SpawnContext, WireTx}};
-use proto::{PingRequest, PingResponse, actuator_data::ActuatorStatus, record::tick_hz::GlobalTickHz, sensor_data::{AltimeterData, GpsData, ImuData}};
+use postcard_rpc::{header::VarHeader, server::{Server, SpawnContext}};
+use proto::{PingRequest, PingResponse, record::tick_hz::GlobalTickHz};
 
-#[cfg(feature = "impl_software")]
-use crate::interfaces::impls::simulation::sensor::SimSensor;
-use crate::{config::PostcardConfig, interfaces::{Led, impls::simulation::{arming_system::SimArming, sensor::{SimAltimeter, SimGps, SimImu}}}};
+use crate::{config::PostcardConfig, interfaces::Led};
+
+#[cfg(feature = "impl_sim")]
+use postcard_rpc::server::{Sender, WireTx};
+
+#[cfg(feature = "impl_sim")]
+use proto::{actuator_data::ActuatorStatus, sensor_data::{AltimeterData, GpsData, ImuData}};
+
+#[cfg(feature = "impl_sim")]
+use crate::interfaces::impls::simulation::{arming_system::SimArming, sensor::{SimAltimeter, SimGps, SimImu, SimSensor}};
 
 pub struct Context {
 }
@@ -31,13 +38,12 @@ pub fn embassy_time_tick_hz_handler(_context: &mut Context, _header: VarHeader, 
     GlobalTickHz::set_global_tick_hz(embassy_time::TICK_HZ)
 }
 
-#[cfg(feature = "impl_software")]
+#[cfg(feature = "impl_sim")]
 pub mod simulator {
     #[allow(clippy::wildcard_imports)]
     use super::*;
 
     pub fn sim_altimeter_update<Tx: WireTx>(_context: &mut Context, _header: VarHeader, data: AltimeterData, _out: &Sender<Tx>) {
-        #[cfg(feature = "impl_software")]
         SimAltimeter::update_data(data);
     }
     

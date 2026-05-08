@@ -112,7 +112,7 @@ PIL — perf testing on prod board
    ┌──────────────────────┐                ┌──────────────────────┐
    │ simulator (host)     │ ◄── USB ─────► │ FC firmware          │
    │                      │                │ cross-* binary       │
-   │                      │                │ impl_software        │
+   │                      │                │ impl_sim             │
    └──────────┬───────────┘                └──────────┬───────────┘
               │                                       │
        interprocess                       same USB wire,
@@ -128,7 +128,7 @@ PIL — perf testing on prod board
 |---|---|---|---|---|
 | **HW** | Production MCU | Real drivers (`impl_embedded`) | SD / flash | Production flight |
 | **HOST** (SIL/SITL) | Host process (`flight-computer-host`) | Simulator process via `fc-sim.sock` (`impl_host`) | Host FS | Full-stack scenario testing |
-| **PIL** | Production MCU | Simulator on host via USB (`impl_software`) | SD / flash | Performance / firmware testing on the prod board |
+| **PIL** | Production MCU | Simulator on host via USB (`impl_sim`) | SD / flash | Performance / firmware testing on the prod board |
 
 ---
 
@@ -138,7 +138,7 @@ PIL — perf testing on prod board
 |---|---|---|---|
 | **FC library** | [`flight-computer`](../../code/flight-computer/) | `no_std` core, `std` test utils | Hardware-agnostic flight software core. Sensor traits, FSM, deployment logic, telemetry tasks. Linked by every FC binary. |
 | **FC binary (host)** | `flight-computer-host` (planned) | `std` | Host-side FC binary. Links FC library with `impl_host` peripherals (postcard-rpc clients over interprocess sockets). |
-| **FC binary (HW / PIL)** | `cross-esp32-s3`, `cross-nucleo-f413zh` | `no_std` | Embedded FC binaries. HW and PIL firmware are sibling binaries inside each `cross-*` crate (HW links `impl_embedded`, PIL links `impl_software`). Live outside the workspace because they need different toolchains. |
+| **FC binary (HW / PIL)** | `cross-esp32-s3`, `cross-nucleo-f413zh` | `no_std` | Embedded FC binaries. HW and PIL firmware are sibling binaries inside each `cross-*` crate (HW links `impl_embedded`, PIL links `impl_sim`). Live outside the workspace because they need different toolchains. |
 | **Simulator** | [`simulator`](../../code/simulator/) | `std` | Host-side process. Physics engine, scripted scenarios, force/trigger event model. Drives the FC's peripheral surface in HOST and PIL. Owns its own structured log and exposes a ratatui TUI for real-time inspection and configuration. |
 | **Simulator TUI** | (planned, ratatui TUI, part of `simulator` binary) | `std` | Read-write operator interface embedded in the simulator process. Displays live physics state, active force events, LED indicator state, and sim-side log. Accepts manual trigger commands and config-phase controls independently of GS. |
 | **GS backend** | [`ground-station-backend`](../../code/ground-station-backend/) | `std` | Host-side process. Telemetry consumer, command issuer, REST/JSON server for the frontend. Source of truth for scenario config files. Operates independently of whether the simulator is present. |
@@ -160,8 +160,10 @@ These properties hold across every component. Each is a deliberate design choice
 | **Architecture-agnostic core** | Compiles for RISC-V, ARM Cortex-M, x86/x64 | `no_std`-clean for embedded; `std` only via opt-in feature |
 | **Single wire vocabulary** | One GS UI works in HW, PIL, HOST | All Topics/Endpoints live in `proto/`; only transport adapter differs per medium |
 | **Event-driven FC FSM** | Determinism + decoupled telemetry cadence | FSM has no loop rate; transitions execute on events only |
-| **Production targets have no shutdown path** | A reachable shutdown on prod firmware is a safety regression | Sim/orchestration shutdown logic gated behind `impl_host` / `impl_software` features; CI verifies |
+| **Production targets have no shutdown path** | A reachable shutdown on prod firmware is a safety regression | Sim/orchestration shutdown logic gated behind `impl_host` / `impl_sim` features; CI verifies |
 | **Sim/HW strictly one-or-the-other** | Hybrid (e.g. real IMU + sim GPS) adds complexity with no current need | Mutually-exclusive feature flags at link time |
+| **FC loop never panics** | A panic mid-flight kills all tasks simultaneously and removes the recovery deployment path. Setup panics (before the loop) are acceptable — a watchdog reset before flight is the correct recovery. | Loop bodies in `tasks/` contain no `unwrap`/`expect`; setup sections before the first `loop {}` may. |
+| **Error channel is logging only** | Peripherals are task-owned; no fallback owner exists to receive a propagated error. | Tasks return `()` or `!`, never `Result`. Error paths call `error!()` and continue. |
 | **GS is simulator-independent** | GS operates on FC telemetry and commands alone; removing the simulator leaves GS fully functional. No GS code path requires the simulator to be present or to have produced data. | GS backend imports no simulator type; `sim-gs.sock` connection is optional from GS's perspective — its absence is a degraded but valid state |
 | **Simulator is GS-independent for physics** | The simulator's physics loop, internal log, and TUI operate without a GS connection. GS connectivity is required only for lifecycle control and config-hash handshake; the absence of GS does not halt or corrupt the sim loop. | Sim TUI provides independent operator access; `sim-gs.sock` connection loss follows the crash policy in §11 |
 
@@ -288,10 +290,10 @@ REST / JSON over HTTP. The frontend never speaks postcard-rpc. Isolates UI itera
                 ┌────────────────────┼────────────────────┐
                 ▼                    ▼                    ▼
    ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
-   │ impl_embedded       │ │ impl_software       │ │ impl_host           │
-   │ real drivers via    │ │ postcard-rpc client │ │ postcard-rpc client │
-   │ embedded-hal        │ │ over USB            │ │ over interprocess   │
-   │                     │ │                     │ │ socket              │
+   │ impl_embedded       │ │ impl_sim            │ │ impl_host           │
+   │ real drivers via    │ │ postcard-rpc sim    │ │ HostFileSystem      │
+   │ embedded-hal        │ │ peripheral clients  │ │ over host dir       │
+   │                     │ │ (transport-agnostic)│ │ (implies impl_sim)  │
    └─────────────────────┘ └──────────┬──────────┘ └──────────┬──────────┘
                                       │                       │
                                       └───────────┬───────────┘
@@ -320,7 +322,7 @@ code/flight-computer/src/
 │   ├── filesystem.rs          ← FileSystem: append-only record storage
 │   └── impls/
 │       ├── embedded/          ← impl_embedded
-│       ├── software/          ← impl_software
+│       ├── simulation/        ← impl_sim
 │       └── host/              ← impl_host
 ├── tasks/                     ← sensor_task, fsm_task, storage_task, telemetry_task
 └── core/                      ← FSM, apogee detector, landing detector, deployment logic
@@ -331,13 +333,14 @@ code/flight-computer/src/
 | Feature | What it enables |
 |---|---|
 | `impl_embedded` | Real hardware drivers (`embedded-hal`) — used in HW binaries |
-| `impl_software` | Simulator-fed peripherals via postcard-rpc over USB — used in PIL firmware |
-| `impl_host` | Simulator-fed peripherals via postcard-rpc over interprocess socket — used in the host binary |
-| `std` | Standard library (required by `impl_software` and `impl_host`) |
+| `impl_sim` | Simulator-fed postcard-rpc peripheral clients — transport-agnostic; used in PIL (over USB) and HOST (over interprocess socket) |
+| `impl_host` | `HostFileSystem` over a host directory — used in the HOST binary; orthogonal to `impl_sim` |
+| `host` | Convenience alias: `impl_sim` + `impl_host` + `log` + `proto/host` — everything a HOST binary needs |
+| `std` | Standard library (required by `impl_sim` and `impl_host`) |
 | `log` | Logging via the `log` crate (default for host/test builds) |
 | `defmt` | Logging via `defmt` (for embedded targets) |
 
-The three `impl_*` flags are mutually exclusive at link time.
+`impl_embedded` and `impl_sim` are mutually exclusive at link time. `impl_host` (filesystem) is orthogonal and composes independently with either; use the `host` convenience flag to get both `impl_sim` and `impl_host` together.
 
 ### 6.3 Async runtime dependency
 
@@ -354,8 +357,38 @@ On host these are provided by Tokio + the `embassy-time-driver-std` (or equivale
 - **Event-driven, no loop rate.** State transitions execute purely on incoming events (sensor sample crosses threshold, deployment ack arrives, etc.) and are deterministic.
 - The 10 Hz-ish telemetry cadence is decoupled from FSM execution entirely — telemetry tasks read FSM state, not the other way around.
 - *Why:* eliminates time-quantisation bugs; makes replays deterministic; no scheduling ambiguity.
+- **`FlightState::Initializing` is the true initial state.** The FSM broadcasts `Initializing` as the first action when the FC starts — before any task setup work. When all tasks have completed their setup phases and entered their main loops, the FSM transitions to `PreArmed` and broadcasts it. Any observer (GS, LEDs, logs) that sees `Initializing` but never `PreArmed` knows setup failed and a reset occurred.
 
-### 6.5 Testing strategy
+### 6.5 Task lifecycle: setup vs loop
+
+Every FC task has two phases with different error contracts.
+
+**Setup** — runs once before the main loop. Initialises peripherals, allocates static state, opens files. Failure here panics: the system hits the watchdog and the FC restarts. Acceptable — the rocket has not entered flight; a clean reset is safer than a half-initialised subsystem.
+
+**Loop** — runs for the duration of the flight. Panicking here kills all tasks simultaneously, including the FSM and deployment system, leaving the rocket without a recovery path. **Loop bodies must never panic.** Every error is logged and execution continues.
+
+The boundary is observable: `FlightState::Initializing` is broadcast at FC start; `FlightState::PreArmed` is broadcast only after all tasks have entered their loops successfully. A reset during setup always interrupts before `PreArmed` is ever sent. The reset itself is also observable: on the next boot the FC rebroadcasts `Initializing`, and the boot reason (watchdog vs clean power-on) is emitted as a log record immediately after. An observer that sees `Initializing` → silence → `Initializing` again knows a reset loop occurred.
+
+### 6.6 Task orchestration
+
+Tasks are grouped by post-touchdown lifecycle.
+
+**Finite tasks** — exit cooperatively after touchdown:
+- `finite_state_machine_task` — the lifecycle driver; returns `()` after touchdown + shutdown.
+- `storage_task` — observes `FlightState::Touchdown` via `FLIGHT_STATE_WATCH`. On detection, starts a configurable hold timer before performing the final drain + flush + exit. The delay guards against a false touchdown detection: if the FSM is wrong and the rocket is still in flight, records keep flowing to storage during the hold window and are not lost.
+
+**Infinite tasks** — run until the finite group completes, then dropped at safe cancellation points:
+- `postcard_server_task` — reconnect-safe; dropping closes the connection cleanly.
+- `sensor_task` × 3 — always at a safe cancellation point (top of loop, at `.await`).
+- `groundstation_task` — keeps transmitting sensor data continuously (beacon) with no change in behaviour after touchdown, aiding physical recovery.
+
+Orchestration shape: `select(join(fsm, storage), join5(postcard, alt, gps, imu, groundstation))`. When both finite tasks complete, the infinite tasks are dropped.
+
+**Cancellation safety.** `storage_task` exits when verifying if timeout expired (if it has expired) — it is never dropped mid-write. Infinite tasks are always at safe await points when cancelled.
+
+**No spawner abstraction.** Tasks are driven as futures in a single async context (`embassy_futures::join`/`select`). A generic `Spawner` trait was considered and rejected: Embassy's static task model cannot spawn arbitrary `impl Future` without boxing (`no_std`-incompatible), and Tokio requires `F: Send` while Embassy tasks are `!Send`. For embedded targets, the binary's `main` spawns tasks directly via `embassy_executor::Spawner` — the lib exports all task functions for this purpose.
+
+### 6.7 Testing strategy
 
 Trait-based abstraction is contract-tested on **both sides**:
 
@@ -687,7 +720,7 @@ This is an application-level constraint, not a named-pipe or OS-level one: the O
 | Consumer | Proto features enabled | Why |
 |---|---|---|
 | **HW firmware** (`cross-*`, `impl_embedded`) | `default` only (Ping, tick-hz, Record) | No sim, no IPC — embedded target |
-| **PIL firmware** (`cross-*`, `impl_software`) | `default` + `simulator-endpoints` | Sim on host over USB; no IPC adapter |
+| **PIL firmware** (`cross-*`, `impl_sim`) | `default` + `simulator-endpoints` | Sim on host over USB; no IPC adapter |
 | **FC host binary** (`flight-computer-host`) | `default` + `host` | Sim over interprocess socket; `host` = `simulator-endpoints` + `ipc-adapter` |
 | **Simulator** | `default` + `host` | Same transport as FC host; publishes sim Topics, receives deploy/LED Endpoints |
 | **GS backend** | `default` + `ipc-adapter` | Connects to FC and sim over sockets; no sim endpoint publishing |
@@ -808,6 +841,7 @@ The frontend UI surfaces the same red/last-seen state via REST poll on the backe
 ## 13. Open questions
 
 - **Sim physics-state reset on FC restart.** When the FC reconnects to a still-running sim mid-scenario, does the sim rewind physics to t=0 or keep running? Tracked in [`../TODO.md`](../TODO.md). In current model, FC ↔ Sim survivor exits on peer crash, so mid-scenario reconnect is not reachable; this question only matters if that policy changes.
+- **Boot reason record format.** On startup, the FC should emit the boot reason (watchdog reset vs clean power-on) as a log record before broadcasting `FlightState::Initializing`. The exact `Record` variant and the mechanism for reading the reset-cause register (MCU-specific) are deferred to implementation.
 - **Telemetry / sensor publish rate.** 10 Hz current target as estimate; actual rate is a tuning parameter, not an architectural commitment.
 - **Trace-ID propagation mechanism in postcard-rpc** — dedicated header, message field, or per-Endpoint convention. To be settled in implementation.
 - **OTEL collector destination on host** — file sink (likely) or local collector process.

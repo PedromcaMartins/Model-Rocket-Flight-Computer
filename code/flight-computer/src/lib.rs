@@ -1,3 +1,40 @@
+//! Flight computer library — hardware-agnostic FC logic.
+//!
+//! Contains the FSM, sensor tasks, deployment logic, telemetry, and postcard-rpc
+//! server. Peripheral implementations are selected at compile time via feature
+//! flags; the library itself is runtime-neutral and never spawns tasks or
+//! creates executors.
+//!
+//! See `docs/software/spec.md §6` for the architectural constraints.
+//!
+//! # Features
+//!
+//! | Feature | What it enables |
+//! |---|---|
+//! | `impl_embedded` | Real hardware drivers (`embedded-hal`) — used in HW firmware |
+//! | `impl_sim` | Simulator-fed postcard-rpc peripheral clients — transport-agnostic; used in SIL (HOST) and PIL |
+//! | `impl_host` | `HostFileSystem` over a host directory — orthogonal to `impl_sim`; used in the HOST binary |
+//! | `host` | Convenience alias: `impl_sim` + `impl_host` + `log` + `proto/host` — everything a HOST binary needs |
+//! | `std` | Standard library (required by `impl_sim` and `impl_host`) |
+//! | `log` | Logging via the `log` crate (default for host/test builds) |
+//! | `defmt` | Logging via `defmt` (for embedded targets) |
+//!
+//! `impl_embedded` and `impl_sim` are mutually exclusive at link time.
+//! `impl_host` (filesystem) composes independently with either.
+//!
+//! # Verification
+//!
+//! ```bash
+//! # HW: real hardware drivers
+//! cargo check --no-default-features --features impl_embedded,defmt -p flight-computer
+//!
+//! # SIL / PIL: simulator peripheral clients
+//! cargo check --no-default-features --features impl_sim,log -p flight-computer
+//!
+//! # HOST binary combination
+//! cargo check --no-default-features --features impl_sim,impl_host,log -p flight-computer
+//! ```
+
 #![cfg_attr(not(any(test, feature = "std")), no_std)]
 #![deny(unsafe_code)]
 #![deny(unused_must_use)]
