@@ -3,7 +3,7 @@
 type Timestamp = u64;
 
 fn log_record(fn_name: &'static str, stage: Option<u64>, start: Timestamp, end: Timestamp) {
-    defmt_or_log::trace!("trace: {} {:?} {} {}", fn_name, stage, start, end);
+    crate::log::trace!("trace: {} {:?} {} {}", fn_name, stage, start, end);
 }
 
 fn now() -> Timestamp {

@@ -1,7 +1,7 @@
 use core::convert::Infallible;
 use core::num::Wrapping;
 
-use defmt_or_log::warn;
+use crate::log::warn;
 use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use proto::{SimDeploymentTopic, actuator_data::ActuatorStatus};
 

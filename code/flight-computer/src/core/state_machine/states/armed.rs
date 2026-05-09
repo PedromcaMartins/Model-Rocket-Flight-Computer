@@ -1,7 +1,8 @@
 use embassy_time::Timer;
 use proto::uom::si::length::meter;
-use defmt_or_log::{error, info, Debug2Format};
+use defmt_or_log::Debug2Format;
 
+use crate::log::{error, info};
 use crate::{core::state_machine::{FlightStateMachine, detectors::ApogeeDetector, states::{Armed, RecoveryActivated}}, interfaces::{ArmingSystem, DeploymentSystem, Led}};
 
 impl<A, LedA, D, LedD> FlightStateMachine<A, LedA, D, LedD, Armed>

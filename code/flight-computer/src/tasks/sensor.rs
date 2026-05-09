@@ -1,4 +1,4 @@
-use defmt_or_log::{debug, error};
+use crate::log::{debug, error};
 use embassy_futures::join::join;
 
 use crate::{interfaces::{Led, Sensor}, sync::broadcast_record};

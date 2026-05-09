@@ -1,5 +1,5 @@
 use proto::uom::si::length::meter;
-use defmt_or_log::info;
+use crate::log::info;
 
 use crate::{core::state_machine::{FlightStateMachine, detectors::TouchdownDetector, states::{RecoveryActivated, Touchdown}}, interfaces::{ArmingSystem, DeploymentSystem, Led}};
 

@@ -11,7 +11,7 @@ impl embedded_sdmmc::TimeSource for DummyTimeSource {
     }
 }
 
-#[defmt_or_log::maybe_derive_format]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum SdCardError<E: Debug> {
     #[error("FileSystem error")]

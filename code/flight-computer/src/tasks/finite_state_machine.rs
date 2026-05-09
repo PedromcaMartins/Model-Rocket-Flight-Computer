@@ -1,4 +1,4 @@
-use defmt_or_log::info;
+use crate::log::info;
 use proto::flight_state::FlightState;
 
 use crate::{core::state_machine::FlightStateMachine, interfaces::{ArmingSystem, DeploymentSystem, Led}, sync::broadcast_record};
@@ -38,5 +38,5 @@ where
 
 fn update_flight_state(state: FlightState) {
     broadcast_record(state.into());
-    info!("Flight Computer {state}");
+    info!("Flight Computer {}", state);
 }

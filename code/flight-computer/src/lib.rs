@@ -45,12 +45,14 @@
 #![allow(clippy::future_not_send)]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::unused_async)]
+#![allow(clippy::uninlined_format_args)]
 
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
 pub(crate) mod core;
 pub(crate) mod config;
+pub(crate) mod log;
 pub(crate) mod sync;
 
 pub mod interfaces;

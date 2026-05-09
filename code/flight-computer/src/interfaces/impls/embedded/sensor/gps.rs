@@ -6,7 +6,7 @@ use proto::uom::si::length::meter;
 use crate::config::DataAcquisitionConfig;
 use crate::interfaces::Sensor;
 
-#[defmt_or_log::maybe_derive_format]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(thiserror::Error, Debug, PartialEq, Eq, Clone)]
 pub enum GpsError {
     #[error("NMEA parser initialization error")]

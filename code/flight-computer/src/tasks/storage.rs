@@ -1,6 +1,6 @@
 use embassy_futures::select::{Either4, select4};
 use embassy_time::{Timer, Ticker};
-use defmt_or_log::{trace, error, info, warn};
+use crate::log::{trace, error, info, warn};
 use proto::{RecordData, flight_state::FlightState};
 use core::{future::Future, pin::Pin, task::Poll};
 

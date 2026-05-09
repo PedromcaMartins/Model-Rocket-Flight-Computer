@@ -1,6 +1,6 @@
 use core::ops::DerefMut;
 
-use defmt_or_log::{debug, info, error};
+use crate::log::{debug, info, error};
 use embassy_time::Timer;
 use postcard_rpc::{header::VarHeader, server::{Server, SpawnContext}};
 use proto::{PingRequest, PingResponse, record::tick_hz::GlobalTickHz};

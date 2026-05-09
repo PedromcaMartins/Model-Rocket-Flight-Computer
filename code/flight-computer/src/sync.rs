@@ -1,4 +1,4 @@
-use defmt_or_log::warn;
+use crate::log::warn;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal, watch::Watch};
 use proto::{Record, RecordData, sensor_data::Altitude};
 use crate::config::TasksConfig;

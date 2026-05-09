@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use embassy_futures::select::{Either, select};
 use embassy_time::Ticker;
 use proto::uom::si::length::meter;
-use defmt_or_log::{error, info};
+use crate::log::{error, info};
 
 use crate::{config::FiniteStateMachineConfig, core::state_machine::{FlightStateMachine, states::{Armed, PreArmed}}, interfaces::{ArmingSystem, DeploymentSystem, Led}, sync::LATEST_ALTITUDE_SIGNAL};
 

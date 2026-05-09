@@ -2,7 +2,6 @@ use core::sync::atomic::AtomicU32;
 use core::sync::atomic::Ordering;
 
 use defmt_or_log::Debug2Format;
-use defmt_or_log::warn;
 
 use embassy_futures::select::Either;
 use embassy_futures::select::select;
@@ -13,6 +12,7 @@ use postcard_rpc::server::{Sender as PostcardSender, WireTx};
 use proto::Record;
 use proto::RecordTopic;
 
+use crate::log::warn;
 use crate::config::GroundStationConfig;
 use crate::interfaces::Led;
 use crate::sync::ALTIMETER_DATA_TO_GROUNDSTATION_SIGNAL;
@@ -30,7 +30,7 @@ where
     if let Err(err) = postcard_sender.publish::<RecordTopic>(
         VarSeq::Seq4(
             UID_COUNTER.fetch_add(1, Ordering::Relaxed)
-        ), 
+        ),
         msg
     ).await {
         warn!("GroundStation: Failed to send record to ground station: {:?}", Debug2Format(&err.as_kind()));

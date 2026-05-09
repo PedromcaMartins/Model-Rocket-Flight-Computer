@@ -5,8 +5,9 @@ use embedded_io::Write as _;
 use proto::{Record, error::FileSystemError};
 
 use crate::{config::StorageConfig, interfaces::FileSystem, core::trace::TraceSync};
+use crate::log::error;
 
-use defmt_or_log::{Debug2Format, error};
+use defmt_or_log::Debug2Format;
 use static_cell::ConstStaticCell;
 type FileUniqueId = u16;
 
@@ -35,7 +36,7 @@ where
                     error!("Failed to check existence of file {}: {:?}", filename, Debug2Format(&e));
                     return Err(FileSystemError::GetUniqueIdFailed);
                 },
-                Ok(true) if uid == FileUniqueId::MAX => {           
+                Ok(true) if uid == FileUniqueId::MAX => {
                     error!("No unique ID available");
                     return Err(FileSystemError::UniqueIdUnavailable);
                 },

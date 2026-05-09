@@ -11,18 +11,19 @@
         "diagnostics": {
           "experimental": {
             "enable": true
-          }
+          },
+        // "disabled": ["unresolved-macro-call"],
         },
         // To disable the checking entirely
         // (ignores all cargo and check settings below)
         "checkOnSave": false,
         // To check the `lib` target only.
         "cargo": {
-          "allTargets": false
+          "allTargets": false,
         },
         "check": {
           "command": "clippy",
-          "workspace": false
+          "workspace": false,
         },
         "linkedProjects": [
             "code/Cargo.toml",
@@ -36,15 +37,15 @@
           "maxLength": null,
           "lifetimeElisionHints": {
             "enable": "skip_trivial",
-            "useParameterNames": true
+            "useParameterNames": true,
           },
           "closureReturnTypeHints": {
-            "enable": "always"
+            "enable": "always",
           }
         },
         "rust": {
-          "analyzerTargetDir": true
-        }
+          "analyzerTargetDir": true,
+        },
       }
     }
   }

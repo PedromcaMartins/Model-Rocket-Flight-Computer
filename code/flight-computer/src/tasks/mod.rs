@@ -1,6 +1,6 @@
 use core::future::Future;
 
-use defmt_or_log::info;
+use crate::log::info;
 use embassy_futures::join::{join, join5};
 use embassy_futures::select::{Either, select};
 
