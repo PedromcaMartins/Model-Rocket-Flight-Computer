@@ -1,0 +1,32 @@
+code/flight-computer/src/tasks/sensor.rs
+  s_17a4db99ca14c6::t_facbaf1a6516c1 25
+  s_17a4db99ca14c6::t_fbd331e9eb35b3 20
+code/flight-computer/src/tasks/storage.rs
+  s_17a4db99ca14c6::t_0b2adbb5fdd4df 60
+  s_17a4db99ca14c6::t_3287bf070a0ab6 35
+  s_17a4db99ca14c6::t_ea17006f7f8115 65
+code/flight-computer/src/interfaces/led.rs
+  s_17a4db99ca14c6::t_f27227ba87bbca 2
+code/flight-computer/src/tasks/groundstation.rs
+  s_17a4db99ca14c6::t_025c4979681d0c 56
+  s_17a4db99ca14c6::t_ddcaea307e8453 75
+code/flight-computer/src/tasks/postcard.rs
+  s_17a4db99ca14c6::t_ba6ff921b1d67f 79
+  s_17a4db99ca14c6::t_5698a45906cce9 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "2a47faf2180648a274a691b1b396f03ffd3a9254",
+  "prompts": {},
+  "sessions": {
+    "s_17a4db99ca14c6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1f5ca1926ffe56l3874SRWqJPx",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
