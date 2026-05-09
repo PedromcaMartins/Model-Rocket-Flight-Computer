@@ -1,0 +1,54 @@
+code/flight-computer/src/core/trace.rs
+  s_9fa3ee28a667c6::t_05375a01f04059 6
+code/flight-computer/src/tasks/finite_state_machine.rs
+  s_9fa3ee28a667c6::t_ca924f10b0411c 1
+  s_9fa3ee28a667c6::t_abfd6deefd6aed 41
+code/flight-computer/src/tasks/groundstation.rs
+  s_9fa3ee28a667c6::t_d995ff1177fdfd 33
+code/flight-computer/src/core/state_machine/states/pre_armed.rs
+  s_9fa3ee28a667c6::t_177157ad6aa544 6
+code/flight-computer/src/tasks/storage.rs
+  s_9fa3ee28a667c6::t_8447741cc8f0da 3
+code/flight-computer/src/interfaces/impls/embedded/sd_card.rs
+  s_9fa3ee28a667c6::t_79b29203b4adc7 14
+code/flight-computer/src/interfaces/impls/simulation/led.rs
+  s_9fa3ee28a667c6::t_2023fbddd4846b 4
+code/flight-computer/src/lib.rs
+  s_9fa3ee28a667c6::t_bed749ba498910 55
+code/flight-computer/src/tasks/postcard.rs
+  s_9fa3ee28a667c6::t_6a6cf3fb2e96ab 3
+code/flight-computer/src/sync.rs
+  s_9fa3ee28a667c6::t_701abe6308c435 1
+code/flight-computer/src/core/state_machine/states/recovery_activated.rs
+  s_9fa3ee28a667c6::t_704348e5afb4c1 2
+code/flight-computer/src/log.rs
+  s_9fa3ee28a667c6::t_18a19f38ade12d 1-4,6
+code/flight-computer/src/core/storage.rs
+  s_9fa3ee28a667c6::t_e0c5c7360e4500 39
+code/flight-computer/src/interfaces/impls/simulation/deployment_system.rs
+  s_9fa3ee28a667c6::t_bb55879d25c6f7 4
+code/flight-computer/src/interfaces/impls/embedded/sensor/gps.rs
+  s_9fa3ee28a667c6::t_cc27ec43ec2066 9
+code/flight-computer/src/core/state_machine/states/touchdown.rs
+  s_9fa3ee28a667c6::t_cbbc4d60cf25ec 1
+code/flight-computer/src/tasks/sensor.rs
+  s_9fa3ee28a667c6::t_8cc86550323036 1
+code/flight-computer/src/tasks/mod.rs
+  s_9fa3ee28a667c6::t_fa85e5b98f0a37 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "375b9e42e64ac6a8f23a0ffc763d460f727ddae8",
+  "prompts": {},
+  "sessions": {
+    "s_9fa3ee28a667c6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1f5b95372ffe5sI6XAkHzv622t",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
