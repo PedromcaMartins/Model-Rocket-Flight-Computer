@@ -26,13 +26,13 @@
 //!
 //! ```bash
 //! # HW: real hardware drivers
-//! cargo check --no-default-features --features impl_embedded,defmt -p flight-computer
+//! cargo clippy --no-default-features --features impl_embedded,defmt -p flight-computer
 //!
 //! # SIL / PIL: simulator peripheral clients
-//! cargo check --no-default-features --features impl_sim,log -p flight-computer
+//! cargo clippy --no-default-features --features impl_sim,log -p flight-computer
 //!
 //! # HOST binary combination
-//! cargo check --no-default-features --features impl_sim,impl_host,log -p flight-computer
+//! cargo clippy --no-default-features --features impl_sim,impl_host,log -p flight-computer
 //! ```
 
 #![cfg_attr(not(any(test, feature = "std")), no_std)]

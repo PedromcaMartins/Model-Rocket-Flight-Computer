@@ -48,6 +48,7 @@ impl StorageConfig {
     pub const MAX_FILENAME_LENGTH: usize = 8;
 
     pub const FLUSH_FILES_TICK_INTERVAL: Duration = Duration::from_millis(500);
+    pub const TOUCHDOWN_HOLD_DURATION: Duration = Duration::from_secs(30);
 }
 
 pub struct GroundStationConfig;

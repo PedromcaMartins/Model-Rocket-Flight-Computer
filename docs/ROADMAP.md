@@ -109,14 +109,20 @@ Currently the codebase uses `impl_software`. This is being renamed to `impl_sim`
 
 `impl_embedded` and `impl_sim` are mutually exclusive peripheral feature flags. `impl_host` (filesystem) is orthogonal and composes with `impl_sim` in the HOST binary. Default features drop to `["log", "std"]`; consumers opt in explicitly.
 
-#### `start_*_flight_computer` — retained as-is
-
-Each deployment target has a generic `async fn start_*_flight_computer(...)` parameterised over its transport and filesystem types. The task set is constructed inline, composed with `select`/`select6`, and returned as a single future for the calling binary's executor. This pattern is unchanged by this milestone — no refactor to the entry-point functions is in scope here.
-
 Verification gates: `cargo check` must pass independently for:
 - `--no-default-features --features impl_embedded` (no_std, HW)
 - `--no-default-features --features impl_sim` (std, PIL)
 - `--no-default-features --features impl_sim,impl_host` (std, HOST binary combination)
+
+**Status:** Done.
+
+### M1.3 — Task lifecycle separation: `run_flight_computer` + cooperative storage exit
+
+Extract the `select`/`join` composition from `start_pil_flight_computer` into a generic `run_flight_computer` function that takes pre-created task futures. This separates future creation from execution.
+
+Modify `storage_task` to observe `FlightState::Touchdown` via `FLIGHT_STATE_WATCH` and exit cleanly after a configurable hold-timer, enabling the `select(join(fsm, storage), join5(...))` orchestration shape defined in `spec.md §6.6`.
+
+The `start_pil_flight_computer` function becomes a pure factory — creates all 7 task futures and passes them to `run_flight_computer`. The `start_sil_flight_computer` entry point is unchanged.
 
 **Status:** Done.
 
@@ -208,6 +214,7 @@ Architectural role of `xtask` in HOST:
 |---|---|---|---|
 | M1.1 | Proto feature gating | `spec.md §9` + `proto` features | Not started |
 | M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename + `start_*` builder | `spec.md §10` + `flight-computer` features | Done |
+| M1.3 | Task lifecycle separation: `run_flight_computer` + cooperative storage | `spec.md §6.6` + `flight-computer` tasks | Pending |
 | M2.1 | `flight-computer-host` binary | Spec | Blocked (M1 + connection diagram) |
 | M2.2 | Simulator binary | Spec | Blocked (M1 + connection diagram) |
 | M3.1 | GS backend: REST API + storage | Spec | Blocked (M2) |
@@ -247,8 +254,9 @@ Architectural role of `xtask` in HOST:
 ### Milestone 1 — Wire vocabulary and FC library
 - [X] M1.1 — Proto feature gating
 - [X] M1.2 — FC library cleanup: `impl_software` → `impl_sim` rename
+- [X] M1.3 — Task lifecycle separation: `run_flight_computer` + cooperative storage
 
-**M1 progress:** 2 / 2 (100%)
+**M1 progress:** 3 / 3 (100%)
 
 ### Milestone 2 — Independent binaries (FC-host + Simulator)
 - [ ] M2.1 — `flight-computer-host` binary
@@ -269,4 +277,4 @@ Architectural role of `xtask` in HOST:
 
 ---
 
-**Overall progress:** 2 / 7 tasks (29%)
+**Overall progress:** 2 / 8 tasks (25%)

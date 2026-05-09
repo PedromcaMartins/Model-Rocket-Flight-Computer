@@ -31,16 +31,16 @@
 //!
 //! ```bash
 //! # HW: no sim, no IPC
-//! cargo check --no-default-features --features hw -p proto
+//! cargo clippy --no-default-features --features hw -p proto
 //!
 //! # Host: flight-computer binary mode
-//! cargo check --no-default-features --features host -p proto
+//! cargo clippy --no-default-features --features host -p proto
 //!
 //! # PIL: sim endpoints, no IPC
-//! cargo check --no-default-features --features pil -p proto
+//! cargo clippy --no-default-features --features pil -p proto
 //!
 //! # Client: GS backend / simulator
-//! cargo check --no-default-features --features client -p proto
+//! cargo clippy --no-default-features --features client -p proto
 //! ```
 
 #![no_std]
