@@ -5,7 +5,6 @@ use crate::interfaces::Led;
 pub struct LedDevice<O>
 where
     O: StatefulOutputSwitch,
-    <O as OutputSwitch>::Error: core::fmt::Debug,
 {
     led: O,
 }
@@ -13,7 +12,6 @@ where
 impl<O> LedDevice<O>
 where
     O: StatefulOutputSwitch,
-    <O as OutputSwitch>::Error: core::fmt::Debug,
 {
     pub const fn new(led: O) -> Self {
         Self { led }

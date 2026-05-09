@@ -76,10 +76,10 @@ where
         // If the host disconnects, we'll return an error here.
         // If this happens, just wait until the host reconnects
         let _ = server.run().await;
-        if led.off().await.is_err() { error!("Postcard server: Status Led error"); }
+        led.off().await.unwrap_or_else(|e| error!("Postcard server: Status Led error: {:?}", e));
 
         debug!("Postcard server disconnected, waiting for reconnect...");
         Timer::after(PostcardConfig::RECONNECT_INTERVAL).await;
-        if led.on().await.is_err() { error!("Postcard server: Status Led error"); }
+        led.on().await.unwrap_or_else(|e| error!("Postcard server: Status Led error: {:?}", e));
     }
 }

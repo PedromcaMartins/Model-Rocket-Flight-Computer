@@ -17,12 +17,12 @@ where
             sensor.parse_new_data(),
         ).await;
 
-        if led.off().await.is_err() { error!("{}: Status Led error", S::NAME); }
+        led.off().await.unwrap_or_else(|e| error!("{}: Status Led error: {:?}", S::NAME, e));
 
         match res.1 {
             Ok(msg) => {
                 debug!("{}: Parsed new data", S::NAME);
-                if led.on().await.is_err() { error!("{}: Status Led error", S::NAME); }
+                led.on().await.unwrap_or_else(|e| error!("{}: Status Led error: {:?}", S::NAME, e));
 
                 broadcast_record(msg.into());
             },

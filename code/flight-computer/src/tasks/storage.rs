@@ -32,7 +32,7 @@ where
             &mut hold_timer,
         ).await;
 
-        if led.on().await.is_err() { error!("Storage: Status Led error") }
+        led.on().await.unwrap_or_else(|e| error!("Storage: Status Led error: {:?}", e));
 
         match result {
             Either4::First(record) => {
@@ -57,12 +57,12 @@ where
                 let _ = storage.flush().await;
                 info!("Storage: Exiting");
 
-                if led.off().await.is_err() { error!("Storage: Status Led error") }
+                led.off().await.unwrap_or_else(|e| error!("Storage: Status Led error: {:?}", e));
                 return;
             },
         }
 
-        if led.off().await.is_err() { error!("Storage: Status Led error") }
+        led.off().await.unwrap_or_else(|e| error!("Storage: Status Led error: {:?}", e));
     }
 }
 

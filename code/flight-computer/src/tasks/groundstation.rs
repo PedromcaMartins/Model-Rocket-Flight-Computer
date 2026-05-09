@@ -53,7 +53,7 @@ where
             sensor_data_ticker.next(),
         ).await;
 
-        if led.on().await.is_err() { warn!("GroundStation: Status Led error"); }
+        led.on().await.unwrap_or_else(|e| warn!("GroundStation: Status Led error: {:?}", e));
 
         match result {
             Either::First(state) => {
@@ -72,6 +72,6 @@ where
             },
         }
 
-        if led.off().await.is_err() { warn!("GroundStation: Status Led error"); }
+        led.off().await.unwrap_or_else(|e| warn!("GroundStation: Status Led error: {:?}", e));
     }
 }
