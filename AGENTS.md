@@ -103,7 +103,8 @@ If you create a new top-level folder that is not pure reference material, add a 
 
 ## 6. Working conventions
 
-- **Rust workspace** lives under `code/`. Run `cargo` commands from that directory unless a crate's README says otherwise. Prefer `cargo check`, `cargo clippy`, `cargo build`, and `cargo nextest run` for verifying code — these are pre-approved in the project's opencode config. See [`docs/toolchain.md`](docs/toolchain.md) for the full list of installed tools, targets, and toolchains.
+- **Rust workspace** lives under `code/`. Run `cargo` commands from that directory unless a crate's README says otherwise. Use `cargo check`, `cargo clippy`, `cargo build`, and **`cargo nextest run`** for verifying code — these are pre-approved in the project's opencode config. See [`docs/toolchain.md`](docs/toolchain.md) for the full list of installed tools, targets, and toolchains.
+  - **Never use `cargo test`.** Reaching for `cargo test` will produce misleading failures and waste the session debugging test infrastructure instead of real code. `cargo nextest run` isolates each test in its own process and eliminates these issues. 
 - **Do not invent URLs or crate versions.** If you need a reference, point at `datasheets/`, `papers/`, or the upstream docs that are already cited.
 - **Prefer editing existing docs** over creating new files. New files only when an existing doc would become incoherent.
 - **Match the architecture/detailed-design split** when *reading*, too: if the user asks about a public interface, start in `docs/`; if they ask why a specific crate was chosen, start in that crate's README.

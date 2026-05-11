@@ -278,3 +278,32 @@ Architectural role of `xtask` in HOST:
 ---
 
 **Overall progress:** 2 / 8 tasks (25%)
+
+---
+
+## ADR-002 — Async timeout strategy for infinite loop error paths
+
+**Goal:** Protect all infinite loop `.await` calls against indefinite hangs using `embassy_time::with_timeout`, with per-domain timeout constants and proper cancellation-safety handling. See [ADR-002](ADR/ADR-002-async-timeout-strategy.md) for rationale.
+
+### Implementation tasks
+
+| # | File | Change | Status |
+|---|---|---|---|
+| 1 | `code/flight-computer/src/config.rs` | Add `WRITE_TIMEOUT`, `FLUSH_TIMEOUT` to `StorageConfig`; `PUBLISH_TIMEOUT` to `GroundStationConfig` | Done |
+| 2 | `code/flight-computer/src/tasks/sensor.rs` | Wrap `parse_new_data()` in `with_timeout(1.5 × tick_interval, ...)` inside `join()` | Done |
+| 3 | `code/flight-computer/src/tasks/storage.rs` | Wrap `append_record()` and `flush()` in `with_timeout(...)`; log & continue on timeout | Done |
+| 4 | `code/flight-computer/src/tasks/groundstation.rs` | Wrap both `send_to_ground_station()` calls in `with_timeout(...)`; log & continue on timeout | Done |
+| 5 | `code/flight-computer/src/core/state_machine/detectors/apogee_detector.rs` | Wrap `wait_new_data_and_update_buffers()` in `with_timeout(half_tick, ...)`; skip on timeout | Done |
+| 6 | `code/flight-computer/src/core/state_machine/detectors/touchdown_detector.rs` | Same pattern as apogee | Done |
+| 7 | `code/flight-computer/src/core/state_machine/states/armed.rs` | Replace `deploy() + Timer::after(1s)` with `with_timeout(1s, deploy())`; add `verify_deployment()` step | Done |
+| 8 | `code/flight-computer/src/interfaces/deployment_system.rs` | Add `verify_deployment()` as required method | Done |
+| 9 | `code/flight-computer/src/interfaces/impls/simulation/deployment_system.rs` | Change error type from `Infallible`; return `Err` on publish failure; implement `verify_deployment()` | Done |
+| 10 | `code/flight-computer/src/interfaces/impls/embedded/deployment_switch.rs` | Implement `verify_deployment()` as `unimplemented!()` with doc comment | Done |
+
+**Excluded:**
+- `tasks/postcard.rs` — `server.run()` only returns on error; no change.
+- `states/pre_armed.rs` — `select` + `Ticker` is the correct pattern for polling; no change.
+
+**Progress:** 10 / 10 tasks (100%)
+
+---

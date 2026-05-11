@@ -2,6 +2,8 @@ use embassy_time::Duration;
 use proto::sensor_data::{Altitude, Velocity};
 use proto::uom::si::{length::meter, velocity::meter_per_second};
 
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(2);
+
 pub struct ApogeeDetectorConfig;
 impl ApogeeDetectorConfig {
     pub const ALTITUDE_BUFFER_SIZE: usize = 5;
@@ -49,21 +51,32 @@ impl StorageConfig {
 
     pub const FLUSH_FILES_TICK_INTERVAL: Duration = Duration::from_millis(500);
     pub const TOUCHDOWN_HOLD_DURATION: Duration = Duration::from_secs(30);
+
+    pub const WRITE_TIMEOUT: Duration = DEFAULT_TIMEOUT;
+    pub const FLUSH_TIMEOUT: Duration = DEFAULT_TIMEOUT;
 }
 
 pub struct GroundStationConfig;
 impl GroundStationConfig {
     pub const SEND_SENSOR_DATA_TICK_INTERVAL: Duration = Duration::from_hz(10);
+
+    pub const PUBLISH_TIMEOUT: Duration = DEFAULT_TIMEOUT;
 }
 
 pub struct PostcardConfig;
 impl PostcardConfig {
-    pub const RECONNECT_INTERVAL: Duration = Duration::from_secs(2);
+    pub const RECONNECT_INTERVAL: Duration = DEFAULT_TIMEOUT;
 }
 
 pub struct FiniteStateMachineConfig;
 impl FiniteStateMachineConfig {
     pub const WAITING_ARM_INTERVAL: Duration = Duration::from_hz(10);
+}
+
+pub struct ArmedConfig;
+impl ArmedConfig {
+    pub const DEPLOY_TIMEOUT: Duration = Duration::from_secs(1);
+    pub const VERIFY_TIMEOUT: Duration = Duration::from_millis(500);
 }
 
 #[cfg(feature = "impl_host")]

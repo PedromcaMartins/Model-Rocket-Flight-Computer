@@ -30,4 +30,10 @@ where
     async fn deploy(&mut self) -> Result<(), Self::Error> {
         self.switch.on()
     }
+
+    /// Hardware verification (continuity check, current draw sensing) is not yet designed.
+    /// Will be implemented when the HW deployment system is finalised.
+    async fn verify_deployment(&mut self) -> Result<bool, Self::Error> {
+        unimplemented!("Hardware deployment verification not yet implemented")
+    }
 }

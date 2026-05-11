@@ -388,7 +388,23 @@ Orchestration shape: `select(join(fsm, storage), join5(postcard, alt, gps, imu, 
 
 **No spawner abstraction.** Tasks are driven as futures in a single async context (`embassy_futures::join`/`select`). A generic `Spawner` trait was considered and rejected: Embassy's static task model cannot spawn arbitrary `impl Future` without boxing (`no_std`-incompatible), and Tokio requires `F: Send` while Embassy tasks are `!Send`. For embedded targets, the binary's `main` spawns tasks directly via `embassy_executor::Spawner` — the lib exports all task functions for this purpose.
 
-### 6.7 Testing strategy
+### 6.8 Async timeout strategy
+
+Infinite loop bodies (`loop {}` in tasks and state machine states) must not hang indefinitely. All `.await` calls inside loops are classified into two patterns:
+
+- **Error-path protection** — the future should normally complete quickly (sensor read, file write, postcard publish, deployment trigger). If it stalls, the loop makes no progress. Wrap with `embassy_time::with_timeout`.
+- **Periodic polling** — the loop is designed to poll a condition at a regular cadence regardless of the awaited event (e.g. blink LED while waiting for arm button). Use `select` + `Ticker` instead of `with_timeout`.
+
+Timeout values are per-domain constants in `config.rs` structs — there is no global timeout. The decision, full mapping table, and cancellation-safety analysis live in [`../ADR/ADR-002-async-timeout-strategy.md`](../ADR/ADR-002-async-timeout-strategy.md).
+
+**Pattern reference:**
+- Sensor reads: `join(ticker.next(), with_timeout(TICK_INTERVAL * 1.5, parse_new_data()))`
+- Storage / groundstation sends: `with_timeout(domain_timeout, operation()).await;` on timeout: log, continue
+- Deploy retry: `with_timeout(1s, deploy()).await` in a loop (replaces `Timer::after_secs(1)`)
+- Detector data wait: `with_timeout(tick_interval / 2, wait_for_data()).await` on timeout: skip tick
+- Pre-armed arm wait: `select(wait_arm(), ticker.next())` — `with_timeout` not used (polling pattern)
+
+### 6.9 Testing strategy
 
 Trait-based abstraction is contract-tested on **both sides**:
 

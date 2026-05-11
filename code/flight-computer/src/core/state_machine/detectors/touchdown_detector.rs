@@ -1,11 +1,12 @@
 use core::cmp::Ordering;
 
-use embassy_time::{Instant, Ticker};
+use embassy_time::{Instant, Ticker, with_timeout};
 use heapless::HistoryBuf;
 use proto::sensor_data::{Altitude, Time, Velocity};
 use proto::uom::si::time::microsecond;
 
 use crate::config::TouchdownDetectorConfig;
+use crate::log::error;
 use crate::sync::LATEST_ALTITUDE_SIGNAL;
 
 pub struct TouchdownDetector {
@@ -56,10 +57,14 @@ impl TouchdownDetector {
 
     pub async fn await_touchdown(&mut self) -> Altitude {
         let mut ticker = Ticker::every(TouchdownDetectorConfig::DETECTOR_TICK_INTERVAL);
+        let timeout = TouchdownDetectorConfig::DETECTOR_TICK_INTERVAL / 2;
 
         loop {
             ticker.next().await;
-            self.wait_new_data_and_update_buffers().await;
+            if with_timeout(timeout, self.wait_new_data_and_update_buffers()).await.is_err() {
+                error!("TouchdownDetector: Timed out waiting for new altitude data");
+                continue;
+            }
 
             // Check if buffers are full before evaluating conditions
             if self.are_buffers_full() {

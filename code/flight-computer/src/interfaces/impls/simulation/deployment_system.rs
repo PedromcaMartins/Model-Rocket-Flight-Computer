@@ -1,8 +1,7 @@
-use core::convert::Infallible;
 use core::num::Wrapping;
 
-use crate::log::warn;
-use postcard_rpc::{header::VarSeq, server::{Sender as PostcardSender, WireTx}};
+use postcard_rpc::server::{AsWireTxErrorKind, Sender as PostcardSender, WireTx, WireTxErrorKind};
+use postcard_rpc::header::VarSeq;
 use proto::{SimDeploymentTopic, actuator_data::ActuatorStatus};
 
 use crate::interfaces::DeploymentSystem;
@@ -14,7 +13,7 @@ pub struct SimRecovery<'a, Tx: WireTx> {
 
 impl<'a, Tx: WireTx> SimRecovery<'a, Tx> {
     pub fn new(tx: &'a PostcardSender<Tx>) -> Self {
-        Self { 
+        Self {
             tx,
             seq: Wrapping::default(),
         }
@@ -22,15 +21,18 @@ impl<'a, Tx: WireTx> SimRecovery<'a, Tx> {
 }
 
 impl<Tx: WireTx> DeploymentSystem for SimRecovery<'_, Tx> {
-    type Error = Infallible;
+    type Error = WireTxErrorKind;
 
-    /// deploy recovery signal to simulator
     async fn deploy(&mut self) -> Result<(), Self::Error> {
-        if self.tx.publish::<SimDeploymentTopic>(VarSeq::Seq4(self.seq.0), &ActuatorStatus::Active).await.is_ok() {
-            self.seq += 1;
-        } else {
-            warn!("SimRecovery: Failed to send deploy signal to simulator");
-        }
+        self.tx.publish::<SimDeploymentTopic>(VarSeq::Seq4(self.seq.0), &ActuatorStatus::Active)
+            .await
+            .map_err(|e| e.as_kind())?;
+        self.seq += 1;
         Ok(())
+    }
+
+    /// No simulator acknowledgment mechanism exists yet; treat a successful publish as confirmed.
+    async fn verify_deployment(&mut self) -> Result<bool, Self::Error> {
+        Ok(true)
     }
 }

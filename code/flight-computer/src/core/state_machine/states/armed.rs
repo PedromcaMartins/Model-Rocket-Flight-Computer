@@ -1,7 +1,8 @@
-use embassy_time::Timer;
+use embassy_time::with_timeout;
 use proto::uom::si::length::meter;
 use defmt_or_log::Debug2Format;
 
+use crate::config::ArmedConfig;
 use crate::log::{error, info};
 use crate::{core::state_machine::{FlightStateMachine, detectors::ApogeeDetector, states::{Armed, RecoveryActivated}}, interfaces::{ArmingSystem, DeploymentSystem, Led}};
 
@@ -14,15 +15,30 @@ where
 {
     async fn await_deployment_system(&mut self) {
         loop {
-            match self.deployment_system.deploy().await {
-                Ok(()) => {
-                    info!("Deployment system activated");
-                    return;
+            match with_timeout(ArmedConfig::DEPLOY_TIMEOUT, self.deployment_system.deploy()).await {
+                Err(_) => {
+                    error!("Deployment system activation timed out, retrying");
                 },
-                Err(e) => {
+                Ok(Err(e)) => {
                     error!("Deployment system activation failed: {:?}", Debug2Format(&e));
-                    Timer::after_secs(1).await;
-                }
+                },
+                Ok(Ok(())) => {
+                    match with_timeout(ArmedConfig::VERIFY_TIMEOUT, self.deployment_system.verify_deployment()).await {
+                        Err(_) => {
+                            error!("Deployment system verification timed out, retrying");
+                        },
+                        Ok(Err(e)) => {
+                            error!("Deployment system verification error: {:?}", Debug2Format(&e));
+                        },
+                        Ok(Ok(false)) => {
+                            error!("Deployment system verification failed, retrying");
+                        },
+                        Ok(Ok(true)) => {
+                            info!("Deployment system activated");
+                            return;
+                        },
+                    }
+                },
             }
         }
     }

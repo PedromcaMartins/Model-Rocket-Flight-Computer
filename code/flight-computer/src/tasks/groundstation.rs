@@ -6,13 +6,14 @@ use defmt_or_log::Debug2Format;
 use embassy_futures::select::Either;
 use embassy_futures::select::select;
 use embassy_time::Ticker;
+use embassy_time::with_timeout;
 use postcard_rpc::header::VarSeq;
 use postcard_rpc::server::AsWireTxErrorKind;
 use postcard_rpc::server::{Sender as PostcardSender, WireTx};
 use proto::Record;
 use proto::RecordTopic;
 
-use crate::log::warn;
+use crate::log::{error, warn};
 use crate::config::GroundStationConfig;
 use crate::interfaces::Led;
 use crate::sync::ALTIMETER_DATA_TO_GROUNDSTATION_SIGNAL;
@@ -27,13 +28,16 @@ async fn send_to_ground_station<Tx>(postcard_sender: &PostcardSender<Tx>, msg: &
 where
     Tx: WireTx,
 {
-    if let Err(err) = postcard_sender.publish::<RecordTopic>(
-        VarSeq::Seq4(
-            UID_COUNTER.fetch_add(1, Ordering::Relaxed)
+    match with_timeout(
+        GroundStationConfig::PUBLISH_TIMEOUT,
+        postcard_sender.publish::<RecordTopic>(
+            VarSeq::Seq4(UID_COUNTER.fetch_add(1, Ordering::Relaxed)),
+            msg,
         ),
-        msg
     ).await {
-        warn!("GroundStation: Failed to send record to ground station: {:?}", Debug2Format(&err.as_kind()));
+        Err(_) => error!("GroundStation: Timed out sending record to ground station"),
+        Ok(Err(err)) => warn!("GroundStation: Failed to send record to ground station: {:?}", Debug2Format(&err.as_kind())),
+        Ok(Ok(())) => (),
     }
 }
 

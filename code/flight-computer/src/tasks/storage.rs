@@ -1,5 +1,5 @@
 use embassy_futures::select::{Either4, select4};
-use embassy_time::{Timer, Ticker};
+use embassy_time::{Timer, Ticker, with_timeout};
 use crate::log::{trace, error, info, warn};
 use proto::{RecordData, flight_state::FlightState};
 use core::{future::Future, pin::Pin, task::Poll};
@@ -36,12 +36,16 @@ where
 
         match result {
             Either4::First(record) => {
-                let res = storage.append_record(&record).await;
-                trace!("Storage: Logged record: {:?}", res);
+                match with_timeout(StorageConfig::WRITE_TIMEOUT, storage.append_record(&record)).await {
+                    Err(_) => error!("Storage: Timed out writing record"),
+                    Ok(res) => trace!("Storage: Logged record: {:?}", res),
+                }
             },
             Either4::Second(()) => {
-                let res = storage.flush().await;
-                trace!("Storage: Flushed file: {:?}", res);
+                match with_timeout(StorageConfig::FLUSH_TIMEOUT, storage.flush()).await {
+                    Err(_) => warn!("Storage: Timed out flushing file"),
+                    Ok(res) => trace!("Storage: Flushed file: {:?}", res),
+                }
             },
             Either4::Third(record) => {
                 if hold_timer.is_running() {
@@ -54,7 +58,10 @@ where
             },
             Either4::Fourth(()) => {
                 info!("Storage: Final flush");
-                let _ = storage.flush().await;
+                match with_timeout(StorageConfig::FLUSH_TIMEOUT, storage.flush()).await {
+                    Err(_) => warn!("Storage: Final flush timed out"),
+                    Ok(_) => (),
+                }
                 info!("Storage: Exiting");
 
                 led.off().await.unwrap_or_else(|e| error!("Storage: Status Led error: {:?}", e));
