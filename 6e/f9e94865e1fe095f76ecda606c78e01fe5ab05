@@ -1,0 +1,64 @@
+code/flight-computer/src/tasks/storage.rs
+  s_adf23ee626486e::t_e9d61bfd1b51ca 2,39-42,45-48,61-64
+code/flight-computer/src/core/state_machine/detectors/apogee_detector.rs
+  s_adf23ee626486e::t_e9d61bfd1b51ca 1,7,70,74-77
+code/flight-computer/src/interfaces/deployment_system.rs
+  s_adf23ee626486e::t_e9d61bfd1b51ca 5-8
+code/flight-computer/src/tasks/sensor.rs
+  s_adf23ee626486e::t_e9d61bfd1b51ca 3,16-17,19,24-27
+code/flight-computer/src/core/state_machine/detectors/touchdown_detector.rs
+  s_adf23ee626486e::t_e9d61bfd1b51ca 3,9,60,64-67
+code/flight-computer/src/core/state_machine/states/armed.rs
+  s_8db4e7583b78b8::t_f361a08d02ed27 1,5
+  s_adf23ee626486e::t_e9d61bfd1b51ca 19-20,22,24-25,27-41
+  s_8db4e7583b78b8::t_89bb3a534fac85 26
+  s_8db4e7583b78b8::t_75a5f4ce81658f 18
+docs/software/spec.md
+  s_adf23ee626486e::t_e9d61bfd1b51ca 391-407
+docs/ROADMAP.md
+  s_adf23ee626486e::t_e9d61bfd1b51ca 281-309
+docs/ADR/ADR-002-async-timeout-strategy.md
+  s_fe68400a482453::t_19f6dc6994dc16 1-215
+code/flight-computer/src/config.rs
+  s_8db4e7583b78b8::t_6190e2cd1d9ed7 76-81
+  s_adf23ee626486e::t_e9d61bfd1b51ca 54,62
+code/flight-computer/src/tasks/groundstation.rs
+  s_adf23ee626486e::t_e9d61bfd1b51ca 9,16,31-35,38-40
+code/flight-computer/src/interfaces/impls/simulation/deployment_system.rs
+  s_adf23ee626486e::t_61c3d1eeb13b5d 37
+  s_adf23ee626486e::t_e9d61bfd1b51ca 3-4,16,24,27-30,33-36
+code/flight-computer/src/interfaces/impls/embedded/deployment_switch.rs
+  s_adf23ee626486e::t_e9d61bfd1b51ca 33-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "6ef9e94865e1fe095f76ecda606c78e01fe5ab05",
+  "prompts": {},
+  "sessions": {
+    "s_8db4e7583b78b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d71fad97-9317-4f50-840b-0c0c4756bc8e",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_adf23ee626486e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd2a44c4-3ae6-49ed-8da6-64919bfd76fe",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_fe68400a482453": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1f5fa4977ffepTBCq0ilhsPUeS",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
