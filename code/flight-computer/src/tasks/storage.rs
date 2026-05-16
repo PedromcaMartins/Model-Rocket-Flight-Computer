@@ -60,7 +60,7 @@ where
                 info!("Storage: Final flush");
                 match with_timeout(StorageConfig::FLUSH_TIMEOUT, storage.flush()).await {
                     Err(_) => warn!("Storage: Final flush timed out"),
-                    Ok(_) => (),
+                    Ok(res) => trace!("Storage: Final flush: {:?}", res),
                 }
                 info!("Storage: Exiting");
 

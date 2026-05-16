@@ -14,7 +14,7 @@ where
 
     loop {
         let timeout = S::TICK_INTERVAL + S::TICK_INTERVAL / 2;
-        let (_, data) = join(
+        let ((), data) = join(
             sensor_ticker.next(),
             with_timeout(timeout, sensor.parse_new_data()),
         ).await;

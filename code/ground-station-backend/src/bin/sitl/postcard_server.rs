@@ -1,7 +1,7 @@
 use flight_computer::tasks::postcard::{Context, embassy_time_tick_hz_handler, ping_handler, simulator::{sim_altimeter_update, sim_arming_activate, sim_gps_update, sim_imu_update}};
 use crate::{PostcardClient, LocalPostcardConfig};
 use postcard_rpc::{define_dispatch, header::VarSeqKind, host_client::test_channels as client, server::{Dispatch, Server, impls::test_channels::{ChannelWireRx, ChannelWireSpawn, ChannelWireTx, dispatch_impl::{Settings, WireRxBuf, WireRxImpl, WireSpawnImpl, WireTxImpl, new_server}}}};
-use proto::{ENDPOINT_LIST, GlobalTickHzEndpoint, PingEndpoint, SimAltimeterTopic, SimArmTopic, SimGpsTopic, SimImuTopic, TOPICS_IN_LIST, TOPICS_OUT_LIST};
+use proto::{ENDPOINT_LIST, GlobalTickHzEndpoint, PingEndpoint, SimAltimeterTopic, SimArmTopic, SimGpsTopic, SimImuTopic, TOPICS_IN_LIST, TOPICS_GS_OUT_LIST};
 use tokio::sync::mpsc;
 
 pub type LocalServer = Server<WireTxImpl, WireRxImpl, WireRxBuf, App>;
@@ -32,7 +32,7 @@ define_dispatch! {
         | SimArmTopic               | blocking  | sim_arming_activate           |
     };
     topics_out: {
-        list: TOPICS_OUT_LIST;
+        list: TOPICS_GS_OUT_LIST;
     };
 }
 

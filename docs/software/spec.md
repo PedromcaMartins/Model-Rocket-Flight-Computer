@@ -137,7 +137,7 @@ PIL — perf testing on prod board
 | Component | Crate | Std/no_std | Role |
 |---|---|---|---|
 | **FC library** | [`flight-computer`](../../code/flight-computer/) | `no_std` core, `std` test utils | Hardware-agnostic flight software core. Sensor traits, FSM, deployment logic, telemetry tasks. Linked by every FC binary. |
-| **FC binary (host)** | `flight-computer-host` (planned) | `std` | Host-side FC binary. Links FC library with `impl_host` peripherals (postcard-rpc clients over interprocess sockets). |
+| **FC binary (host)** | [`flight-computer-host`](../../code/flight-computer-host/) | `std` | Host-side FC binary. Links FC library with `impl_host` peripherals (postcard-rpc clients over interprocess sockets). |
 | **FC binary (HW / PIL)** | `cross-esp32-s3`, `cross-nucleo-f413zh` | `no_std` | Embedded FC binaries. HW and PIL firmware are sibling binaries inside each `cross-*` crate (HW links `impl_embedded`, PIL links `impl_sim`). Live outside the workspace because they need different toolchains. |
 | **Simulator** | [`simulator`](../../code/simulator/) | `std` | Host-side process. Physics engine, scripted scenarios, force/trigger event model. Drives the FC's peripheral surface in HOST and PIL. Owns its own structured log and exposes a ratatui TUI for real-time inspection and configuration. |
 | **Simulator TUI** | (planned, ratatui TUI, part of `simulator` binary) | `std` | Read-write operator interface embedded in the simulator process. Displays live physics state, active force events, LED indicator state, and sim-side log. Accepts manual trigger commands and config-phase controls independently of GS. |
@@ -522,7 +522,7 @@ Two distinct event categories. Both are concepts inside the simulator; they are 
 
 #### Force events
 
-```
+```rust
 ForceEvent {
     magnitude_fn,   // closure / function selected by event kind, parameterised by config scalars
     direction,      // deferred — see §12
@@ -543,7 +543,7 @@ Examples: motor thrust, parachute drag.
 
 #### Trigger events
 
-```
+```rust
 TriggerEvent {
     signal_type,   // Ignition, Arm, Deployment, ...
 }
@@ -639,6 +639,21 @@ The simulator embeds a **ratatui TUI** and maintains a **structured internal log
 ---
 
 ## 8. Host IPC
+
+**Why local sockets.** `interprocess::local_socket` was chosen over TCP or
+platform-specific IPC:
+
+- **No networking overhead.** A local socket avoids TCP's handshake, congestion
+  control, and buffering — all unnecessary for single-machine IPC. The FC,
+  simulator, and GS always run on the same host.
+- **Same-machine enforcement.** A local socket path cannot be reached from
+  another machine, preventing accidental cross-network connections that would
+  add latency, failure modes, and complexity with no benefit. The non-goals
+  already state "no cross-machine availability."
+- **Single binary for Linux and Windows.** `GenericNamespaced` maps the bare
+  socket name to an abstract namespace socket on Linux and a `\\.\pipe\*`
+  named pipe on Windows — the same name string works on both platforms without
+  `#[cfg]` in any caller.
 
 ### 8.1 Three-socket triangle
 

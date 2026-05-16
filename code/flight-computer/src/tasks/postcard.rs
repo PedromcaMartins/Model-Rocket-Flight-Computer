@@ -16,6 +16,7 @@ use proto::{actuator_data::ActuatorStatus, sensor_data::{AltimeterData, GpsData,
 #[cfg(feature = "impl_sim")]
 use crate::interfaces::impls::simulation::{arming_system::SimArming, sensor::{SimAltimeter, SimGps, SimImu, SimSensor}};
 
+#[derive(Default)]
 pub struct Context {
 }
 
