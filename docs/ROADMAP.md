@@ -145,7 +145,7 @@ Architectural role:
 - Owns tracing initialisation (console + file sink).
 - GS connection via `fc-gs.sock` (see M3).
 
-**Status:** Blocked — requires M1 complete and connection diagram confirmed.
+**Status:** Spec written — see `code/flight-computer-host/src/main.rs` and `code/flight-computer-host/src/dispatch.rs`.
 
 ### M2.2 — Simulator binary
 
@@ -212,11 +212,11 @@ Architectural role of `xtask` in HOST:
 
 | Milestone | Task | Artifact | Status |
 |---|---|---|---|
-| M1.1 | Proto feature gating | `spec.md §9` + `proto` features | Not started |
+| M1.1 | Proto feature gating | `spec.md §9` + `proto` features | Done |
 | M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename + `start_*` builder | `spec.md §10` + `flight-computer` features | Done |
-| M1.3 | Task lifecycle separation: `run_flight_computer` + cooperative storage | `spec.md §6.6` + `flight-computer` tasks | Pending |
-| M2.1 | `flight-computer-host` binary | Spec | Blocked (M1 + connection diagram) |
-| M2.2 | Simulator binary | Spec | Blocked (M1 + connection diagram) |
+| M1.3 | Task lifecycle separation: `run_flight_computer` + cooperative storage | `spec.md §6.6` + `flight-computer` tasks | Done |
+| M2.1 | `flight-computer-host` binary | `flight-computer-host/src/main.rs` + `dispatch.rs` | Spec written |
+| M2.2 | Simulator binary | Spec | Blocked (M2.1 spec + connection diagram) |
 | M3.1 | GS backend: REST API + storage | Spec | Blocked (M2) |
 | M3.2 | GS frontend TUI | Spec | Blocked (M3.1 REST contract) |
 | M4 | `xtask run-host` orchestration | — | Deferred (after M3) |

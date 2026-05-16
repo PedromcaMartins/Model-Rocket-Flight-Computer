@@ -52,6 +52,7 @@ defmt = [
     "postcard-rpc/defmt",
 ]
 
+# This crate is embedded-specific
 embassy-time = ["dep:embassy-time"]
 timestamp-into-duration = []
 
@@ -66,7 +67,7 @@ simulator-endpoints = []
 ipc-adapter = ["dep:interprocess", "dep:tokio", "dep:postcard", "postcard-rpc/use-std"]
 
 # Convenience alias: everything a HOST binary needs.
-host = ["simulator-endpoints", "ipc-adapter", "log", "embassy-time", "timestamp-into-duration"]
+host = ["simulator-endpoints", "ipc-adapter", "log", "timestamp-into-duration"]
 
 # Convenience alias: what PIL firmware needs (sim endpoints over USB).
 pil = ["simulator-endpoints", "defmt", "embassy-time", "timestamp-into-duration"]

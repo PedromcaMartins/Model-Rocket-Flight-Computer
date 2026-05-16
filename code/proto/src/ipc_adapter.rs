@@ -10,6 +10,7 @@ use postcard_rpc::standard_icd::LoggingTopic;
 use postcard_rpc::Topic;
 use core::fmt::Arguments;
 use std::string::ToString;
+use std::sync::Arc;
 use std::vec::Vec;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::Mutex;
@@ -34,13 +35,14 @@ fn serialize_msg<T: serde::Serialize + ?Sized>(
     Ok(buf)
 }
 
-pub struct InterprocessWireTx(Mutex<SendHalf>);
+#[derive(Clone)]
+pub struct InterprocessWireTx(Arc<Mutex<SendHalf>>);
 
 pub struct InterprocessWireRx(RecvHalf);
 
 pub fn interprocess_wire_from_stream(stream: Stream) -> (InterprocessWireTx, InterprocessWireRx) {
     let (rx, tx) = stream.split();
-    (InterprocessWireTx(Mutex::new(tx)), InterprocessWireRx(rx))
+    (InterprocessWireTx(Arc::new(Mutex::new(tx))), InterprocessWireRx(rx))
 }
 
 impl WireTx for InterprocessWireTx {

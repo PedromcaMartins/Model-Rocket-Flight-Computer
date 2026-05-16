@@ -15,6 +15,7 @@ It does **not** own goals, non-goals, system constraints, or cross-subsystem int
 | `flight-computer/` | Hardware-agnostic flight computer library: sensor traits, state machine, deployment logic, telemetry tasks, test utilities. Embedded firmware crates (e.g. `cross-esp32-s3`, `cross-nucleo-f413zh`) consume this. | `no_std` core, `std` test utils simulators |
 | `proto/` | Telemetry message definitions, newtypes (units), records, events, errors. The wire-format contract shared between flight computer, simulator, and ground station. | `no_std` |
 | `simulator/` | Host-side simulator: physics, scripted scenarios, runtime, API. Drives the flight computer library through its sensor/actuator interfaces for SITL testing. | `std` |
+| `flight-computer-host/` | Host-side FC binary — binds two interprocess local sockets (Linux + Windows transparently via `GenericNamespaced`), runs the FC library with simulator-fed peripherals over `fc-sim.sock` and GS telemetry over `fc-gs.sock`. | `std` |
 | `ground-station-backend/` | Ground-station server: postcard client to the FC, REST/DB layer for the frontend. Binaries live in `src/bin/`. | `std` |
 | `xtask/` | Project task runner (build, run, test orchestration). Invoke via `cargo xtask <task>`. | `std` |
 
@@ -38,6 +39,18 @@ cargo xtask <task>                # project-specific tasks (see xtask/)
 ```
 
 Embedded targets have their own commands; see the respective `cross-*` crate.
+
+## Important: `no_std` ≠ test constraints
+
+Despite being a `no_std` crate in production, `flight-computer` enables `std` during tests
+(`#![cfg_attr(not(any(test, feature = "std")), no_std)]` at `lib.rs:38`). This means:
+
+- **Dev-dependencies do not need to be `no_std`-compatible.** `std` is always available
+  in `#[cfg(test)]` code. A comment like "no_std compatible" on a dev-dependency is
+  misleading — the real constraint is "avoids unnecessary default features."
+- **Test code can freely use `std`** — including `std::thread`, `std::sync`, filesystem I/O, etc.
+- **`cfg(test)` gates** are separate from feature gates; `std` is available in test mode
+  regardless of which features are selected.
 
 ## Patches
 

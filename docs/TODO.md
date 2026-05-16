@@ -85,7 +85,7 @@
 - [X] Add tests for core modules!
 - [ ] TraceAsync - linter config
 - [ ] Trace - parser to get info back! uder feature wall
-    ```Rust
+    ```rust
     pub enum Stage {
         Sync(u64),
         Await(u64),

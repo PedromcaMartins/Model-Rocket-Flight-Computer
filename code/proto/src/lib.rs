@@ -88,11 +88,21 @@ endpoints! {
 }
 
 topics! {
-    list = TOPICS_OUT_LIST;
+    list = TOPICS_GS_OUT_LIST;
     direction = TopicDirection::ToClient;
     | TopicTy                   | MessageTy         | Path                  |
     | ------------------------- | ----------------- | --------------------- |
     | RecordTopic               | Record            | "record"              |
+}
+
+/* --- GS→FC topics (empty — GS uses endpoints, not topics_in) --- */
+
+topics! {
+    list = TOPICS_GS_IN_LIST;
+    direction = TopicDirection::ToServer;
+    omit_std = true;
+    | TopicTy                   | MessageTy         | Path                  |
+    | ------------------------- | ----------------- | --------------------- |
 }
 
 /* --- Simulator-fed topics (gated behind `simulator-endpoints`) --- */

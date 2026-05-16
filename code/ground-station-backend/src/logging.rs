@@ -17,7 +17,7 @@ impl Logging {
         // log files
         tokio::fs::create_dir_all(&config.log_dir_path).await.expect("Failed to create log directory");
         let system_file = File::create_new(&config.system_log_path).expect("Failed to create log file");
-        
+
         // JSON log layer
         let system_json_layer = fmt::layer()
             .json()

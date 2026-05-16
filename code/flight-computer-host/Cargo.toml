@@ -1,0 +1,23 @@
+[package]
+name = "flight-computer-host"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+proto = { path = "../proto", features = ["host"] }
+flight-computer = { path = "../flight-computer", features = ["host"] }
+
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "io-util", "sync"] }
+
+chrono = { version = "0.4" }
+embassy-time = { version = "0.4", features = ["std", "generic-queue-128"] }
+interprocess = { version = "2.4.2", features = ["tokio"] }
+
+postcard = "1"
+postcard-schema = "0.2"
+postcard-rpc = { version = "0.11", features = ["test-utils"] }
+
+tracing = "0.1"
+tracing-log = "0.2"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }

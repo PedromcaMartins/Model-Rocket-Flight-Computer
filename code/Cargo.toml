@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "flight-computer",
+    "flight-computer-host",
     "ground-station-backend",
     "proto",
     "simulator",

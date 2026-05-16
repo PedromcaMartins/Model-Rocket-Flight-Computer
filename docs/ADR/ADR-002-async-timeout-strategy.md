@@ -145,7 +145,7 @@ pub trait DeploymentSystem {
 
 The `await_deployment_system` loop in `armed.rs` changes to:
 
-```
+```rust
 loop {
     match with_timeout(1s, deployment_system.deploy()).await {
         Ok(Ok(())) → verify → break on verification, retry on failure
