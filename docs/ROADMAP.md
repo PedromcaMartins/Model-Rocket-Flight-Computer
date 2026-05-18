@@ -145,22 +145,51 @@ Architectural role:
 - Owns tracing initialisation (console + file sink).
 - GS connection via `fc-gs.sock` (see M3).
 
-**Status:** Spec written — see `code/flight-computer-host/src/main.rs` and `code/flight-computer-host/src/dispatch.rs`.
+**Status:** Done.
 
 ### M2.2 — Simulator binary
 
-Standalone binary in (or alongside) `code/simulator/`.
+Standalone binary in `code/simulator/`.
 
 Architectural role:
-- Serves postcard-rpc over `fc-sim.sock`; FC connects to it.
-- Physics tick loop publishes sensor Topics; FC deployment/LED calls arrive as Endpoint requests.
-- Two-phase lifecycle (Setup → Runtime) controlled by GS over `sim-gs.sock`.
-- Owns its own ratatui TUI for independent operator access (physics state, force events, LED indicators, sim log).
-- Config loaded from CLI path; hash computed at setup, sent to GS on connect.
+- Physics tick loop publishes sensor Topics as postcard-rpc client on `fc-sim.sock`.
+- FC deployment/LED calls arrive as Endpoint requests from FC's server.
+- Scripted scenario with timed trigger events from compile-time config struct.
+- Minimal read-only TUI: live physics state (altitude, velocity, acceleration, sim time), actuator state (LEDs, deployment), config summary.
+- tracing initialisation (console + file sink), panic hook.
+34'
+Out of scope for M2.2:
+- GS interaction (`sim-gs.sock`, lifecycle, config handshake) — see M2.4+ / M3.2+.
+- Two-phase lifecycle — binary runs physics on launch; Ctrl-C to exit.
+- Config from file — values are in a Rust `pub const` struct; recompile to change.
+- Interactive TUI controls — read-only display only.
 
-Physics scope for initial version: parabolic 1D trajectory (motor burn → coast → apogee → descent). Sufficient to exercise the full FC FSM.
+Physics scope: parabolic 1D trajectory (motor burn → coast → apogee → descent). Sufficient to exercise the full FC FSM.
 
-**Status:** Blocked — requires M1 complete and connection diagram confirmed.
+**Status:** Ready for implementation.
+
+### M2.3 — Simulator 3D physics enhancement
+
+Enhance the physics engine from 1D to 3D.
+
+Scope:
+- Launch position, inclination and azimuth.
+- Multi-axis force composition (thrust vector, gravity, drag).
+- Attitude / orientation state integration.
+
+**Status:** Deferred.
+
+### M2.4 — Simulator config, lifecycle & interactive TUI
+
+Add production features to the simulator binary.
+
+Scope:
+- Config loading from TOML file (replacing compile-time struct), validation, hashing.
+- Full interactive TUI with manual trigger controls (ignition, arm, deploy) and lifecycle controls.
+- Internal lifecycle (setup → runtime) with Restart support (re-read config, reset physics).
+- GS connectivity deferred to M3.2+ — the TUI provides the operator interface until then.
+
+**Status:** Deferred.
 
 ---
 
@@ -168,19 +197,20 @@ Physics scope for initial version: parabolic 1D trajectory (motor burn → coast
 
 **Goal:** The full four-process HOST topology from spec.md is running. An operator can start a scenario, observe live telemetry, issue commands, and see crash/disconnect state correctly reflected in the UI.
 
-### M3.1 — GS backend: REST API + storage
+### M3.1 — GS backend: REST API + storage (FC-facing)
 
 Crate `code/ground-station-backend/`.
 
 Architectural role:
 - Connects to FC on `fc-gs.sock` (telemetry subscriber, command issuer).
-- Connects to Sim on `sim-gs.sock` (lifecycle control: Start / Restart / Shutdown; config-hash handshake; manual trigger relay).
-- Source of truth for scenario config files; supplies config path to simulator at launch.
 - Stores FC telemetry records to disk (append-only, one file per session).
 - Exposes REST/JSON API consumed exclusively by the frontend — GS frontend never speaks postcard-rpc.
-- Independent of the simulator for its core function: if `sim-gs.sock` is absent, GS continues operating on FC telemetry alone.
+- Independent of the simulator for its core function: operates on FC telemetry alone.
 
-**Status:** Blocked — requires M2 running and `sim-gs.sock` contract settled.
+Simulator integration deferrred:
+- `sim-gs.sock` connection (lifecycle, config-hash, manual triggers) postponed to M3.3+.
+
+**Status:** Blocked — requires M2 running.
 
 ### M3.2 — GS frontend TUI
 
@@ -188,10 +218,21 @@ New ratatui binary.
 
 Architectural role:
 - Pure REST client of GS backend; no direct postcard-rpc.
-- Minimum viable screens: live telemetry (altimeter, GPS, IMU, flight state), log tail, manual controls (arm, ignition, deploy), simulation status and phase indicator.
+- Minimum viable screens: live telemetry (altimeter, GPS, IMU, flight state), log tail, manual controls (arm, ignition, deploy).
 - Disconnect UX: affected panel turns red within one UI refresh; last-known state stays visible, dimmed, with stale-indicator badge; Restart / Shutdown buttons available; no automatic reconnect retry.
 
 **Status:** Blocked — requires M3.1 REST contract settled.
+
+### M3.3 — Simulator-GS integration
+
+Wire the simulator into the GS topology over `sim-gs.sock`.
+
+Phased approach:
+1. **State data** — simulator publishes status Topics (physics state, active events, actuator states, config summary) to GS backend.
+2. **Config ownership** — GS backend becomes source of truth for scenario config; simulator loads from file path, both compare hashes.
+3. **Lifecycle & triggers** — GS controls simulator lifecycle (Start / Restart / Shutdown) and forwards manual triggers (arm, ignition, deploy) over `sim-gs.sock`.
+
+**Status:** Blocked — requires M2.4 (simulator ready for GS interaction) and M3.1 settling the REST/frontend contract.
 
 ---
 
@@ -211,17 +252,18 @@ Architectural role of `xtask` in HOST:
 ## Status summary
 
 | Milestone | Task | Artifact | Status |
-|---|---|---|---|
+|---|---|---|---|---|
 | M1.1 | Proto feature gating | `spec.md §9` + `proto` features | Done |
-| M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename + `start_*` builder | `spec.md §10` + `flight-computer` features | Done |
+| M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename | `spec.md §10` + `flight-computer` features | Done |
 | M1.3 | Task lifecycle separation: `run_flight_computer` + cooperative storage | `spec.md §6.6` + `flight-computer` tasks | Done |
-| M2.1 | `flight-computer-host` binary | `flight-computer-host/src/main.rs` + `dispatch.rs` | Spec written |
-| M2.2 | Simulator binary | Spec | Blocked (M2.1 spec + connection diagram) |
-| M3.1 | GS backend: REST API + storage | Spec | Blocked (M2) |
+| M2.1 | `flight-computer-host` binary | `flight-computer-host/src/main.rs` + `dispatch.rs` + `config.rs` | Done |
+| M2.2 | Simulator binary (MVP) | `code/simulator/` — physics + FC client + scripted + minimal TUI | Ready |
+| M2.3 | Simulator 3D physics | — | Deferred |
+| M2.4 | Simulator config, lifecycle & interactive TUI | — | Deferred |
+| M3.1 | GS backend: REST API + storage (FC-facing) | Spec | Blocked (M2) |
 | M3.2 | GS frontend TUI | Spec | Blocked (M3.1 REST contract) |
+| M3.3 | Simulator-GS integration (state, config, lifecycle) | Spec | Blocked (M2.4 + M3.1) |
 | M4 | `xtask run-host` orchestration | — | Deferred (after M3) |
-
-> **Blocker for M2:** the FC ↔ Simulator ↔ GS connection diagram must be confirmed before M2 specs are written. Open questions resolved by spec.md: GS-backend connects to FC-host via `fc-gs.sock` and to the simulator via `sim-gs.sock`; GS does **not** talk to the simulator's peripheral surface (`fc-sim.sock`) directly.
 
 ---
 
@@ -232,17 +274,22 @@ Architectural role of `xtask` in HOST:
           ↓
 [M1.2] FC library cleanup (spec.md §10 + flight-computer features)
           ↓
-   [Connection diagram confirmed]
+[M1.3] Task lifecycle separation
           ↓
-[M2.1] flight-computer-host      [M2.2] simulator binary
-          ↓                               ↓
-          └──────── both running ─────────┘
-                        ↓
-              [M3.1] GS backend
-                        ↓
-              [M3.2] GS frontend TUI
-                        ↓
-              [M4] xtask run-host orchestration
+[M2.1] flight-computer-host binary (Done)
+          ↓
+[M2.2] Simulator binary MVP ── physics + FC client + scripted + minimal TUI
+          ↓
+          ├── [M2.3] 3D physics enhancement (deferred)
+          ├── [M2.4] Config, lifecycle & interactive TUI (deferred)
+          ↓
+[M3.1] GS backend (FC-facing)
+          ↓
+[M3.2] GS frontend TUI
+          ↓
+[M3.3] Simulator-GS integration (state → config → lifecycle)
+          ↓
+[M4] xtask run-host orchestration
 ```
 
 ---
@@ -260,15 +307,18 @@ Architectural role of `xtask` in HOST:
 
 ### Milestone 2 — Independent binaries (FC-host + Simulator)
 - [X] M2.1 — `flight-computer-host` binary
-- [ ] M2.2 — Simulator binary
+- [ ] M2.2 — Simulator binary (MVP)
+- [ ] M2.3 — Simulator 3D physics
+- [ ] M2.4 — Simulator config, lifecycle & interactive TUI
 
-**M2 progress:** 1 / 2 (50%)
+**M2 progress:** 1 / 4 (25%)
 
-### Milestone 3 — Ground station (GS backend + GS frontend)
-- [ ] M3.1 — GS backend: REST API + storage
+### Milestone 3 — Ground station (GS backend + GS frontend + sim integration)
+- [ ] M3.1 — GS backend: REST API + storage (FC-facing)
 - [ ] M3.2 — GS frontend TUI
+- [ ] M3.3 — Simulator-GS integration (state → config → lifecycle)
 
-**M3 progress:** 0 / 2 (0%)
+**M3 progress:** 0 / 3 (0%)
 
 ### Milestone 4 — Orchestration (`xtask run-host`)
 - [ ] M4 — `xtask run-host` orchestration
@@ -277,7 +327,7 @@ Architectural role of `xtask` in HOST:
 
 ---
 
-**Overall progress:** 3 / 8 tasks (37%)
+**Overall progress:** 3 / 11 tasks (27%)
 
 ---
 
