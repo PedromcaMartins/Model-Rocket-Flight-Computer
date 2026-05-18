@@ -1,0 +1,51 @@
+docs/ROADMAP.md
+  s_7ff7cdce902cd2::t_1e023c4298f62c 265
+  s_7ff7cdce902cd2::t_c1ebbcdc045b54 316,319,321,330
+  s_7ff7cdce902cd2::t_e3b38d7b8c5459 288-290
+  s_7ff7cdce902cd2::t_5ee7806add50b6 200,208,210,213,221
+  s_7ff7cdce902cd2::t_4206d826f849d8 255,257,259-263
+  s_7ff7cdce902cd2::t_299a6a85e5110a 155-175,177-178,180,182-192,212,236
+  s_7ff7cdce902cd2::t_350d2e441b12f0 211,226-235
+  s_7ff7cdce902cd2::t_d700d968a8cdd9 277-287,292
+  s_7ff7cdce902cd2::t_fca2d00ad53d5a 310-312,314,317
+code/flight-computer-host/spec.md
+  s_9e5e65797ee8ac::t_7c3f66c2790539 1-86
+code/simulator/spec.md
+  s_39bd5fe00b0cf9::t_f73245649b6147 1-161,177-184,186-189,196-296
+  s_39bd5fe00b0cf9::t_e7dbde9551a89b 185,190-195
+  s_39bd5fe00b0cf9::t_e0017acfff005c 162-176
+code/simulator/README.md
+  s_39bd5fe00b0cf9::t_c2845f92739fc4 1-7,9-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "36993e4e6f0d89cdc608d9b656c40ea8969d3645",
+  "prompts": {},
+  "sessions": {
+    "s_39bd5fe00b0cf9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f2356bfb-af0e-4358-804d-a0c0eb5d5a45",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_7ff7cdce902cd2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1d0345d7effeZVQpBKjQGCLxiq",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_9e5e65797ee8ac": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1d8a4a677ffesirJmwyhFqKB6y",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
