@@ -1,0 +1,19 @@
+README.md
+  s_d718b0bcafe70d::t_db1304c5aa00a1 3,5,7-17,68-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "0b1ea37c5cbf18a160bc0938c32ffef0a80d5e57",
+  "prompts": {},
+  "sessions": {
+    "s_d718b0bcafe70d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_199acd338ffeS11xJ8lEVJyboP",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
