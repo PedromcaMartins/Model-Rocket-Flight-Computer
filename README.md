@@ -1,10 +1,20 @@
 # Motivation
 
-This repository is the result of an ongoing project to develop a Model Rocket, while learning from many fields of engineering I find interesting.
+This repository is the result of an ongoing project to develop a Model Rocket, while learning from many fields of engineering I find interesting. 
 
-My background is in Computer Science, and I've got 2 years of experience designing software for a rocket team @RED, Portugal. I want to challenge myself by using Rust, a language I've been learning since 2024, for the flight computer, and some of the Ground-station stack, if not all...
+My background is in Computer Science, and I've got 2 years of experience designing software for a rocket team @RED (Rocket Experiment Division), Portugal. I want to challenge myself by using Rust, a language I've been learning since 2024, for the flight computer, and some of the Ground-station stack, if not all... 
 
-I also want to take this opportunity to learn more about model rocket design / simulation, get experience with CAD modeling by modeling and 3d printing parts for the rocket, electronics and PCB design, and eventually control algorithms :)
+I also want to take this opportunity to learn more about model rocket design / simulation, get experience with CAD modeling by modeling and 3d printing parts for the rocket, electronics and PCB design, and eventually control algorithms :) 
+
+---
+
+This codebases started with multiple prototypes for testing Rust use for rocketry and embedded devices. As the complexity / constraints grew larger, it became harder to scale with some architectural decisions. 
+
+The architecture grew organically, first focusing on the Flight Computer lib, then growing to take into account agnostic design choices (agnostic Peripherals,Instruction Set Architecture (ISA), Microcontroller, async runtime). 
+
+Now, as project ambition grows, I've started to work on complementary software (simulator, groundstation, testing) that is necessary to support, test and validate the Flight Computer lib. 
+
+As the software matures into a v1.0 (ready for the first rocket launch), the rest of the rocket subsystem will be worked on - Rocket simulation and decision making, Motor selection, CAD, Hardware selection and PCB development, eventually culminating in a rocket - launch, and publication / project divulgation! 
 
 # Repository layout
 
@@ -55,3 +65,23 @@ The split applies to every discipline, not just code. See [`docs/README.md`](doc
 ## For AI agents
 
 [`AGENTS.md`](AGENTS.md) contains agent-specific instructions (self-improvement protocol, project map, agent-flavored cheat sheet, working conventions). Humans contributing to the repo can ignore it.
+
+# AI Disclaimer
+
+AI (LLM chats) have always been used since conception of this project, used for:
+- High-level architectural decisions
+- Crate examples (when none were provided)
+- Explainers - Rust features, crates, guides, ...
+- Crate discovery
+
+All the architecture decisions, constraints and implementation relied on human intelligence. 
+
+Since May 2026, AI (Agentic tools) has been used to develop a lot of the necessary glue complementary of the Flight Computer: simulator crate, groundstation (backend and frontends), ... 
+
+The Flight Computer lib was and remains the main focus of this project. All other crates provide:
+- FC Binary targets
+- Simulator
+- Ground station
+
+I intend to continue using AI (chat and agentic) in order to expedite development of the software used in this project, for non-critical crates/ software. 
+For now, the only critical crate in this library is the Flight Computer lib (and corresponding binary crates), which will continue to be developed with the rigor and human touch it deserves. 
