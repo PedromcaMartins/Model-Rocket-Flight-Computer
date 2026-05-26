@@ -9,7 +9,9 @@ impl ApogeeDetectorConfig {
     pub const ALTITUDE_BUFFER_SIZE: usize = 5;
     pub const VELOCITY_BUFFER_SIZE: usize = 5;
 
-    pub const DETECTOR_TICK_INTERVAL: Duration = Duration::from_hz(2);
+    const DETECTOR_TICK_INTERVAL_MS: u64 = 500;
+    pub const DETECTOR_TICK_INTERVAL: Duration = Duration::from_millis(Self::DETECTOR_TICK_INTERVAL_MS);
+    pub const DATA_WAIT_TIMEOUT: Duration = Duration::from_millis(Self::DETECTOR_TICK_INTERVAL_MS / 2);
 
     #[inline]
     pub fn max_descent_velocity() -> Velocity { Velocity::new::<meter_per_second>(-1.0) }
@@ -26,7 +28,7 @@ impl DataAcquisitionConfig {
 
 pub struct TasksConfig;
 impl TasksConfig {
-    pub const FLIGHT_STATE_WATCH_CONSUMERS: usize = 4;
+    pub const FLIGHT_STATE_WATCH_CONSUMERS: usize = 5;
 
     pub const RECORD_TO_STORAGE_CHANNEL_DEPTH: usize = 30;
 }
@@ -36,7 +38,9 @@ impl TouchdownDetectorConfig {
     pub const ALTITUDE_BUFFER_SIZE: usize = 10;
     pub const VELOCITY_BUFFER_SIZE: usize = 10;
 
-    pub const DETECTOR_TICK_INTERVAL: Duration = Duration::from_hz(1);
+    const DETECTOR_TICK_INTERVAL_MS: u64 = 1000;
+    pub const DETECTOR_TICK_INTERVAL: Duration = Duration::from_millis(Self::DETECTOR_TICK_INTERVAL_MS);
+    pub const DATA_WAIT_TIMEOUT: Duration = Duration::from_millis(Self::DETECTOR_TICK_INTERVAL_MS / 2);
 
     #[inline]
     pub fn touchdown_stability_threshold() -> Altitude { Altitude::new::<meter>(1.0) }
@@ -48,6 +52,7 @@ pub struct StorageConfig;
 impl StorageConfig {
     pub const WRITE_BUFFER_SIZE: usize = 576;
     pub const MAX_FILENAME_LENGTH: usize = 8;
+    pub const SD_VOLUME_IDX: usize = 0;
 
     pub const FLUSH_FILES_TICK_INTERVAL: Duration = Duration::from_millis(500);
     pub const TOUCHDOWN_HOLD_DURATION: Duration = Duration::from_secs(30);
@@ -79,19 +84,51 @@ impl ArmedConfig {
     pub const VERIFY_TIMEOUT: Duration = Duration::from_millis(500);
 }
 
-#[cfg(feature = "impl_host")]
-pub mod host {
-    use std::path::PathBuf;
+pub struct AltimeterConfig;
+impl AltimeterConfig {
+    pub const REFERENCE_PRESSURE: f32 = 101_325.0;
+}
 
-    pub struct HostConfig {
-        pub storage_path: PathBuf,
+#[cfg(feature = "impl_embedded")]
+pub mod embedded {
+    use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby};
+    use bno055::{BNO055OperationMode, BNO055PowerMode};
+    use nmea::SentenceType;
+
+    pub struct Bmp280Config;
+    impl Bmp280Config {
+        pub const CONFIG: Config = Config {
+            filter: Filter::c16,
+            t_sb: Standby::ms0_5,
+        };
+        pub const CONTROL: Control = Control {
+            osrs_t: Oversampling::x1,
+            osrs_p: Oversampling::x4,
+            mode: PowerMode::Normal,
+        };
     }
 
-    impl Default for HostConfig {
-        fn default() -> Self {
-            Self {
-                storage_path: PathBuf::from("host_storage"),
-            }
-        }
+    pub struct Bno055Config;
+    impl Bno055Config {
+        pub const STARTUP_DELAY: embassy_time::Instant = embassy_time::Instant::from_millis(650);
+        pub const OPERATION_MODE: BNO055OperationMode = BNO055OperationMode::NDOF;
+        pub const POWER_MODE: BNO055PowerMode = BNO055PowerMode::NORMAL;
+        pub const USE_EXTERNAL_CRYSTAL: bool = true;
+    }
+
+    pub struct GpsConfig;
+    impl GpsConfig {
+        pub const NMEA_SENTENCES_FOR_NAVIGATION: &'static [SentenceType] = &[
+            SentenceType::GGA,
+        ];
+    }
+}
+
+#[cfg(feature = "impl_host")]
+pub mod host {
+    pub struct HostConfig;
+
+    impl HostConfig {
+        pub const STORAGE_PATH: &str = "host_storage";
     }
 }

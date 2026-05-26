@@ -1,4 +1,4 @@
-use proto::Record;
+use proto::wire::Record;
 
 pub trait Sensor {
     type Data: Into<Record> + Clone + PartialEq + core::fmt::Debug + 'static;

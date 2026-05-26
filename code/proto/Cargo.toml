@@ -19,6 +19,7 @@ uom = { version = "0.37.0", default-features = false, features = ["f32", "si", "
 nalgebra = { version = "0.33.2", default-features = false, features = ["serde-serialize-no-std"] }
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 derive_more = { version = "2", default-features = false, features = ["from", "into", "deref", "display"] }
+thiserror = { version = "2", default-features = false }
 embassy-time = { version = "0.4", optional = true }
 
 # postcard-schema = { version = "0.2", features = ["derive", "nalgebra-v0_33", "chrono-v0_4"] }
@@ -30,10 +31,10 @@ log = { version = "0.4", optional = true }
 defmt-or-log = { version = "0.2.2", optional = true }
 defmt-or-log-macros = "0.1.2"
 
-# ipc-adapter dependencies (host-only: tokio + interprocess over postcard-rpc).
-# Keep optional — incompatible with no_std / embedded targets.
+# transport-ipc deps (host-only: tokio + interprocess over postcard-rpc).
 interprocess = { version = "2.4.2", optional = true, default-features = false, features = ["tokio"] }
-tokio = { version = "1", optional = true, default-features = false, features = ["net", "io-util", "sync"] }
+# transport-ipc + transport-thread deps (host-only, tokio-based transports).
+tokio = { version = "1", optional = true, default-features = false, features = ["net", "io-util", "sync", "rt"] }
 postcard = { version = "1", optional = true, default-features = false, features = ["use-std"] }
 
 [features]
@@ -62,12 +63,16 @@ timestamp-into-duration = []
 simulator-endpoints = []
 
 # Interprocess transport adapter (InterprocessWireTx / InterprocessWireRx).
-# Brings tokio + interprocess — incompatible with no_std targets.
-# Used by: FC host binary, GS backend, simulator.
-ipc-adapter = ["dep:interprocess", "dep:tokio", "dep:postcard", "postcard-rpc/use-std"]
+# Inter-process communication (tokio + interprocess sockets) — incompatible with no_std targets.
+# Client-side wire halves and connect helpers are additionally gated on `client`.
+transport-ipc = ["dep:interprocess", "dep:tokio", "dep:postcard", "postcard-rpc/use-std"]
+
+# In-process channel transport (tokio mpsc channels) — incompatible with no_std targets.
+# `create_pair` is additionally gated on `client` (returns `PostcardClient`).
+transport-thread = ["dep:tokio", "dep:postcard", "postcard-rpc/use-std", "postcard-rpc/test-utils"]
 
 # Convenience alias: everything a HOST binary needs.
-host = ["simulator-endpoints", "ipc-adapter", "log", "timestamp-into-duration"]
+host = ["simulator-endpoints", "transport-ipc", "log", "timestamp-into-duration"]
 
 # Convenience alias: what PIL firmware needs (sim endpoints over USB).
 pil = ["simulator-endpoints", "defmt", "embassy-time", "timestamp-into-duration"]
@@ -75,5 +80,6 @@ pil = ["simulator-endpoints", "defmt", "embassy-time", "timestamp-into-duration"
 # Convenience alias: what HW firmware needs (no sim, no IPC).
 hw = ["defmt", "embassy-time"]
 
-# Convenience alias: what non-flight-computer software needs (e.g. GS backend, simulator).
-client = ["simulator-endpoints", "ipc-adapter", "timestamp-into-duration"]
+# Non-transport client utilities (PostcardClient, PostcardError).
+# Consumer must also enable the transport feature they use (transport-ipc, transport-thread, etc.).
+client = ["simulator-endpoints", "timestamp-into-duration", "postcard-rpc/use-std"]

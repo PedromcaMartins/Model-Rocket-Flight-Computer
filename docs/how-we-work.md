@@ -73,3 +73,23 @@ All pending work lives in exactly one place:
 | **Subsystem-internal** — scoped to one subsystem (`code/`, `hardware/`, `structure/`, `open rocket/`) | that subsystem's own `TODO.md` |
 
 Within `code/`, per-crate TODOs (e.g. "switch this to `thiserror`", "make sensor task generic over device") belong in the crate's own `TODO.md`, not in `docs/TODO.md`. If a TODO outgrows its subsystem, promote it to `docs/TODO.md`.
+
+## Logging conventions
+
+All Rust code uses the `tracing` crate macros (`error!`, `warn!`, `info!`, `debug!`, `trace!`).
+Levels follow these rules:
+
+| Level | When | Examples from codebase |
+|---|---|---|
+| `error!` | Data loss, unrecoverable hardware failure, unrecoverable desync, programming bugs that must not be silently ignored. Panic hooks. | Deployment timeout / verify failure (`armed.rs`), storage I/O failure (`core/storage.rs`), FC ↔ sim connection close (`postcard.rs`), 3+ consecutive sensor timeouts (`sensor.rs`) |
+| `warn!` | Recoverable transient issues, cosmetic side effects, expected connection drops, retry loops. | LED failures, detector altitude-data timeouts, ground-station radio timeouts, sensor parse glitches, FC-state receiver gone after scripted task exit |
+| `info!` | Normal lifecycle events, state transitions, operational milestones. | Arm/deploy/apogee detection, scripted-sequence steps, task init |
+| `debug!` | Per-iteration diagnostic detail. | Parsed sensor values, record writes, buffer flushes |
+| `trace!` | Very high-frequency / fine-grained detail. | Raw data dumps, inner-loop counters |
+
+**Rule of thumb:** If the system recovers and continues (`continue`, next loop iteration, `?` /
+`unwrap_or_else` that does not propagate), prefer `warn!` over `error!`. Reserve `error!` for
+conditions that cause data loss or require human intervention.
+
+FC task loop bodies must never panic — all recoverable errors use `warn!` or `error!` and
+continue (see software spec §4).

@@ -76,6 +76,16 @@ Tasks in [`docs/ROADMAP.md`](docs/ROADMAP.md) follow the same split. Cross-subsy
 
 Each of `code/`, `hardware/`, `open rocket/`, `structure/` has a `README.md`. Cross-cutting concerns live in `docs/`. New top-level folders that aren't pure reference material need a `README.md` and a link here.
 
+## 5a. Rust code style
+
+Write **concise, idiomatic, simple** Rust. Prefer plain functions, simple types, and straightforward control flow. Do not disable language features (`#[allow(...)]` lints, `unsafe`, `#![no_std]` without reason, etc.) as a matter of course — only suppress what is genuinely needed.
+
+**Language features are tools, not decorations.** Use `const`, `static`, `generics`, `async`, lifetimes, traits, macros, etc. when they solve a real problem (constraint, performance, correctness, API ergonomics), not because they look impressive. Every feature has a cost — justify it.
+
+See [`docs/how-we-work.md`](docs/how-we-work.md) for project-wide policies on architecture/spec/ADR/traceability discipline. Code style is not a substitute for design rigor.
+
+In tests, `std` is always available (see §6). Do not qualify dev-deps as "no_std compatible."
+
 ## 5. Where things go (cheat sheet)
 
 | You want to write… | Put it in… |
@@ -102,15 +112,12 @@ Each of `code/`, `hardware/`, `open rocket/`, `structure/` has a `README.md`. Cr
 - **Approved verification commands:** `cargo check`, `cargo clippy`, `cargo build`, `cargo nextest run`
 - **Never use `cargo test`** — it produces misleading failures; `cargo nextest run` isolates each test in its own process.
 - **Do not invent URLs or crate versions.** Point at `datasheets/`, `papers/`, or already-cited upstream docs.
-- **Config values that don't change at runtime use `pub const` on a unit struct,** not
-  instance fields. See `flight-computer/src/config.rs` for the pattern — every config
-  block is a unit struct with `pub const` associated items. Only use `Default` + fields
-  when the config is genuinely loaded from somewhere (env, file, CLI args) at startup.
-- **`no_std` crates get `std` in tests.** The `flight-computer` library enables `std` under
-  `#[cfg(test)]`. Dev-dependencies and test code have full `std` access — do not annotate
-  dev-deps as "no_std compatible" or qualify test-only imports with `no_std` constraints.
+- **Config values that don't change at runtime use `pub const` on a unit struct,** not instance fields. Const-first: plain types use `pub const`; only fall back to `pub fn` (no `self`) when const arithmetic is impossible (e.g. uom types). Config is a namespace, never instantiated. See `flight-computer/src/config.rs` for the pattern. Config does not change over time!
+- **`no_std` crates get `std` in tests.** The `flight-computer` library enables `std` under `#[cfg(test)]`. Dev-dependencies and test code have full `std` access — do not annotate dev-deps as "no_std compatible" or qualify test-only imports with `no_std` constraints.
+- **Log severity conventions** are defined in [`docs/how-we-work.md#logging-conventions`](docs/how-we-work.md#logging-conventions). Follow them for every `error!` / `warn!` / etc. call.
 - **Prefer editing existing docs** over creating new files. New files only when an existing doc would become incoherent.
 - **When reading:** start in `docs/` for public interfaces; start in the crate's README for implementation rationale.
+- **Before reading or editing any file**, walk up from the file's own directory toward the repo root and read the first README.md found. For example, `code/simulator/src/scripted.rs` → `code/simulator/src/README.md` (none) → `code/simulator/README.md` (hit → read). This ensures you have the relevant context before touching the file.
 - Full tool/target/toolchain list: [`docs/toolchain.md`](docs/toolchain.md)
 
 ## 7. When this file is wrong

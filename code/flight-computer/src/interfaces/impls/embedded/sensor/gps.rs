@@ -4,6 +4,7 @@ use proto::sensor_data::{Altitude, GpsCoordinates, GpsData};
 use proto::uom::si::length::meter;
 
 use crate::config::DataAcquisitionConfig;
+use crate::config::embedded::GpsConfig;
 use crate::interfaces::Sensor;
 
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
@@ -42,7 +43,7 @@ where
         static BUFFER: ConstStaticCell<[u8; SENTENCE_MAX_LEN]> = ConstStaticCell::new([0_u8; SENTENCE_MAX_LEN]);
         let buf = BUFFER.take();
 
-        let nmea = Nmea::create_for_navigation(&[SentenceType::GGA])
+        let nmea = Nmea::create_for_navigation(GpsConfig::NMEA_SENTENCES_FOR_NAVIGATION)
             .map_err(|_| GpsError::NmeaParserInit)?;
 
         Ok(Self { 

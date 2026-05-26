@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use embassy_futures::select::{Either, select};
 use embassy_time::Ticker;
 use proto::uom::si::length::meter;
-use crate::log::{error, info};
+use crate::log::{error, info, warn};
 
 use crate::{config::FiniteStateMachineConfig, core::state_machine::{FlightStateMachine, states::{Armed, PreArmed}}, interfaces::{ArmingSystem, DeploymentSystem, Led}, sync::LATEST_ALTITUDE_SIGNAL};
 
@@ -20,8 +20,8 @@ where
         deployment_system: D,
         mut deployment_system_led: LedD,
     ) -> Self {
-        if arm_button_led.off().await.is_err() { error!("FSM: Arm Button Led error"); }
-        if deployment_system_led.off().await.is_err() { error!("FSM: Deployment System Led error"); }
+        if arm_button_led.off().await.is_err() { warn!("FSM: Arm Button Led error"); }
+        if deployment_system_led.off().await.is_err() { warn!("FSM: Deployment System Led error"); }
 
         Self {
             arm_button,

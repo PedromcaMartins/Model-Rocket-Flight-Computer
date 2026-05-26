@@ -1,11 +1,12 @@
 use core::fmt::Debug;
 
-use bmp280_ehal::{Config, Control, Filter, Oversampling, PowerMode, Standby, BMP280};
+use bmp280_ehal::BMP280;
 use embedded_hal::i2c::{I2c, SevenBitAddress};
 use proto::sensor_data::{AltimeterData, Pressure, ThermodynamicTemperature};
 use proto::uom::si::{pressure::pascal, thermodynamic_temperature::degree_celsius};
 
 use crate::config::DataAcquisitionConfig;
+use crate::config::embedded::Bmp280Config;
 use crate::{interfaces::Sensor, core::sensors::altimeter::altitude_from_pressure};
 
 pub struct Bmp280Device<I, E>
@@ -23,16 +24,8 @@ where
     E: Debug,
 {
     pub fn init(mut bmp280: BMP280<I>) -> Result<Self, E> {
-        bmp280.set_config(Config {
-            filter: Filter::c16, 
-            t_sb: Standby::ms0_5
-        })?;
-
-        bmp280.set_control(Control { 
-            osrs_t: Oversampling::x1, 
-            osrs_p: Oversampling::x4, 
-            mode: PowerMode::Normal
-        })?;
+        bmp280.set_config(Bmp280Config::CONFIG)?;
+        bmp280.set_control(Bmp280Config::CONTROL)?;
 
         Ok(Self {
             bmp280,

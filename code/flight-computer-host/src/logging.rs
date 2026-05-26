@@ -7,6 +7,8 @@ use tracing_subscriber::filter::FilterFn;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, registry, EnvFilter};
 
+use crate::config::Config;
+
 pub struct LoggingGuard {
     _guards: Vec<WorkerGuard>,
 }
@@ -19,7 +21,7 @@ pub fn install_panic_hook() {
     }));
 }
 
-pub fn init_tracing() -> Result<LoggingGuard, Box<dyn std::error::Error>> {
+pub fn init_tracing() -> anyhow::Result<LoggingGuard> {
     let log_dir = log_dir();
     fs::create_dir_all(&log_dir)?;
 
@@ -28,12 +30,11 @@ pub fn init_tracing() -> Result<LoggingGuard, Box<dyn std::error::Error>> {
     let stdout_layer = fmt::layer()
         .with_writer(io::stdout)
         .with_target(true)
-        .with_thread_ids(true)
         .with_file(true)
         .with_line_number(true)
         .with_filter(
             EnvFilter::builder()
-                .with_default_directive(tracing::level_filters::LevelFilter::INFO.into())
+                .with_default_directive(Config::STDOUT_LOG_LEVEL.into())
                 .from_env_lossy(),
         );
 
@@ -114,6 +115,6 @@ pub fn init_tracing() -> Result<LoggingGuard, Box<dyn std::error::Error>> {
 
 fn log_dir() -> PathBuf {
     let ts = Local::now();
-    let ts = ts.format("%Y_%m_%d_%H_%M_%S").to_string();
-    PathBuf::from("logs").join(&ts)
+    let ts = ts.format(Config::LOG_TIMESTAMP_FORMAT).to_string();
+    PathBuf::from(Config::LOG_ROOT_DIR).join(&ts)
 }

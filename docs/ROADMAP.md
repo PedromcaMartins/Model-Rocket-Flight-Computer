@@ -157,7 +157,7 @@ Architectural role:
 - Scripted scenario with timed trigger events from compile-time config struct.
 - Minimal read-only TUI: live physics state (altitude, velocity, acceleration, sim time), actuator state (LEDs, deployment), config summary.
 - tracing initialisation (console + file sink), panic hook.
-34'
+
 Out of scope for M2.2:
 - GS interaction (`sim-gs.sock`, lifecycle, config handshake) — see M2.4+ / M3.2+.
 - Two-phase lifecycle — binary runs physics on launch; Ctrl-C to exit.
@@ -166,18 +166,53 @@ Out of scope for M2.2:
 
 Physics scope: parabolic 1D trajectory (motor burn → coast → apogee → descent). Sufficient to exercise the full FC FSM.
 
-**Status:** Ready for implementation.
+**Status:** Done.
 
-### M2.3 — Simulator 3D physics enhancement
+### M2.3 — Simulator 3D physics (spatial crate + kinematic attitude)
 
-Enhance the physics engine from 1D to 3D.
+Enhance the physics engine from 1D to 3D using the new `code/spatial/` crate
+for type-safe coordinate frame conversions. Frame conversions run on the host
+only — the FC receives sensor data in its native wire format.
+
+**New crate:** `code/spatial/` — wraps sguaba, defines `LaunchNed` and `RocketFrd`
+frames, provides conversion functions between spatial types and proto wire types.
+See `code/simulator/spec.md §2.5`. Depends on nalgebra 0.34 + uom 0.38 (alongside
+proto's nalgebra 0.33 + uom 0.37).
+
+**3D physics scope:**
+- Launch position, inclination and azimuth.
+- Multi-axis force composition: gravity (NED), thrust (RocketFrd → NED via attitude),
+  drag (RocketFrd → NED), recovery (NED, opposing velocity).
+- **Kinematic attitude** — nose aligns with velocity direction via
+  `UnitQuaternion::rotation_between`. No rotational dynamics.
+- 3D position/velocity/acceleration state in `LaunchNed` frame.
+- Attitude (yaw/pitch/roll) for TUI display and IMU output.
+- Ground contact check uses NED vertical coordinate.
+
+**Sensor output changes (PhysicsState → Proto conversions):**
+- GPS: NED position → ECEF → WGS84 via `FrameConversions::ned_to_gps`.
+- IMU: body-frame acceleration (rotated from NED) + angular velocity.
+- Altimeter: altitude = launchpad MSL − NED down component.
+
+**TUI update:** Physics panel adds downrange distance, bearing, velocity magnitude,
+attitude (yaw/pitch/roll).
+
+**Status:** Not started.
+
+### Full 6-DOF rotational dynamics (deferred)
+
+Replace kinematic attitude with full rotational dynamics:
 
 Scope:
-- Launch position, inclination and azimuth.
-- Multi-axis force composition (thrust vector, gravity, drag).
-- Attitude / orientation state integration.
+- Rocket moment of inertia (MOI) about each axis.
+- Aerodynamic moments: center-of-pressure vs. center-of-gravity offset.
+- Thrust misalignment torque during motor burn.
+- Angular acceleration → angular velocity → attitude integration.
+- Fin-based passive stability model (restoring moment proportional to angle of attack).
 
-**Status:** Deferred.
+Config additions: MOI tensor, CP location, CG location, fin geometry.
+
+**Status:** Deferred — building on spatial crate from M2.3.
 
 ### M2.4 — Simulator config, lifecycle & interactive TUI
 
@@ -199,7 +234,7 @@ Scope:
 
 ### M3.1 — GS backend: REST API + storage (FC-facing)
 
-Crate `code/ground-station-backend/`.
+Total rewrite crate `code/ground-station-backend/`.
 
 Architectural role:
 - Connects to FC on `fc-gs.sock` (telemetry subscriber, command issuer).
@@ -207,8 +242,17 @@ Architectural role:
 - Exposes REST/JSON API consumed exclusively by the frontend — GS frontend never speaks postcard-rpc.
 - Independent of the simulator for its core function: operates on FC telemetry alone.
 
+Cleanup before building:
+- Remove outdated code `code/ground-station-backend/` — its `PostcardClient` and `postcard_server` are superseded by `proto::PostcardClient` + `proto::transport::thread`.
+- `PostcardClient::try_new_raw_nusb` (USB serial) needs a new home if still needed.
+
 Simulator integration deferrred:
 - `sim-gs.sock` connection (lifecycle, config-hash, manual triggers) postponed to M3.3+.
+
+Config convention cleanup (see `AGENTS.md §6`):
+- Convert `RESTApiConfig`, `LocalPostcardConfig` to unit structs with `pub const` values.
+- Extract `LoggingConfig` constant fields into a separate unit struct; keep only runtime-timestamp fields in `LoggingConfig`.
+- Update call sites.
 
 **Status:** Blocked — requires M2 running.
 
@@ -258,7 +302,8 @@ Architectural role of `xtask` in HOST:
 | M1.3 | Task lifecycle separation: `run_flight_computer` + cooperative storage | `spec.md §6.6` + `flight-computer` tasks | Done |
 | M2.1 | `flight-computer-host` binary | `flight-computer-host/src/main.rs` + `dispatch.rs` + `config.rs` | Done |
 | M2.2 | Simulator binary (MVP) | `code/simulator/` — physics + FC client + scripted + minimal TUI | Ready |
-| M2.3 | Simulator 3D physics | — | Deferred |
+| M2.3 | Simulator 3D physics (spatial crate + kinematic attitude) | `code/spatial/` crate + `code/simulator/` physics | Not started |
+| M2.3b | Full 6-DOF rotational dynamics | — | Deferred |
 | M2.4 | Simulator config, lifecycle & interactive TUI | — | Deferred |
 | M3.1 | GS backend: REST API + storage (FC-facing) | Spec | Blocked (M2) |
 | M3.2 | GS frontend TUI | Spec | Blocked (M3.1 REST contract) |
@@ -280,7 +325,8 @@ Architectural role of `xtask` in HOST:
           ↓
 [M2.2] Simulator binary MVP ── physics + FC client + scripted + minimal TUI
           ↓
-          ├── [M2.3] 3D physics enhancement (deferred)
+          ├── [M2.3] Spatial crate + 3D physics ── kinematic attitude
+          ├── [M2.3b] Full 6-DOF rotational dynamics (deferred)
           ├── [M2.4] Config, lifecycle & interactive TUI (deferred)
           ↓
 [M3.1] GS backend (FC-facing)
@@ -307,11 +353,12 @@ Architectural role of `xtask` in HOST:
 
 ### Milestone 2 — Independent binaries (FC-host + Simulator)
 - [X] M2.1 — `flight-computer-host` binary
-- [ ] M2.2 — Simulator binary (MVP)
-- [ ] M2.3 — Simulator 3D physics
+- [X] M2.2 — Simulator binary (MVP)
+- [ ] M2.3 — Simulator 3D physics (spatial crate + kinematic attitude)
+- [ ] M2.3b — Full 6-DOF rotational dynamics (deferred)
 - [ ] M2.4 — Simulator config, lifecycle & interactive TUI
 
-**M2 progress:** 1 / 4 (25%)
+**M2 progress:** 2 / 5 (40%)
 
 ### Milestone 3 — Ground station (GS backend + GS frontend + sim integration)
 - [ ] M3.1 — GS backend: REST API + storage (FC-facing)
@@ -327,7 +374,7 @@ Architectural role of `xtask` in HOST:
 
 ---
 
-**Overall progress:** 3 / 11 tasks (27%)
+**Overall progress:** 4 / 12 tasks (33%)
 
 ---
 

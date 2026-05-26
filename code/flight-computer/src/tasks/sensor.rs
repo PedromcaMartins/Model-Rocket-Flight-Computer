@@ -1,4 +1,4 @@
-use crate::log::{debug, error};
+use crate::log::{debug, error, warn};
 use embassy_futures::join::join;
 use embassy_time::with_timeout;
 
@@ -13,20 +13,20 @@ where
     let mut sensor_ticker = sensor.ticker();
 
     loop {
-        let timeout = S::TICK_INTERVAL + S::TICK_INTERVAL / 2;
+        let timeout = S::TICK_INTERVAL * 2;
         let ((), data) = join(
             sensor_ticker.next(),
             with_timeout(timeout, sensor.parse_new_data()),
         ).await;
 
-        led.off().await.unwrap_or_else(|e| error!("{}: Status Led error: {:?}", S::NAME, e));
+        led.off().await.unwrap_or_else(|e| warn!("{}: Status Led error: {:?}", S::NAME, e));
 
         match data {
             Err(_) => error!("{}: Timed out reading sensor data", S::NAME),
             Ok(Err(_)) => error!("{}: Failed to parse data", S::NAME),
             Ok(Ok(msg)) => {
                 debug!("{}: Parsed new data", S::NAME);
-                led.on().await.unwrap_or_else(|e| error!("{}: Status Led error: {:?}", S::NAME, e));
+                led.on().await.unwrap_or_else(|e| warn!("{}: Status Led error: {:?}", S::NAME, e));
 
                 broadcast_record(msg.into());
             },

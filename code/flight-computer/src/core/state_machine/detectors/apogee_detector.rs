@@ -4,7 +4,7 @@ use proto::sensor_data::{Altitude, Time, Velocity};
 use proto::uom::si::time::microsecond;
 
 use crate::config::ApogeeDetectorConfig;
-use crate::log::error;
+use crate::log::warn;
 use crate::sync::LATEST_ALTITUDE_SIGNAL;
 
 pub struct ApogeeDetector {
@@ -67,12 +67,12 @@ impl ApogeeDetector {
 
     pub async fn await_apogee(&mut self) -> Altitude {
         let mut ticker = Ticker::every(ApogeeDetectorConfig::DETECTOR_TICK_INTERVAL);
-        let timeout = ApogeeDetectorConfig::DETECTOR_TICK_INTERVAL / 2;
+        let timeout = ApogeeDetectorConfig::DATA_WAIT_TIMEOUT;
 
         loop {
             ticker.next().await;
             if with_timeout(timeout, self.wait_new_data_and_update_buffers()).await.is_err() {
-                error!("ApogeeDetector: Timed out waiting for new altitude data");
+                warn!("ApogeeDetector: Timed out waiting for new altitude data");
                 continue;
             }
 

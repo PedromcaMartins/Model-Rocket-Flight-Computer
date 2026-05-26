@@ -1,40 +1,42 @@
-# simulator — detailed design (M2.2 MVP)
+# simulator — detailed design
 
 Crate-level detailed design for the standalone simulator binary. Architectural
 constraints (the FC ↔ simulator interface) live in `docs/software/spec.md`; this
-document covers the crate's internal design and is updated on every change.
+document covers the crate's internal architecture.
 
 > **Living document.** Update this spec in the same change that alters the
-> design. Drift is a bug (see `AGENTS.md §1`). Record scope/decision changes in
-> §11.
+> design. Drift is a bug (see `AGENTS.md §1`).
 
 ---
 
 ## 1. Scope
 
-M2.2 delivers the simulator as an independent process that closes the
-sensor → FC FSM → deployment loop over postcard-rpc, with no GS process present.
+The simulator is an independent process that closes the sensor → FC FSM →
+deployment loop over postcard-rpc, with no ground-station process present.
 
 **In scope**
 
 - postcard-rpc **client** connecting to the FC-host **server** on `fc-sim.sock`.
-- 1D parabolic physics (motor burn → coast → apogee → descent → landing).
-- Scripted scenario from a compile-time `pub const` config struct.
-- Minimal **read-only** ratatui TUI.
+- 3D physics (kinematic attitude, multi-axis forces, drag) using the `spatial` crate for coordinate frame safety.
+- Scripted scenario from a compile-time config struct.
+- Read-only ratatui TUI.
 - Structured tracing (per-level JSON + stdout) and a panic hook.
 - Graceful shutdown on Ctrl-C.
 - Two binaries — `host` (interprocess socket) and `pil` (USB) — over one shared
   library.
 
-**Out of scope** (deferred — see §11 and `docs/ROADMAP.md`)
+**Out of scope**
 
-| Deferred | To |
+| Deferred | Reference |
 |---|---|
-| `sim-gs.sock` server, GS lifecycle/trigger Endpoints, config-hash handshake | M3.3 |
-| Two-phase Setup→Runtime lifecycle, Restart | M2.4 |
-| Config from TOML file + validation + hashing | M2.4 |
-| Interactive (keyboard) TUI controls | M2.4 |
-| 3D physics (inclination, azimuth, attitude) | M2.3 |
+| `sim-gs.sock` server, GS lifecycle / trigger endpoints, config-hash handshake | `docs/ROADMAP.md`, `proto/` |
+| Two-phase Setup→Runtime lifecycle, Restart | `docs/ROADMAP.md` |
+| Config from TOML file + validation + hashing | `docs/ROADMAP.md` |
+| Interactive (keyboard) TUI controls | `docs/ROADMAP.md`, crate `README.md` |
+| Full 6-DOF rotational dynamics (angular inertia, aerodynamic moments, thrust torque) | `docs/ROADMAP.md` |
+
+See `docs/ROADMAP.md` for the full project plan and `README.md` for
+crate-specific deferred features.
 
 ---
 
@@ -47,250 +49,228 @@ client transport. Everything downstream of the client is transport-agnostic.
 ```
 code/simulator/
 ├── spec.md                  ← this document
-├── README.md                ← brief overview
+├── README.md                ← crate overview
 ├── src/
-│   ├── lib.rs               ← run_simulator(client, cancel) + module decls
-│   ├── config.rs            ← pub const SIM_CONFIG: SimulatorConfig
+│   ├── lib.rs               ← run_simulator(client, cancel, tui_cancel) + module decls
+│   ├── config.rs            ← SimulatorConfig (physics) + Config (infrastructure)
+│   ├── connect.rs           ← transport connect with exponential backoff
+│   ├── flight_computer.rs   ← publish sensor topics / subscribe actuator topics + FcCommand
 │   ├── logging.rs           ← per-level JSON + stdout + panic hook
-│   ├── types.rs             ← TriggerEvent, SimActuatorData, ActiveEventSummary
-│   ├── fc_client.rs         ← publish sensor Topics / subscribe actuator Topics
-│   ├── scripted.rs          ← timed TriggerEvent emitter
-│   ├── tui.rs               ← read-only ratatui view
-│   └── physics/
-│       ├── mod.rs
-│       ├── engine.rs        ← integration + force composition
-│       ├── state.rs         ← PhysicsState + From<PhysicsState> for sensors
-│       └── events.rs        ← ActiveCommand (force events)
+│   ├── scripted.rs          ← timed script: arm → wait → ignite
+│   ├── types.rs             ← domain types (ForceEvent, FcCommand, shared snapshots)
+│   ├── physics/
+│   │   ├── mod.rs           ← run_physics_loop: timing + integration
+│   │   ├── engine.rs        ← PhysicsEngine (state machine + force integration)
+│   │   └── state.rs         ← PhysicsState + From<> sensor conversions
+│   └── tui/                 ← read-only ratatui TUI
+│       ├── mod.rs           ← blocking bridge + event loop
+│       ├── render.rs        ← layout and panel rendering
+│       ├── actuators.rs     ← LED status display
+│       └── logs.rs          ← colorized log viewer
 └── src/bin/
-    ├── host.rs              ← interprocess Stream → HostClient on fc-sim.sock
-    └── pil.rs               ← HostClient::try_new_raw_nusb (USB)
+    ├── host.rs              ← interprocess socket → connect_with_retry → run_simulator
+    └── pil.rs               ← USB (deferred)
 ```
+
+### 2.5 — The `spatial` crate (host-side frame conversions)
+
+A new workspace member at `code/spatial/` wraps [`sguaba`](https://docs.rs/sguaba/latest/sguaba/)
+to provide type-safe reference frame conversions. It is used **only** by host-side
+crates (simulator, ground-station) — never by `proto` or the FC library.
+
+```
+code/spatial/
+├── Cargo.toml
+├── README.md
+└── src/
+    ├── lib.rs        — re-exports sguaba, nalgebra, uom, serde
+    ├── frames.rs     — system!(struct LaunchNed using NED)
+                        system!(struct RocketFrd using FRD)
+                        type aliases: NedPosition, NedVelocity, etc.
+    └── convert.rs    — FrameConversions: NED↔WGS84, NED↔ECEF, body-frame rotation
+                        — converts spatial types (nalgebra 0.34, uom 0.38) to
+                          proto wire types (nalgebra 0.33, uom 0.37)
+                        — single unsafe call site: RigidBodyTransform::ecef_to_ned_at
+```
+
+**Dependency story.** Two independent nalgebra+uom versions coexist:
+
+| Layer | nalgebra | uom | Used by |
+|---|---|---|---|
+| `spatial` / `sguaba` | 0.34 | 0.38 | Host-side: sim, GS, any frame-conversion code |
+| `proto` / `flight-computer` | 0.33 | 0.37 | FC firmware, wire format (no_std) |
+
+The `spatial` crate provides explicit per-field conversion functions between the two.
+No `From` blanket impls across crate versions.
+
+**Frame definitions:**
+- `LaunchNed` — NED (North-East-Down) tangent plane at the launchpad. The principal
+  simulation frame. Origin is the launchpad position.
+- `RocketFrd` — FRD (Front-Right-Down) body frame. +Front is the rocket nose,
+  +Right is starboard, +Down is through the belly.
+
+**FrameConversions** pre-computes the `RigidBodyTransform::ecef_to_ned_at` for the
+launchpad WGS84 position. Key methods:
+
+| Method | Direction | Purpose |
+|---|---|---|
+| `ned_to_gps` | Spatial → Proto | Simulator: NED position → GPS lat/lon |
+| `ned_to_altitude` | Spatial → Proto | Simulator: NED down → MSL altitude |
+| `ned_accel_to_body` | Spatial → Proto | Simulator: NED acceleration → body-frame IMU |
+| `gps_to_ned` | Proto → Spatial | GS: received GPS → NED offset from launchpad |
 
 `lib.rs` exposes a single transport-generic entry point:
 
 ```rust
-pub async fn run_simulator(client: PostcardClient, cancel: CancellationToken);
+pub async fn run_simulator(client: PostcardClient, cancel: CancellationToken, tui_cancel: CancellationToken);
 ```
 
 Both binaries build the `PostcardClient`, install logging, then call
 `run_simulator`. The library never knows which transport it runs over.
 
-**Reuse / removal.** Port `physics/{engine,state,events}` from the existing code
-(integration math, force model, `From<PhysicsState>` sensor conversions are
-correct and kept). Delete the channel-based `api/`, `runtime/`,
-`scripted_scenario/` modules and the in-process `simulator_loop` — they were the
-preliminary in-process design and are superseded by the postcard-rpc boundary.
+**Config convention.** Two structs by design:
+
+- `SimulatorConfig` — physics parameters (fn getters, const-first; `fn` only
+  when const arithmetic is impossible for uom types, never takes `self`).
+- `Config` — infrastructure parameters (plain `pub const`).
 
 ---
 
 ## 3. Transport — simulator is the client
 
-Per `docs/ROADMAP.md` and `flight-computer-host/src/main.rs`, the **FC-host
-binds and accepts** on `fc-sim.sock`; the **simulator connects as the
-postcard-rpc client**.
+Per `docs/software/spec.md`, the **FC-host binds and accepts** on `fc-sim.sock`;
+the **simulator connects as the postcard-rpc client**.
 
 | Binary | Transport | Construction |
 |---|---|---|
-| `host` | interprocess local socket `fc-sim.sock` | connect a `Stream`, wrap in a client wire, build `HostClient` |
-| `pil`  | USB | `HostClient::try_new_raw_nusb(..)` — mirror `ground-station-backend/src/bin/serial/main.rs` |
-
-A thin `PostcardClient` wrapper (modelled on
-`ground-station-backend/src/postcard_client.rs`) provides typed
-`publish_sim_*` / `subscribe_sim_*` methods over `HostClient<WireError>`.
-
-> **Open design item — client-side IPC wire.** `proto::ipc_adapter` currently
-> provides only the **server** side (`InterprocessWireTx/Rx`,
-> `interprocess_wire_from_stream`) used by FC-host. The `host` binary needs the
-> **client** counterpart: a `HostClient` constructed over a connected
-> interprocess `Stream` (length-prefixed framing identical to the server, a
-> spawned RX pump, `WireError` error path). This adapter does not exist yet —
-> it must be added (likely in `proto::ipc_adapter` behind `ipc-adapter`) before
-> the `host` binary can connect. The `pil` path is unblocked (USB constructor
-> exists). Tracked in §11.
+| `host` | interprocess local socket `fc-sim.sock` | connect a stream, wrap in a client wire, build `PostcardClient` |
+| `pil`  | USB | `PostcardClient::try_new_raw_nusb(..)` — deferred |
 
 ---
 
-## 4. Wire contract (from `proto`, `simulator-endpoints`)
+## 4. Wire contract
 
-The simulator **publishes** `TOPICS_SIM_IN_LIST` (client → server) and
-**subscribes** `TOPICS_SIM_OUT_LIST` (server → client). Verified against
-`code/proto/src/lib.rs`.
+The simulator publishes sensor topics (`TOPICS_SIM_IN_LIST` in `proto`) and
+subscribes actuator and flight-state topics (`TOPICS_SIM_OUT_LIST` +
+`SimFlightStateTopic`; canonical list in `proto/src/lib.rs`).
 
-**Published by simulator (sensors / arming):**
+Sensor messages are derived from `PhysicsState` via `From<PhysicsState>`.
+Actuator status and LED states are aggregated into a shared snapshot for the TUI.
 
-| Topic | Message | Source |
-|---|---|---|
-| `SimAltimeterTopic` | `AltimeterData` | `From<PhysicsState>` |
-| `SimGpsTopic` | `GpsData` | `From<PhysicsState>` |
-| `SimImuTopic` | `ImuData` | `From<PhysicsState>` |
-| `SimArmTopic` | `ActuatorStatus` | scripted `Arm` trigger |
-
-**Subscribed by simulator (FC actuator outputs):**
-
-| Topic | Message | Effect |
-|---|---|---|
-| `SimDeploymentTopic` | `ActuatorStatus` | `Active` → recovery force event into physics |
-| `SimPostcardLedTopic` … `SimGroundStationLedTopic` (8 LEDs) | `LedStatus` | display only (TUI) |
-
-`AltimeterData`/`GpsData`/`ImuData` conversions and `ActuatorStatus {Active,
-Inactive}` / `LedStatus {On, Off}` already exist in `proto` and `physics/state.rs`.
+**FlightState feedback** creates a control loop: scripted waits for
+`FlightState::Armed` from the FC before triggering ignition.
 
 ---
 
 ## 5. Closed-loop event flow
 
 ```
-scripted (compile-time schedule)        FC-host (postcard-rpc server)
-        │                                        ▲   │
-        │ TriggerEvent                           │   │ SimDeploymentTopic
-        ▼                                  sensor│   ▼ Sim*LedTopic
-  ┌───────────────┐  mpsc<TriggerEvent>  ┌───────┴──────────┐
-  │ scripted task │ ───────────────────▶ │  fc_client task  │
-  └───────────────┘                      │  publish/subscribe│
-        │                                └───────┬──────────┘
-        │ Ignition/Deploy                        │ Deploy (from SimDeploymentTopic)
-        ▼                                        ▼
-  ┌──────────────────────────────────────────────────────┐
-  │ physics engine  (step @ physics_time_step)            │
-  │  watch<PhysicsState>  watch<Vec<ActiveEventSummary>>  │
-  └───────────────┬──────────────────────┬───────────────┘
-                  ▼                       ▼
-          fc_client (publish      TUI (read-only)
-          @ data_acquisition)  +  watch<Vec<SimActuatorData>>
+┌──────────────┐
+│   scripted   │  — one-shot, emits domain commands/triggers
+└──┬───────┬───┘
+   │       │
+   │  FcCommand::Arm       ForceEvent::MotorThrust
+   │       │
+   ▼       ▼
+┌────────────────────────┐          ┌───────────────────────────┐
+│    fc_client task      │◀─subscribe─  FC-host (postcard-rpc) │
+│  (publish / subscribe) │──publish─▶     (flight computer)    │
+└─────────┬──────────────┘          └───────────────────────────┘
+          │
+          │   ForceEvent::Recovery  (when FC fires deployment)
+          │
+          ▼
+┌──────────────────┐
+│  physics engine  │  — 1 ms step, publishes PhysicsState @ 20 ms
+└────────┬─────────┘
+         │
+         ├── PhysicsState (watch) → fc_client publishes sensors
+         ├── PhysicsState (watch) → TUI displays state
+         ├── ActiveForceEvent (ArcSwap) → TUI displays active forces
+         │
+         │   ArcSwap<SimActuatorSnapshot>
+         ├── fc_client ← (actuator subscriptions) → TUI reads for display
+         │
+         │   FlightState (watch)
+         └── fc_client ← SimFlightStateTopic → scripted waits for arm
 ```
 
-**`fc_client` is the routing hub for all trigger events.** `mpsc<TriggerEvent>`
-flows scripted → fc_client; fc_client routes by variant:
+**3D force composition.** All forces are expressed as 3-vectors in the `LaunchNed`
+frame. Gravity is `[0, 0, m·g]`. Thrust and drag are computed in `RocketFrd` and
+rotated to `LaunchNed` using the kinematic attitude quaternion. Recovery drag
+opposes velocity in NED. See `physics/engine.rs`.
 
-- `Ignition` / `Deploy` → forwarded into a second `mpsc` into the physics
-  engine (as force events: thrust or recovery force).
-- `Arm` → fc_client publishes `SimArmTopic(ActuatorStatus::Active)` on the
-  wire to FC. Not a physics force.
-
-The deployment loop is closed through fc_client: physics publishes sensors →
-FC FSM decides to deploy → FC publishes `SimDeploymentTopic(Active)` →
-fc_client receives it (via subscription) → sends `TriggerEvent::Deploy` into
-the physics mpsc → recovery force event applied.
-
-Physics is fully decoupled from the wire — it only ever receives force triggers
-(`Ignition`, `Deploy`), never knows about postcard topics or arming signals.
+**Separation principle.** Scripted speaks only domain types (`FcCommand`,
+`ForceEvent`). It never touches the postcard-rpc wire. fc_client translates
+between domain types and postcard-rpc topics. Physics knows only
+`ForceEvent` triggers and publishes `PhysicsState` via watch — it has no
+knowledge of topics, the wire, or FC commands.
 
 ---
 
-## 6. Shared state — parallel watch channels (no monolithic struct)
+## 6. Shared state
 
-Each producer task owns exactly the channels it writes; readers subscribe.
-No `Arc<RwLock<…>>`, no single `SimState` god-struct.
+Five channels and one shared atomic store connect the tasks. Each producer owns
+the state it writes; readers subscribe or load lock-free.
 
-| Channel | Writer | Reader |
+| Data | Producer | Consumer(s) |
 |---|---|---|
-| `watch::Sender<PhysicsState>` | physics | fc_client, scripted, TUI |
-| `watch::Sender<Vec<ActiveEventSummary>>` | physics | TUI |
-| `watch::Sender<Vec<SimActuatorData>>` | fc_client | TUI |
-| `mpsc::Sender<TriggerEvent>` | scripted | fc_client (routing hub) |
-| `mpsc::Sender<TriggerEvent>` (physics-only) | fc_client | physics engine |
+| `PhysicsState` (sensor snapshot) | physics engine (every 20 ms) | fc_client → publish, TUI → display |
+| `FlightState` (FC status) | fc_client (from FC via `SimFlightStateTopic`) | scripted (arm confirmation) |
+| `FcCommand` | scripted | fc_client (translate to `SimArmTopic`) |
+| `ForceEvent` (physics triggers) | scripted + fc_client | physics engine (integrate) |
+| `SimActuatorSnapshot` (LED + deployment) | fc_client (from FC subscriptions) | TUI (lock-free, ArcSwap) |
+| Active force events | physics engine (derived each step) | TUI (lock-free, ArcSwap) |
 
-`fc_client` is the sole consumer of the scripted `mpsc`. It routes Arm → wire
-publish; Ignition/Deploy → physics `mpsc`. fc_client also sends Deploy into
-the physics `mpsc` when `SimDeploymentTopic(Active)` arrives from FC.
-
-`PhysicsState` is the single source of truth for sensors; sensor messages are
-derived on demand via `From<PhysicsState>`. `PhysicsState.time` carries sim time
-— scripted/TUI read it from the `watch`; no separate time channel.
+No monolithic `SimState` — each channel carries exactly what its consumer needs.
+The TUI reads three sources (PhysicsState, active forces, actuator snapshot)
+independently.
 
 ---
 
-## 7. Types (`types.rs`)
+## 7. Two rates
 
-```rust
-enum TriggerEvent { Ignition, Arm, Deploy }   // Deploy also arrives from FC
-
-enum SimActuatorData {
-    Deployment(ActuatorStatus),
-    PostcardLed(LedStatus),
-    AltimeterLed(LedStatus),
-    GpsLed(LedStatus),
-    ImuLed(LedStatus),
-    ArmLed(LedStatus),
-    FileSystemLed(LedStatus),
-    DeploymentLed(LedStatus),
-    GroundStationLed(LedStatus),
-}
-
-struct ActiveEventSummary { /* kind + remaining duration, for TUI */ }
-```
-
-Descriptive names only — no `fn_*`-style prefixes (per task feedback).
+Physics integrates at `PHYSICS_TIME_STEP` (1 ms). Sensor messages are published
+to the FC at `DATA_ACQUISITION_INTERVAL` (20 ms). A compile-time assertion
+enforces that acquisition is no faster than the physics step.
 
 ---
 
-## 8. Two rates
+## 8. Tasks, cancellation, resilience
 
-`config.rs` holds two durations as `pub const`:
+`run_simulator` spawns one task per domain. Two cancellation tokens control
+shutdown:
 
-- `PHYSICS_TIME_STEP` (e.g. 1 ms) — engine integration step.
-- `DATA_ACQUISITION_INTERVAL` (e.g. 20 ms) — sensor publish cadence.
+- **`cancel`** — stops physics, fc_client, scripted. Fired by Ctrl-C or FC
+  disconnect cascade.
+- **`tui_cancel`** — stops the TUI event loop. Fired by user `q`/Esc or Ctrl-C.
 
-The engine integrates every step; sensors are published only on the acquisition
-tick. A **compile-time** assertion enforces
-`DATA_ACQUISITION_INTERVAL >= PHYSICS_TIME_STEP`
-(`const { assert!(..) }`), since publishing must be no faster than the sim step.
+**Three shutdown paths:**
 
----
-
-## 9. Tasks, cancellation, resilience
-
-`run_simulator` spawns one task per domain with `tokio::spawn` (not a single
-`select!`), each holding a clone of a `tokio_util::sync::CancellationToken`:
-
-| Task | Lifetime | Notes |
-|---|---|---|
-| physics loop | spawned, cancellable | step @ `PHYSICS_TIME_STEP`; publishes state @ `DATA_ACQUISITION_INTERVAL` |
-| fc_client | spawned, cancellable | publish sensors; subscribe actuator/LED topics |
-| scripted | spawned, cancellable | sleeps to scheduled offsets, emits `TriggerEvent` |
-| TUI | spawned, cancellable | restores terminal on cancel |
-
-**Shutdown.** Ctrl-C → `cancel.cancel()` → each task observes
-`cancel.cancelled()` at the top of its loop, cleans up (TUI restores terminal,
-client flushes), then exits; `main` joins handles and exits 0.
-
-**Resilience (per task decision).** The `fc-sim` pipe is **critical** — if it
-breaks (`ConnectionClosed`), the simulator **panics**: FC ↔ Sim desync is
-unrecoverable in the MVP. The panic hook records the cause to the JSON logs
-before exit. (Reconnect/restart handling is M2.4.)
-
-> **Cross-crate dependency.** `flight-computer/src/tasks/simulation.rs`
-> `postcard_sim_task` must likewise **panic on error** rather than log-and-retry,
-> so both ends fail fast on desync. Tracked in §11; not part of this crate.
+1. **User quits TUI** (q/Esc/Ctrl-C in TUI) → `tui_cancel` fires → TUI returns
+   → `run_simulator` cascades to `cancel` → physics/fc_client/scripted stop →
+   exit 0.
+2. **Ctrl-C while TUI not focused** → handler fires both tokens → `tui_cancel`
+   wins the biased select → cascade to `cancel` → all tasks stop.
+3. **FC disconnects** → fc_client exits → `cancel` fires (physics/scripted
+   stop) but `tui_cancel` is **not** fired. TUI keeps rendering with a
+   "FC DISCONNECTED" banner until the user quits — this is **degraded mode**.
 
 ---
 
-## 10. Logging
+## 9. Logging
 
-Mirror `flight-computer-host/src/logging.rs` exactly for cross-binary
-consistency: non-blocking `tracing_appender` writing per-level JSON files
-(`info/debug/warn/error/trace.json` + combined `log.json`) under
-`logs/<timestamp>/`, plus a stdout layer, plus `install_panic_hook()` that
-emits `tracing::error!(%info, "process panicked")` before the default hook.
-Both binaries call `install_panic_hook()` then `init_tracing()` first thing.
+Per-level JSON files + stdout, mirroring `flight-computer-host/src/logging.rs`,
+with a panic hook that emits a tracing error before the default handler.
 
 ---
 
-## 11. Status & change log
+## 10. Connect retry
 
-| Item | Status |
-|---|---|
-| Spec authored | Done |
-| Client-side IPC wire adapter in `proto::ipc_adapter` (§3) | **Open — blocks `host` binary** |
-| lib + `host`/`pil` bin skeleton | Not started |
-| Port `physics/*`, delete `api`/`runtime`/`scripted_scenario` | Not started |
-| `fc_client`, `scripted`, `tui`, `types`, `logging`, `config` | Not started |
-| `flight-computer` `postcard_sim_task` panic-on-error (§9, cross-crate) | Not started |
+Both binaries retry their transport connect with exponential backoff so the
+simulator can start before its peer (FC host or MCU). The retry loop checks
+cancellation before every attempt and wraps each connect in a timeout.
 
-**Decisions captured from planning (`task.md`):** clean rewrite alongside
-postcard-rpc; compile-time `pub const` config (no CLI/TOML in MVP); lib + two
-bins differing only in transport; two explicit rates with compile-time
-assertion; parallel `watch` channels, no monolithic `SimState`; `From<PhysicsState>`
-for sensors (no `SharedSensors`); `SimActuatorData` enum for actuator state;
-`tokio::spawn` per domain + `CancellationToken`; Ctrl-C graceful shutdown;
-`fc-sim` break → panic both ends; descriptive names (no `fn_*`).
+When launched via `cargo xtask host`, the retry almost always succeeds on the
+first attempt. The backoff is a safety net for standalone runs and USB
+enumeration delays.

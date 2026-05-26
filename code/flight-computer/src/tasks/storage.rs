@@ -1,7 +1,8 @@
 use embassy_futures::select::{Either4, select4};
 use embassy_time::{Timer, Ticker, with_timeout};
 use crate::log::{trace, error, info, warn};
-use proto::{RecordData, flight_state::FlightState};
+use proto::wire::RecordData;
+use proto::flight_state::FlightState;
 use core::{future::Future, pin::Pin, task::Poll};
 
 use crate::{config::StorageConfig, core::storage::Storage, interfaces::{FileSystem, Led}, sync::{RECORD_TO_STORAGE_CHANNEL, FLIGHT_STATE_WATCH}};
@@ -32,7 +33,7 @@ where
             &mut hold_timer,
         ).await;
 
-        led.on().await.unwrap_or_else(|e| error!("Storage: Status Led error: {:?}", e));
+        led.on().await.unwrap_or_else(|e| warn!("Storage: Status Led error: {:?}", e));
 
         match result {
             Either4::First(record) => {
@@ -64,12 +65,12 @@ where
                 }
                 info!("Storage: Exiting");
 
-                led.off().await.unwrap_or_else(|e| error!("Storage: Status Led error: {:?}", e));
+                led.off().await.unwrap_or_else(|e| warn!("Storage: Status Led error: {:?}", e));
                 return;
             },
         }
 
-        led.off().await.unwrap_or_else(|e| error!("Storage: Status Led error: {:?}", e));
+        led.off().await.unwrap_or_else(|e| warn!("Storage: Status Led error: {:?}", e));
     }
 }
 

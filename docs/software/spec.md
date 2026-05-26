@@ -163,9 +163,10 @@ These properties hold across every component. Each is a deliberate design choice
 | **Production targets have no shutdown path** | A reachable shutdown on prod firmware is a safety regression | Sim/orchestration shutdown logic gated behind `impl_host` / `impl_sim` features; CI verifies |
 | **Sim/HW strictly one-or-the-other** | Hybrid (e.g. real IMU + sim GPS) adds complexity with no current need | Mutually-exclusive feature flags at link time |
 | **FC loop never panics** | A panic mid-flight kills all tasks simultaneously and removes the recovery deployment path. Setup panics (before the loop) are acceptable — a watchdog reset before flight is the correct recovery. | Loop bodies in `tasks/` contain no `unwrap`/`expect`; setup sections before the first `loop {}` may. |
-| **Error channel is logging only** | Peripherals are task-owned; no fallback owner exists to receive a propagated error. | Tasks return `()` or `!`, never `Result`. Error paths call `error!()` and continue. |
+| **Error channel is logging only** | Peripherals are task-owned; no fallback owner exists to receive a propagated error. | Tasks return `()` or `!`, never `Result`. Error paths call `warn!()` or `error!()` and continue. Severity conventions in [`../how-we-work.md#logging-conventions`](../how-we-work.md#logging-conventions). |
 | **GS is simulator-independent** | GS operates on FC telemetry and commands alone; removing the simulator leaves GS fully functional. No GS code path requires the simulator to be present or to have produced data. | GS backend imports no simulator type; `sim-gs.sock` connection is optional from GS's perspective — its absence is a degraded but valid state |
 | **Simulator is GS-independent for physics** | The simulator's physics loop, internal log, and TUI operate without a GS connection. GS connectivity is required only for lifecycle control and config-hash handshake; the absence of GS does not halt or corrupt the sim loop. | Sim TUI provides independent operator access; `sim-gs.sock` connection loss follows the crash policy in §11 |
+| **Domain types vs wire types separated by adapter tasks** | Each subsystem owns its domain types (ForceEvent, FlightState, FSM states). Translation to/from postcard-rpc Topics happens at dedicated adapter tasks, never in domain logic. Keeps physics, FSM, and storage code independent of wire format evolution. | `simulator/fc_client.rs`, `flight-computer/src/tasks/simulation.rs`, `ground-station-backend/src/postcard_client.rs` — each bridges domain ↔ wire |
 
 ---
 
@@ -812,6 +813,10 @@ This is **separate from** FC storage logging (`Record`s to flash / SD via `FileS
 - Storage records → post-flight playback via GS.
 - Tracing spans → live diagnosis, panic context, performance profiling.
 
+### 10.6 Log-level conventions
+
+See [`docs/how-we-work.md#logging-conventions`](../how-we-work.md#logging-conventions) for the project-wide severity-level rules. Every `error!`, `warn!`, `info!`, `debug!`, and `trace!` call across the codebase follows that classification.
+
 ---
 
 ## 11. Crash & disconnect policy
@@ -917,7 +922,7 @@ code/
 ## See also
 
 - [`../README.md`](../README.md) — `docs/` scope; architecture vs detailed-design split.
-- [`../how-we-work.md`](../how-we-work.md) — spec / ADR policy and traceability rules.
+- [`../how-we-work.md`](../how-we-work.md) — spec / ADR policy, traceability rules, logging conventions.
 - [`../REQUIREMENTS.md`](../REQUIREMENTS.md) — the requirements (`[SW-*]`) this spec implements.
 - [`../ROADMAP.md`](../ROADMAP.md) — implementation milestones for the binary split.
 - [`../ADR/ADR-001-fc-simulator-postcard-rpc-ipc.md`](../ADR/ADR-001-fc-simulator-postcard-rpc-ipc.md) — *why* postcard-rpc + binary split.

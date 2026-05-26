@@ -1,0 +1,10 @@
+[
+  {
+    "label": "xtask host (SITL)",
+    "command": "cargo",
+    "args": ["run", "--package", "xtask", "--", "host"],
+    "cwd": "${ZED_WORKTREE_ROOT}/code",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  }
+]

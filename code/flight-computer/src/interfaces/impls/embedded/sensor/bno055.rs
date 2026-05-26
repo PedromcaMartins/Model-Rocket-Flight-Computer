@@ -1,13 +1,14 @@
 use core::fmt::Debug;
 
-use bno055::{BNO055OperationMode, BNO055PowerMode, Bno055};
-use embassy_time::{Delay, Instant, Timer};
+use bno055::Bno055;
+use embassy_time::{Delay, Timer};
 use embedded_hal::i2c::{I2c, SevenBitAddress};
 use proto::sensor_data::{Vector3, ImuData};
 use proto::uom::si::{acceleration::meter_per_second_squared, angular_velocity::degree_per_second, magnetic_flux_density::microtesla, thermodynamic_temperature::degree_celsius};
 use proto::sensor_data::{Acceleration, AngularVelocity, MagneticFluxDensity, ThermodynamicTemperature};
 
 use crate::config::DataAcquisitionConfig;
+use crate::config::embedded::Bno055Config;
 use crate::interfaces::Sensor;
 
 pub struct Bno055Device<I, E>
@@ -26,19 +27,19 @@ where
 {
     pub async fn init(mut bno055: Bno055<I>) -> Result<Self, bno055::Error<E>> {
         // The sensor has an initial startup time of 400ms - 650ms during which interaction with it will fail
-        Timer::at(Instant::from_millis(650)).await;
+        Timer::at(Bno055Config::STARTUP_DELAY).await;
         let mut delay = Delay;
 
         bno055.init(&mut delay)?;
 
         // Enable 9-degrees-of-freedom sensor fusion mode with fast magnetometer calibration
-        bno055.set_mode(BNO055OperationMode::NDOF, &mut delay)?;
+        bno055.set_mode(Bno055Config::OPERATION_MODE, &mut delay)?;
 
         // Set power mode to normal
-        bno055.set_power_mode(BNO055PowerMode::NORMAL)?;
+        bno055.set_power_mode(Bno055Config::POWER_MODE)?;
 
         // Enable usage of external crystal
-        bno055.set_external_crystal(true, &mut delay)?;
+        bno055.set_external_crystal(Bno055Config::USE_EXTERNAL_CRYSTAL, &mut delay)?;
 
         Ok(Self {
             bno055,

@@ -14,27 +14,31 @@ where
     LedD: Led,
 {
     async fn await_deployment_system(&mut self) {
+        let mut deploy_attempt = 0u32;
         loop {
+            deploy_attempt += 1;
+            info!("Deploy attempt #{deploy_attempt}: calling deploy()");
             match with_timeout(ArmedConfig::DEPLOY_TIMEOUT, self.deployment_system.deploy()).await {
                 Err(_) => {
-                    error!("Deployment system activation timed out, retrying");
+                    error!("Deploy attempt #{deploy_attempt} deploy() timed out, retrying");
                 },
                 Ok(Err(e)) => {
-                    error!("Deployment system activation failed: {:?}", Debug2Format(&e));
+                    error!("Deploy attempt #{deploy_attempt} deploy() failed: {:?}", Debug2Format(&e));
                 },
                 Ok(Ok(())) => {
+                    info!("Deploy attempt #{deploy_attempt} deploy() Ok, calling verify()");
                     match with_timeout(ArmedConfig::VERIFY_TIMEOUT, self.deployment_system.verify_deployment()).await {
                         Err(_) => {
-                            error!("Deployment system verification timed out, retrying");
+                            error!("Deploy attempt #{deploy_attempt} verify() timed out, retrying");
                         },
                         Ok(Err(e)) => {
-                            error!("Deployment system verification error: {:?}", Debug2Format(&e));
+                            error!("Deploy attempt #{deploy_attempt} verify() error: {:?}", Debug2Format(&e));
                         },
                         Ok(Ok(false)) => {
-                            error!("Deployment system verification failed, retrying");
+                            error!("Deploy attempt #{deploy_attempt} verify() false, retrying");
                         },
                         Ok(Ok(true)) => {
-                            info!("Deployment system activated");
+                            info!("Deploy attempt #{deploy_attempt} verify Ok — deployment confirmed");
                             return;
                         },
                     }

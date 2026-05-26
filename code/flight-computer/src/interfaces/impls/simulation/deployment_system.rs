@@ -2,7 +2,8 @@ use core::num::Wrapping;
 
 use postcard_rpc::server::{AsWireTxErrorKind, Sender as PostcardSender, WireTx, WireTxErrorKind};
 use postcard_rpc::header::VarSeq;
-use proto::{SimDeploymentTopic, actuator_data::ActuatorStatus};
+use proto::wire::SimDeploymentTopic;
+use proto::actuator_data::ActuatorStatus;
 
 use crate::interfaces::DeploymentSystem;
 

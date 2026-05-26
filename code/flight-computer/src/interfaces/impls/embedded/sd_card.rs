@@ -2,6 +2,7 @@ use core::fmt::Debug;
 
 use embedded_sdmmc::{Mode, RawDirectory, RawFile, VolumeManager};
 
+use crate::config::StorageConfig;
 use crate::interfaces::FileSystem;
 
 pub struct DummyTimeSource;
@@ -39,7 +40,7 @@ where
 {
     pub fn init<const ID_OFFSET: u32>(sd_card: D) -> Result<Self, SdCardError<D::Error>> {
         let volume_manager = VolumeManager::new_with_limits(sd_card, DummyTimeSource, ID_OFFSET);
-        let raw_volume = volume_manager.open_raw_volume(embedded_sdmmc::VolumeIdx(0))?;
+        let raw_volume = volume_manager.open_raw_volume(embedded_sdmmc::VolumeIdx(StorageConfig::SD_VOLUME_IDX))?;
         let raw_root_dir = volume_manager.open_root_dir(raw_volume)?;
 
         Ok(Self {

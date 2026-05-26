@@ -1,11 +1,11 @@
 use flight_computer::tasks::postcard::{
     embassy_time_tick_hz_handler, ping_handler, Context,
 };
-use flight_computer::tasks::postcard::simulator::{
+use flight_computer::tasks::simulation::{
     sim_altimeter_update, sim_arming_activate, sim_gps_update, sim_imu_update,
 };
 use postcard_rpc::define_dispatch;
-use proto::{
+use proto::wire::{
     ENDPOINT_LIST, GlobalTickHzEndpoint, PingEndpoint, SimAltimeterTopic,
     SimArmTopic, SimGpsTopic, SimImuTopic, TOPICS_GS_IN_LIST,
     TOPICS_GS_OUT_LIST, TOPICS_SIM_IN_LIST,
@@ -20,7 +20,7 @@ pub(crate) mod sim {
     define_dispatch! {
         app: SimDispatch;
         spawn_fn: tokio_spawn;
-        tx_impl: proto::ipc_adapter::InterprocessWireTx;
+        tx_impl: proto::wire::InterprocessWireTx;
         spawn_impl: ChannelWireSpawn;
         context: Context;
 
@@ -67,7 +67,7 @@ pub(crate) mod gs {
     define_dispatch! {
         app: GsDispatch;
         spawn_fn: tokio_spawn;
-        tx_impl: proto::ipc_adapter::InterprocessWireTx;
+        tx_impl: proto::wire::InterprocessWireTx;
         spawn_impl: ChannelWireSpawn;
         context: Context;
 

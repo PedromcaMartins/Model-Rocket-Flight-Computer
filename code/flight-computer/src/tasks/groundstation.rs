@@ -10,10 +10,9 @@ use embassy_time::with_timeout;
 use postcard_rpc::header::VarSeq;
 use postcard_rpc::server::AsWireTxErrorKind;
 use postcard_rpc::server::{Sender as PostcardSender, WireTx};
-use proto::Record;
-use proto::RecordTopic;
+use proto::wire::{Record, RecordTopic};
 
-use crate::log::{error, warn};
+use crate::log::warn;
 use crate::config::GroundStationConfig;
 use crate::interfaces::Led;
 use crate::sync::ALTIMETER_DATA_TO_GROUNDSTATION_SIGNAL;
@@ -35,7 +34,7 @@ where
             msg,
         ),
     ).await {
-        Err(_) => error!("GroundStation: Timed out sending record to ground station"),
+        Err(_) => warn!("GroundStation: Timed out sending record to ground station"),
         Ok(Err(err)) => warn!("GroundStation: Failed to send record to ground station: {:?}", Debug2Format(&err.as_kind())),
         Ok(Ok(())) => (),
     }

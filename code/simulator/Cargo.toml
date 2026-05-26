@@ -4,9 +4,39 @@ version = "0.0.0"
 publish = false
 edition = "2024"
 
-[dependencies]
-proto = { version = "*", path = "../proto", default-features = false, features = ["log", "timestamp-into-duration", "simulator-endpoints"] }
+[[bin]]
+name = "host"
+path = "src/bin/host.rs"
 
-log = { version = "*" }
-chrono = "0.4.42"
-tokio = { version = "=1.49", features = ["time", "sync", "macros", "rt"] }
+[[bin]]
+name = "pil"
+path = "src/bin/pil.rs"
+
+[lib]
+name = "simulator"
+path = "src/lib.rs"
+
+[dependencies]
+proto = { version = "*", path = "../proto", default-features = false, features = ["client", "transport-ipc"] }
+
+postcard-rpc = { version = "0.11", features = ["use-std"] }
+postcard = { version = "1", features = ["use-std"] }
+serde = { version = "1", default-features = false }
+
+chrono = "0.4"
+tokio = { version = "=1.49", features = ["rt-multi-thread", "time", "sync", "macros", "signal"] }
+tokio-util = { version = "0.7" }
+interprocess = { version = "2.4.2", default-features = false, features = ["tokio"] }
+
+tracing = "0.1"
+tracing-log = "0.2"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+
+ratatui = "0.29"
+crossterm = "0.28"
+scopeguard = "1"
+
+anyhow = "1"
+derive_more = { version = "2", default-features = false, features = ["display"] }
+arc-swap = "1"

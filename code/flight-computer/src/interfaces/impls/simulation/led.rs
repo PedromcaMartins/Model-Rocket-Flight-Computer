@@ -1,7 +1,7 @@
 use core::convert::Infallible;
 use core::num::Wrapping;
 
-use crate::log::error;
+use crate::log::warn;
 use postcard_rpc::{Topic, header::VarSeq, server::{Sender as PostcardSender, WireTx}};
 use proto::actuator_data::LedStatus;
 
@@ -49,7 +49,7 @@ where
         {
             self.seq += 1;
         } else {
-            error!("SimLed: Failed to send led status (Off)");
+            warn!("SimLed: Failed to send led status (Off)");
         }
         Ok(())
     }
@@ -63,7 +63,7 @@ where
         {
             self.seq += 1;
         } else {
-            error!("SimLed: Failed to send led status (On)");
+            warn!("SimLed: Failed to send led status (On)");
         }
         Ok(())
     }

@@ -1,6 +1,7 @@
 use crate::log::warn;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal, watch::Watch};
-use proto::{Record, RecordData, sensor_data::Altitude};
+use proto::wire::{Record, RecordData};
+use proto::sensor_data::Altitude;
 use crate::config::TasksConfig;
 
 pub static LATEST_ALTITUDE_SIGNAL: Signal<CriticalSectionRawMutex, Altitude> = Signal::new();
@@ -38,7 +39,7 @@ mod tests {
     use crate::test_utils::{ms, sensor_data::{random_altimeter_data, random_gps_data, random_imu_data}};
 
     use super::*;
-    use proto::{Record, flight_state::FlightState};
+    use proto::flight_state::FlightState;
 
     #[test_log::test(rstest::rstest)]
     #[async_std::test]

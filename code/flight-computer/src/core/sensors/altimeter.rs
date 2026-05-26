@@ -1,3 +1,4 @@
+use crate::config::AltimeterConfig;
 use proto::uom::si::{length::meter, pressure::pascal};
 use proto::sensor_data::{Altitude, Pressure};
 
@@ -7,7 +8,7 @@ pub fn altitude_from_pressure(pressure: Pressure) -> Altitude {
     use proto::uom::num_traits::Float;
 
     let pressure = pressure.get::<pascal>();
-    let p0 = 101_325.0; // ISA sea level standard pressure in pascal
+    let p0 = AltimeterConfig::REFERENCE_PRESSURE; // ISA sea level standard pressure in pascal
     let exponent = 0.190_284;
     let scale = 44_330.0;
 

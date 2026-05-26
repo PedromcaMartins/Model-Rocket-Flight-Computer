@@ -1,62 +1,87 @@
+use proto::sensor_data::{Altitude, GpsCoordinates, Pressure, ThermodynamicTemperature};
+use proto::uom::si::pressure::pascal;
+use proto::uom::si::thermodynamic_temperature::degree_celsius;
 use tokio::time::Duration;
 
-use proto::sensor_data::{Altitude, GpsCoordinates, Velocity};
-use proto::uom::si::{f32::{Force, Mass, Time}, length::meter, time::second, velocity::meter_per_second, force::newton, mass::gram};
-use tokio::time::{Interval, interval};
+use proto::uom::si::f32::{Acceleration, Force, Mass, Time, Velocity};
+use proto::uom::si::acceleration::meter_per_second_squared;
+use proto::uom::si::force::newton;
+use proto::uom::si::mass::gram;
+use proto::uom::si::length::meter;
+use proto::uom::si::time::second;
+use proto::uom::si::velocity::meter_per_second;
 
-#[derive(Debug)]
-pub struct SimulatorConfig {
-    pub time_step: Time,
-    pub time_step_interval: Interval,
-    pub data_acquisition_interval: Interval,
-
-    pub gravity: Force,
-    pub rocket_mass: Mass,
-
-    pub launchpad_altitude: Altitude,
-    pub launchpad_coordinates: GpsCoordinates,
-
-    pub motor_burn_time: Time,
-    pub motor_avg_thrust: Force,
-
-    pub recovery_response_time: Time,
-    pub recovery_terminal_velocity: Velocity,
-
-    pub landing_altitude: Altitude,
-}
+/// Compile-time simulator configuration.
+pub struct SimulatorConfig;
 
 impl SimulatorConfig {
-    pub const PHYSICS_ENGINE_TIME_STEP: f32 = 0.001;
-    pub const DATA_ACQUISITION_TIME_STEP: f32 = 0.020;
+    // Timing
+    pub const PHYSICS_TIME_STEP_INTERVAL: Duration = Duration::from_millis(1);
+    pub const DATA_ACQUISITION_INTERVAL: Duration = Duration::from_millis(20);
 
-    pub const SIMULATOR_COMMAND_CAPACITY: usize = 1024;
-    pub const FLIGHT_COMPUTER_COMMAND_CAPACITY: usize = 1024;
-    pub const PHYSICS_STATE_CAPACITY: usize = 1024;
+    // Physics
+    pub fn gravity() -> Acceleration { Acceleration::new::<meter_per_second_squared>(9.81) }
+    pub fn rocket_mass() -> Mass { Mass::new::<gram>(232.0) }
 
-    pub const ACTIVATION_DELAY_IGNITION: Duration = Duration::from_secs(5);
-    pub const ACTIVATION_DELAY_ARM: Duration = Duration::from_secs(10);
+    // Motor
+    pub fn motor_avg_thrust() -> Force { Force::new::<newton>(10.4) }
+    pub fn motor_burn_time() -> Time { Time::new::<second>(1.61) }
+
+    // Recovery
+    pub fn recovery_response_time() -> Time { Time::new::<second>(2.0) }
+    pub fn terminal_velocity() -> Velocity { Velocity::new::<meter_per_second>(5.0) }
+
+    // Activation delay
+    pub fn recovery_activation_delay() -> Time { Time::new::<second>(2.0) }
+
+    // Launchpad / landing
+    pub fn launchpad_altitude() -> Altitude { Altitude::new::<meter>(90.0) }
+    pub const LAUNCHPAD_COORDINATES: GpsCoordinates = GpsCoordinates { latitude: 47.397742, longitude: 8.545594 };
+    pub fn touch_down_altitude() -> Altitude { Altitude::new::<meter>(86.0) }
+
+    // Scripted scenario delays (wall-clock)
+    pub const IGNITION_DELAY: Duration = Duration::from_millis(5_000);
+    pub const ARM_DELAY: Duration = Duration::from_millis(5_000);
+    pub const ARM_ACTIVE_DELAY: Duration = Duration::from_millis(500);
+
+    // Environment
+    pub const GPS_FIX_SATELLITES: u8 = 12;
+    pub fn sea_level_pressure() -> Pressure { Pressure::new::<pascal>(101_325.0) }
+    pub fn ambient_temperature() -> ThermodynamicTemperature { ThermodynamicTemperature::new::<degree_celsius>(20.0) }
 }
 
-impl Default for SimulatorConfig {
-    fn default() -> Self {
-        Self {
-            time_step: Time::new::<second>(Self::PHYSICS_ENGINE_TIME_STEP),
-            time_step_interval: interval(Duration::from_secs_f32(Self::PHYSICS_ENGINE_TIME_STEP)),
-            data_acquisition_interval: interval(Duration::from_secs_f32(Self::DATA_ACQUISITION_TIME_STEP)),
+const _: () = assert!(
+    SimulatorConfig::DATA_ACQUISITION_INTERVAL.as_millis() >= SimulatorConfig::PHYSICS_TIME_STEP_INTERVAL.as_millis(),
+    "DATA_ACQUISITION_INTERVAL must be >= PHYSICS_TIME_STEP_INTERVAL",
+);
 
-            gravity: Force::new::<newton>(9.81),
-            rocket_mass: Mass::new::<gram>(232.0),
+pub struct Config;
 
-            launchpad_coordinates: GpsCoordinates { latitude: 47.397742, longitude: 8.545594 },
-            launchpad_altitude: Altitude::new::<meter>(90.0),
+impl Config {
+    // Channel depths
+    pub const SUBSCRIBE_DEPTH: usize = 1024;
+    pub const FC_COMMAND_DEPTH: usize = 1024;
+    pub const FORCE_EVENT_DEPTH: usize = 1024;
 
-            motor_burn_time: Time::new::<second>(1.61),
-            motor_avg_thrust: Force::new::<newton>(10.4),
+    // Logging
+    pub const LOG_BUFFER_CAPACITY: usize = 10_000;
+    pub const TUI_LOG_LEVEL: &'static str = "info";
+    pub const LOG_ROOT_DIR: &'static str = "logs";
+    pub const LOG_TIMESTAMP_FORMAT: &'static str = "%Y_%m_%d_%H_%M_%S";
 
-            recovery_response_time: Time::new::<second>(2.0),
-            recovery_terminal_velocity: Velocity::new::<meter_per_second>(5.0),
+    // TUI
+    pub const TUI_REFRESH_RATE: u64 = 60;
+    pub const PHYSICS_PANEL_HEIGHT: u16 = 9;
+    pub const EVENTS_PANEL_HEIGHT: u16 = 8;
+    pub const ACTUATOR_PANEL_HEIGHT: u16 = 6;
+    pub const LOG_PANEL_MIN_HEIGHT: u16 = 5;
 
-            landing_altitude: Altitude::new::<meter>(86.0),
-        }
-    }
+    // Connection retry
+    pub const CONNECT_MAX_ATTEMPTS: u32 = 20;
+    pub const CONNECT_TIMEOUT: Duration = Duration::from_millis(200);
+    pub const CONNECT_RETRY_INTERVAL: Duration = Duration::from_millis(200);
+
+    // Client connection
+    pub const SIM_SOCKET_PATH: &'static str = "fc-sim.sock";
+    pub const CLIENT_OUTGOING_DEPTH: usize = 64;
 }

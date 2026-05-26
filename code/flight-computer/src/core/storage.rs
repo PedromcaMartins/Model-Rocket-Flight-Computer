@@ -2,7 +2,8 @@
 use core::fmt::Write as _;
 #[allow(unused_imports)]
 use embedded_io::Write as _;
-use proto::{Record, error::FileSystemError};
+use proto::wire::Record;
+use proto::error::FileSystemError;
 
 use crate::{config::StorageConfig, interfaces::FileSystem, core::trace::TraceSync};
 use crate::log::error;
@@ -30,6 +31,7 @@ where
         let trace = TraceSync::start("Storage::new");
 
         for uid in 0..=FileUniqueId::MAX {
+            filename.clear();
             write!(&mut filename, "{uid}").map_err(|_| FileSystemError::FilenameTooLong)?;
             match filesystem.exist_file(&filename).await {
                 Err(e) => {
