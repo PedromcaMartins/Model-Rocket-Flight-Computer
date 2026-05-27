@@ -1,0 +1,19 @@
+.gitignore
+  s_44d0d47724a3f3::t_8c48c5881eb153 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "904874499f007f250a0fced1e09d6fe8bd5aeb46",
+  "prompts": {},
+  "sessions": {
+    "s_44d0d47724a3f3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1971c6d86ffeWI75qngVxyG2lJ",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
