@@ -1,0 +1,117 @@
+code/ground-station-backend/src/routes.rs
+  s_c803807a2c68b8::t_39ef2cb3849f38 71,84,86,97,103
+  s_c803807a2c68b8::t_99ad24dc6035d4 136-141,148-149,153-154,156-158,189
+  s_c803807a2c68b8::t_400db3edd3ebf6 126-127,150-152,155,159-161,171,175-176
+  s_c803807a2c68b8::t_56e9604c0acce6 128-131,133-135,142-147,162,164-170,172-174,177,179-183,185-188
+  s_c803807a2c68b8::t_42bd6f0ead3c42 79
+  s_c803807a2c68b8::t_22437a3369fd2d 36-42
+  s_c803807a2c68b8::t_3d21a6e3bcfdf1 16
+  s_c803807a2c68b8::t_6e97d1fd93cacd 67
+  s_c803807a2c68b8::t_56dc934a45ac1c 5-6,23,63-66,68-70,72-78,80-83,85,87-96,98-102,104-125
+  s_c803807a2c68b8::t_0a9c30bc45bc54 1-4,7-8,11-15,17-22,24-35,43-62,132,190
+  s_c803807a2c68b8::t_9b902f088db43c 9-10
+code/ground-station-backend/src/logging.rs
+  s_c803807a2c68b8::t_26f08353be701d 1-7,10,15-18,21-33,39-115,117-121
+  s_c803807a2c68b8::t_bf3b22472ffd9a 34-38
+  s_c803807a2c68b8::t_7d03549fa374f1 19-20
+  s_c803807a2c68b8::t_fbf9016ebdef8c 116
+code/ground-station-backend/src/storage.rs
+  s_c803807a2c68b8::t_c92d3bf4512a32 78-84,86-92,94-97,99-100
+  s_c803807a2c68b8::t_21491877f7c5dc 1-3,6-15,17-22,25-50,52-66,68-77,101
+  s_c803807a2c68b8::t_adebc6500e2a9a 93
+  s_c803807a2c68b8::t_a2e7e48bbb2c0b 98
+  s_c803807a2c68b8::t_f5c9456d9d055b 4-5,16,23
+  s_c803807a2c68b8::t_7ea29e2879c72a 24
+  s_c803807a2c68b8::t_95bbcf92563516 51
+  s_c803807a2c68b8::t_ea1d3a6d01410e 85
+code/ground-station-backend/Cargo.toml
+  s_c803807a2c68b8::t_fb1288e4e9b0f3 7-8,11,14,16
+  s_05ce131738e6ae::t_5a1e9c35876d01 15,17,19,24
+code/ground-station-backend/README.md
+  s_c803807a2c68b8::t_c990ed8ace9ba9 1-6,8-23,25-42
+  s_c803807a2c68b8::t_77ce4f56e0f0ec 7
+  s_4ed07442f57b64::t_bfb2523c839a9a 24
+code/xtask/src/host.rs
+  s_4ed07442f57b64::t_e6091ca6b84d06 45-48
+  s_c803807a2c68b8::t_9e91063b378dd3 161-164,174-176
+  s_c803807a2c68b8::t_ced0a83e4f771d 14-15
+  s_c803807a2c68b8::t_3fe9618aef11e6 82-101
+  s_c803807a2c68b8::t_7263a1daa7c53c 21,31,44,49,62,68,70,75,77,81
+code/proto/src/lib.rs
+  s_c803807a2c68b8::t_d9c8967721b8ba 73
+code/proto/README.md
+  s_c803807a2c68b8::t_4ab12ee582c863 1-9,11-19,21-41,43-45
+  s_c803807a2c68b8::t_3b750dbadff572 10,20,42
+docs/how-we-work.md
+  s_c803807a2c68b8::t_5c2cc745a4581b 23
+docs/software/spec.md
+  s_c803807a2c68b8::t_4a89720d080355 225
+  s_c803807a2c68b8::t_2572075c084069 756-758
+  s_c803807a2c68b8::t_0002bc1921e6f4 310
+  s_c803807a2c68b8::t_4a6298c359f9f1 764
+code/flight-computer-host/spec.md
+  s_c803807a2c68b8::t_67fa6b241ef756 32-44
+code/ground-station-backend/src/fc_client.rs
+  s_c803807a2c68b8::t_192c629c45655a 1-21,24-25,35-49,52-55,57-61,63-71,73-81,86-91,93-100
+  s_c803807a2c68b8::t_c5ac40352ea94c 82-85
+  s_c803807a2c68b8::t_a8fd002b9d8621 26-34
+  s_c803807a2c68b8::t_b1f9ff23d3dc84 50-51,56
+  s_c803807a2c68b8::t_11b97debe5d1b4 62,72,92
+  s_c803807a2c68b8::t_43272f58e4281a 22-23
+AGENTS.md
+  s_c803807a2c68b8::t_b9146b38334657 120
+  s_c803807a2c68b8::t_b59bede7419c56 100-102
+code/simulator/spec.md
+  s_c803807a2c68b8::t_569d0e2401b110 284
+  s_c803807a2c68b8::t_b6360e0af1f3b2 261-277
+code/flight-computer-host/src/main.rs
+  s_4ed07442f57b64::t_f9a582b8de21ec 1-13
+code/ground-station-backend/src/config.rs
+  s_c803807a2c68b8::t_5af1effc5b7b01 1-4,6,8-15,17-31,33-37,39-41
+code/flight-computer/README.md
+  s_4ed07442f57b64::t_d3347d5d1ccd59 17
+code/README.md
+  s_4ed07442f57b64::t_4ffe6fb5822bed 26-28
+code/simulator/src/lib.rs
+  s_4ed07442f57b64::t_2cac5b96735f5d 1-18
+code/ground-station-backend/src/main.rs
+  s_c803807a2c68b8::t_7692050042724a 57-58,63-65
+  s_c803807a2c68b8::t_c516816326c973 32
+  s_c803807a2c68b8::t_0e68c554c117a4 1-5,21-31,37-40,42-43,45,47-56,59-60,62,69-71,79-83
+  s_4ed07442f57b64::t_107afa33d616ca 6-20
+  s_c803807a2c68b8::t_eff4f5ae9ccd29 33-36
+  s_c803807a2c68b8::t_32ee2f5f0acbcb 41,46,61
+  s_c803807a2c68b8::t_d2d8ef46b9ee60 73-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "b5b1da9a89636b6ea49525d52ff9edba7071f6de",
+  "prompts": {},
+  "sessions": {
+    "s_05ce131738e6ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_196f6a830ffeDbE946xWtL8o6V",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_4ed07442f57b64": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_19773f894ffeQ2RacXw5t7RrWY",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_c803807a2c68b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_19773f894ffeQ2RacXw5t7RrWY",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
