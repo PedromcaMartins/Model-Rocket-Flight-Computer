@@ -97,7 +97,9 @@ In tests, `std` is always available (see §6). Do not qualify dev-deps as "no_st
 | A spec for a single-crate interface | `code/<crate>/README.md` or sibling file |
 | An ADR for a cross-cutting decision | `docs/ADR/` |
 | An ADR for a single-crate/subsystem decision | `code/<crate>/README.md` or sibling note |
-| A crate-level README, module overview, or pattern note | `code/<crate>/README.md` or rustdoc |
+| A crate-level **overview** (purpose, consumers, build/run) | `code/<crate>/README.md` — high-level, stable, links to deeper docs |
+| A crate's **API/reference** (feature flags, public types, developer guide) | `code/<crate>/src/lib.rs` rustdoc (`//!` at crate root) — source of truth, stays in sync with code |
+| A pattern note or implementation rationale | `code/<crate>/README.md` or sibling `.md` file |
 | A dependency, encoding, runtime, or error-type choice | Next to the code that uses it |
 | An avionics-electronics decision | `hardware/README.md` or sibling note |
 | A mechanical/structural decision | `structure/README.md` or sibling note |
@@ -115,6 +117,7 @@ In tests, `std` is always available (see §6). Do not qualify dev-deps as "no_st
 - **Config values that don't change at runtime use `pub const` on a unit struct,** not instance fields. Const-first: plain types use `pub const`; only fall back to `pub fn` (no `self`) when const arithmetic is impossible (e.g. uom types). Config is a namespace, never instantiated. See `flight-computer/src/config.rs` for the pattern. Config does not change over time!
 - **`no_std` crates get `std` in tests.** The `flight-computer` library enables `std` under `#[cfg(test)]`. Dev-dependencies and test code have full `std` access — do not annotate dev-deps as "no_std compatible" or qualify test-only imports with `no_std` constraints.
 - **Log severity conventions** are defined in [`docs/how-we-work.md#logging-conventions`](docs/how-we-work.md#logging-conventions). Follow them for every `error!` / `warn!` / etc. call.
+- **README vs rustdoc:** `README.md` is the crate's front page — what it does, who uses it, how to build/run. `src/lib.rs` rustdoc is the crate's reference — feature flags, public API, developer workflow. Do not duplicate content between them. When in doubt, put it in rustdoc (closer to the code, stays in sync). Binary crates follow the same split: `README.md` = overview, `src/main.rs` rustdoc = reference.
 - **Prefer editing existing docs** over creating new files. New files only when an existing doc would become incoherent.
 - **When reading:** start in `docs/` for public interfaces; start in the crate's README for implementation rationale.
 - **Before reading or editing any file**, walk up from the file's own directory toward the repo root and read the first README.md found. For example, `code/simulator/src/scripted.rs` → `code/simulator/src/README.md` (none) → `code/simulator/README.md` (hit → read). This ensures you have the relevant context before touching the file.

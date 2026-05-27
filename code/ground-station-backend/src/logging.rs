@@ -1,115 +1,122 @@
-use std::{fs::File, path::PathBuf};
+//! Structured JSON logging at every severity level.
+//!
+//! Mirrors the pattern from `flight-computer-host/src/logging.rs`:
+//! per-level JSON files + stdout with `RUST_LOG` filtering.
+
+use std::io;
+use std::path::PathBuf;
 
 use chrono::Local;
-use tracing::level_filters::LevelFilter;
-use tracing_log::LogTracer;
+use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::filter::FilterFn;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, registry, EnvFilter};
 
-pub struct Logging;
+use crate::config::Config;
 
-impl Logging {
-    pub async fn init(config: LoggingConfig) {
-        // Capture log::info! messages
-        LogTracer::init().expect("Failed to set LogTracer");
+pub struct LoggingGuard {
+    _guards: Vec<WorkerGuard>,
+    /// Root directory for the current session's log files.
+    pub log_dir: PathBuf,
+}
 
-        // log files
-        tokio::fs::create_dir_all(&config.log_dir_path).await.expect("Failed to create log directory");
-        let system_file = File::create_new(&config.system_log_path).expect("Failed to create log file");
+pub fn install_panic_hook() {
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        tracing::error!(%info, "process panicked");
+        default_hook(info);
+    }));
+}
 
-        // JSON log layer
-        let system_json_layer = fmt::layer()
-            .json()
-            .with_writer(system_file) // log file
-            .with_filter(
-                EnvFilter::builder()
-                    .with_default_directive(config.system_json_log_level.into())
-                    .from_env_lossy()
-                    .add_directive("flight_computer=OFF".parse().expect("Failed to build EnvFilter"))
-            );
+pub fn init_tracing() -> anyhow::Result<LoggingGuard> {
+    let log_dir = log_dir();
+    std::fs::create_dir_all(&log_dir)?;
+    // Return early so the guard captures the path.
+    init_tracing_inner(log_dir)
+}
 
-        // Stdout log layer
-        let stdout_layer = fmt::layer()
-            .with_writer(std::io::stdout)
-            .with_filter(config.system_stdout_log_level);
-    
-        // Flight computer specific logging - trace
-        let fc_trace_log_file_path = config.log_dir_path.join(format!("{}_TRACE.log", config.flight_computer_log_name));
-        let fc_trace_log_file = File::create_new(&fc_trace_log_file_path).expect("Failed to create flight computer log file");
-        let fc_trace_layer = fmt::layer()
-            .json()
-            .with_writer(fc_trace_log_file)
-            .with_filter(
-                FilterFn::new(|metadata| {
-                    metadata.target().starts_with("flight_computer")
-                        && metadata.level() == &tracing::Level::TRACE
-                })
-            );
+fn init_tracing_inner(log_dir: PathBuf) -> anyhow::Result<LoggingGuard> {
 
-        // Flight computer specific logging - debug
-        let fc_debug_log_file_path = config.log_dir_path.join(format!("{}_DEBUG.log", config.flight_computer_log_name));
-        let fc_debug_log_file = File::create_new(&fc_debug_log_file_path).expect("Failed to create flight computer log file");
-        let fc_debug_layer = fmt::layer()
-            .json()
-            .with_writer(fc_debug_log_file)
-            .with_filter(
-                FilterFn::new(|metadata| {
-                    metadata.target().starts_with("flight_computer")
-                        && metadata.level() == &tracing::Level::DEBUG
-                })
-            );
+    let mut guards = Vec::new();
 
-        // Flight computer specific logging - info
-        let fc_info_log_file_path = config.log_dir_path.join(format!("{}_INFO.log", config.flight_computer_log_name));
-        let fc_info_log_file = File::create_new(&fc_info_log_file_path).expect("Failed to create flight computer log file");
-        let fc_info_layer = fmt::layer()
-            .json()
-            .with_writer(fc_info_log_file)
-            .with_filter(
-                FilterFn::new(|metadata| {
-                    metadata.target().starts_with("flight_computer")
-                        && metadata.level() == &tracing::Level::INFO
-                })
-            );
-    
-        // Flight computer specific logging - warn
-        let fc_warn_log_file_path = config.log_dir_path.join(format!("{}_WARN.log", config.flight_computer_log_name));
-        let fc_warn_log_file = File::create_new(&fc_warn_log_file_path).expect("Failed to create flight computer log file");
-        let fc_warn_layer = fmt::layer()
-            .json()
-            .with_writer(fc_warn_log_file)
-            .with_filter(
-                FilterFn::new(|metadata| {
-                    metadata.target().starts_with("flight_computer")
-                        && metadata.level() == &tracing::Level::WARN
-                })
-            );
-    
-        // Flight computer specific logging - error
-        let fc_error_log_file_path = config.log_dir_path.join(format!("{}_ERROR.log", config.flight_computer_log_name));
-        let fc_error_log_file = File::create_new(&fc_error_log_file_path).expect("Failed to create flight computer log file");
-        let fc_error_layer = fmt::layer()
-            .json()
-            .with_writer(fc_error_log_file)
-            .with_filter(
-                FilterFn::new(|metadata| {
-                    metadata.target().starts_with("flight_computer")
-                        && metadata.level() == &tracing::Level::ERROR
-                })
-            );
-    
-        // Combine layers into registry
-        let subscriber = registry()
-            .with(system_json_layer)
-            .with(stdout_layer)
-            .with(fc_trace_layer)
-            .with(fc_debug_layer)
-            .with(fc_info_layer)
-            .with(fc_warn_layer)
-            .with(fc_error_layer);
+    let stdout_layer = fmt::layer()
+        .with_writer(io::stdout)
+        .with_target(true)
+        .with_file(true)
+        .with_line_number(true)
+        .with_filter(
+            EnvFilter::builder()
+                .with_default_directive(Config::STDOUT_LOG_LEVEL.into())
+                .from_env_lossy(),
+        );
 
-        tracing::subscriber::set_global_default(subscriber)
-            .expect("Failed to set subscriber");    
-    }
+    let (info_w, g) =
+        tracing_appender::non_blocking(tracing_appender::rolling::never(&log_dir, "info.json"));
+    guards.push(g);
+    let info_layer = fmt::layer()
+        .json()
+        .with_writer(info_w)
+        .with_filter(FilterFn::new(|m| m.level() == &tracing::Level::INFO));
+
+    let (debug_w, g) =
+        tracing_appender::non_blocking(tracing_appender::rolling::never(&log_dir, "debug.json"));
+    guards.push(g);
+    let debug_layer = fmt::layer()
+        .json()
+        .with_writer(debug_w)
+        .with_filter(FilterFn::new(|m| m.level() == &tracing::Level::DEBUG));
+
+    let (warn_w, g) =
+        tracing_appender::non_blocking(tracing_appender::rolling::never(&log_dir, "warn.json"));
+    guards.push(g);
+    let warn_layer = fmt::layer()
+        .json()
+        .with_writer(warn_w)
+        .with_filter(FilterFn::new(|m| m.level() == &tracing::Level::WARN));
+
+    let (error_w, g) =
+        tracing_appender::non_blocking(tracing_appender::rolling::never(&log_dir, "error.json"));
+    guards.push(g);
+    let error_layer = fmt::layer()
+        .json()
+        .with_writer(error_w)
+        .with_filter(FilterFn::new(|m| m.level() == &tracing::Level::ERROR));
+
+    let (trace_w, g) =
+        tracing_appender::non_blocking(tracing_appender::rolling::never(&log_dir, "trace.json"));
+    guards.push(g);
+    let trace_layer = fmt::layer()
+        .json()
+        .with_writer(trace_w)
+        .with_filter(FilterFn::new(|m| m.level() == &tracing::Level::TRACE));
+
+    let (all_w, g) =
+        tracing_appender::non_blocking(tracing_appender::rolling::never(&log_dir, "log.json"));
+    guards.push(g);
+    let all_layer = fmt::layer().json().with_writer(all_w).with_filter(
+        EnvFilter::builder()
+            .with_default_directive(tracing::level_filters::LevelFilter::TRACE.into())
+            .from_env_lossy(),
+    );
+
+    let subscriber = registry()
+        .with(stdout_layer)
+        .with(info_layer)
+        .with(debug_layer)
+        .with(warn_layer)
+        .with(error_layer)
+        .with(trace_layer)
+        .with(all_layer);
+
+    tracing::subscriber::set_global_default(subscriber)?;
+    tracing_log::LogTracer::init()?;
+
+    tracing::info!(log_dir = %log_dir.display(), "logging initialized");
+
+    Ok(LoggingGuard { _guards: guards, log_dir })
+}
+
+fn log_dir() -> PathBuf {
+    let ts = Local::now().format(Config::LOG_TIMESTAMP_FORMAT).to_string();
+    PathBuf::from(Config::LOG_ROOT_DIR).join(ts)
 }

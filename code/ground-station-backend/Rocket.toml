@@ -1,4 +1,0 @@
-[default.shutdown]
-ctrlc = true
-grace = 5
-merciful = false

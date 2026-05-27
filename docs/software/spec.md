@@ -222,7 +222,7 @@ The FC's peripheral traits define this boundary:
 
 **Deployment verification.** The `DeploymentSystem::deploy` call travels directly from FC to Sim over `fc-sim.sock` via the peripheral interface. GS does not observe this call directly. Verification is provided by the FC's `telemetry_task`, which emits a deployment event Topic on `fc-gs.sock` at the moment the FC calls `deploy`. This gives GS an independent, FC-authored confirmation without requiring GS to participate in the peripheral boundary.
 
-**FSM transition visibility.** All FC FSM state transitions are emitted as telemetry Topics on `fc-gs.sock` by the `telemetry_task`. GS observes the full FSM history through this channel. No FSM information is transmitted over `fc-sim.sock`; the simulator is not FSM-aware.
+**FSM transition visibility.** A distilled current `FlightState` value is published on `fc-sim.sock` via `SimFlightStateTopic` so the simulator's scripted event loop can synchronise with FC lifecycle (e.g. wait for `Armed` before triggering ignition). The core FSM logic stays inside the FC — only the state output crosses this boundary. The full FSM transition history is emitted on `fc-gs.sock` by the `telemetry_task`, giving GS the complete state machine trace independent of simulator traffic.
 
 **Command origins** (for the simulator's bookkeeping): **ignition** is user-driven (operator from GS, or scripted scenario); **deployment** is FC-driven. Both reach the simulator through its peripheral interface but originate at different ends.
 
@@ -307,7 +307,7 @@ REST / JSON over HTTP. The frontend never speaks postcard-rpc. Isolates UI itera
                                   └─────────────────────────────┘
 
   Peripheral impls — selected at link time by feature flag
-  (impl_embedded, impl_software, impl_host are mutually exclusive)
+  (impl_embedded, impl_sim, impl_host are mutually exclusive)
 ```
 
 ### 6.1 Crate layout
@@ -753,15 +753,15 @@ This is an application-level constraint, not a named-pipe or OS-level one: the O
 |---|---|---|
 | **HW firmware** (`cross-*`, `impl_embedded`) | `default` only (Ping, tick-hz, Record) | No sim, no IPC — embedded target |
 | **PIL firmware** (`cross-*`, `impl_sim`) | `default` + `simulator-endpoints` | Sim on host over USB; no IPC adapter |
-| **FC host binary** (`flight-computer-host`) | `default` + `host` | Sim over interprocess socket; `host` = `simulator-endpoints` + `ipc-adapter` |
-| **Simulator** | `default` + `host` | Same transport as FC host; publishes sim Topics, receives deploy/LED Endpoints |
-| **GS backend** | `default` + `ipc-adapter` | Connects to FC and sim over sockets; no sim endpoint publishing |
+| **FC host binary** (`flight-computer-host`) | `host` | Sim over interprocess socket; `host` = `simulator-endpoints` + `transport-ipc` + `log` + `timestamp-into-duration` |
+| **Simulator** | `host` | Same transport as FC host; publishes sim Topics, receives deploy/LED Endpoints |
+| **GS backend** | `client` + `transport-ipc` | Connects to FC over sockets; receives telemetry Topics, sends command Endpoints; no sim endpoint publishing |
 
 ### 9.3 Rationale
 
 The feature table in `code/proto/Cargo.toml` and `#[cfg]` gates in `code/proto/src/lib.rs` are the source of truth for which symbols live under each flag. This section captures only the architectural invariants those flags enforce:
 
-1. **Embedded targets cannot compile IPC glue.** The `ipc-adapter` feature brings `tokio` + `interprocess` — incompatible with `no_std` and too large for firmware even if `std` were available.
+1. **Embedded targets cannot compile IPC glue.** The `transport-ipc` feature brings `tokio` + `interprocess` — incompatible with `no_std` and too large for firmware even if `std` were available.
 2. **`simulator-endpoints` are bloat on HW.** The Sim* Topics (altimeter, GPS, IMU, arm, deployment, LEDs) are never compiled into real flight firmware — gating them saves code space and prevents accidental misuse.
 3. **Consumers compose features, not duplicate them.** The `host` and `pil` convenience features exist so that each binary enables a single feature alias rather than repeating the full list. The mapping is maintained in `code/proto/Cargo.toml`.
 

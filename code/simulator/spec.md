@@ -258,14 +258,30 @@ shutdown:
 
 ---
 
-## 9. Logging
+## 9. TUI panels
+
+The ratatui TUI displays four panels, each reading from its own shared state channel:
+
+| Panel | Source data | Purpose |
+|---|---|---|
+| **Physics** | `PhysicsState` watch | Live position, velocity, acceleration, sim time |
+| **Actuators** | `SimActuatorSnapshot` (ArcSwap) | LED on/off/toggle state per component; deployment actuator status |
+| **Active Forces** | `ActiveForceEvent` (ArcSwap) | Current force-event list with magnitudes and remaining durations |
+| **Logs** | `LOG_BUFFER` ring | Colorised tail of the structured sim log |
+
+Each panel updates independently at the data's natural cadence. The Actuators
+panel is the only place that surfaces raw FC peripheral calls (LED state,
+deployment) — GS receives these as distilled named status values in the
+telemetry stream per spec.md §5.1.
+
+## 10. Logging
 
 Per-level JSON files + stdout, mirroring `flight-computer-host/src/logging.rs`,
 with a panic hook that emits a tracing error before the default handler.
 
 ---
 
-## 10. Connect retry
+## 11. Connect retry
 
 Both binaries retry their transport connect with exponential backoff so the
 simulator can start before its peer (FC host or MCU). The retry loop checks

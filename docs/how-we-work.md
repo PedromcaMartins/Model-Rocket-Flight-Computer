@@ -20,6 +20,7 @@ Rules of thumb:
 - A **choice of part, crate, library, footprint, material, file layout, encoding format, or test harness** is detailed design. It belongs next to the artifact.
 - A **public interface between two subsystems** (e.g. avionics electronics ↔ structure mounting, recovery ↔ flight-computer trigger signal) is architecture. Its *implementation* is detailed design.
 - If you find detailed design in `docs/` or architecture inside `code/` / `hardware/` / `structure/`, move it.
+- **Within `code/`, `README.md` is the front page (purpose, consumers, how to build); rustdoc (`//!` at `src/lib.rs` or `src/main.rs`) is the reference (feature flags, public API, developer workflow).** Do not duplicate content between them — when in doubt, put it in rustdoc, which stays closer to the code.
 
 When proposing a non-trivial change, sketch the architecture / interface impact in `docs/` first; sketch the detailed design in the affected subsystem's folder second.
 

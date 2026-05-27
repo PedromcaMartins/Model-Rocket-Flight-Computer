@@ -1,3 +1,16 @@
+//! Host-side FC binary — binds two local sockets, accepts the simulator and GS
+//! backend, then hands both postcard-rpc servers to the FC library.
+//!
+//! **Socket layout:**
+//! - `fc-sim.sock` — simulator connects here (blocks until accepted).
+//! - `fc-gs.sock` — GS backend connects here (accepted in background loop with
+//!   retry on disconnect).
+//!
+//! The GS-accept loop never blocks the FC ↔ simulator loop — a missing or
+//! restarting GS is tolerated (M2.2 design constraint).
+//!
+//! See [`README.md`](README.md) for the crate overview.
+
 mod config;
 mod dispatch;
 mod logging;
@@ -10,11 +23,6 @@ use postcard_rpc::server::impls::test_channels::ChannelWireSpawn;
 use flight_computer::tasks::{postcard::Context, simulation::start_host_flight_computer};
 use proto::wire::{accept_server, bind_listener};
 use tracing::{info, warn};
-
-// Binds both local sockets, accepts the simulator (required, blocking), then
-// hands the FC a factory that accepts the GS backend in the background and
-// retries on disconnect — a missing or restarting GS never blocks the
-// FC <-> simulator loop.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     logging::install_panic_hook();

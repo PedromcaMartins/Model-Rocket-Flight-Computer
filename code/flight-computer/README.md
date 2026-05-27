@@ -14,19 +14,7 @@ The FC library — the software core of the rocket. Library crate only; no binar
 - **Error channel is logging only.** Peripherals are task-owned; there is no fallback owner to propagate an error to. LEDs, USB serial, and radio are the only observable error surfaces. Tasks return `()` or `!`, never `Result`.
 - **Not a framework.** This is the flight software for this rocket, not a reusable domain library. Generalising it is out of scope.
 
-## Features
-
-| Feature | What it enables |
-|---|---|
-| `impl_embedded` | Real hardware drivers (`embedded-hal`) — used in HW binaries |
-| `impl_sim` | Simulator-fed postcard-rpc peripheral clients — transport-agnostic; used in PIL (over USB) and HOST (over interprocess socket) |
-| `impl_host` | `HostFileSystem` over a host directory — used in the HOST binary; implies `impl_sim` |
-| `host` | Convenience alias: `impl_host` + `log` + `proto/host` — everything a HOST binary needs |
-| `std` | Standard library (required by `impl_sim` and `impl_host`) |
-| `log` | Logging via the `log` crate (default for host/test builds) |
-| `defmt` | Logging via `defmt` (for embedded targets) |
-
-Default features include all three `impl_*` flags — suitable for host development. Embedded binaries disable defaults and enable only `impl_embedded` + `defmt`.
+See `src/lib.rs` for the feature flag reference and verification commands.
 
 ## Platform dependencies
 

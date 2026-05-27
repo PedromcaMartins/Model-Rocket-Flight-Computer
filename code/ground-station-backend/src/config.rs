@@ -1,70 +1,42 @@
+//! Compile-time constants for the ground-station backend.
+//!
+//! All values are `pub const` on a unit struct per AGENTS.md §6 layout.
+//! Config is a namespace, never instantiated.
+
 use std::time::Duration;
 
-use flight_computer::tasks::postcard::Context;
+/// Infrastructure configuration (sockets, REST, storage paths).
+pub struct Config;
 
-pub struct LocalPostcardConfig {
-    pub context: Context,
-}
+impl Config {
+    // -- FC connection --
+    /// Namespaced local-socket path for the FC ↔ GS link.
+    pub const FC_SOCKET_PATH: &str = "fc-gs.sock";
+    /// Depth of the postcard-rpc outgoing message queue.
+    pub const CLIENT_QUEUE_DEPTH: usize = 1024;
+    /// Timeout for endpoint calls (e.g. ping).
+    pub const ENDPOINT_TIMEOUT: Duration = Duration::from_secs(2);
 
-impl Default for LocalPostcardConfig {
-    fn default() -> Self {
-        Self {
-            context: Context {},
-        }
-    }
-}
+    // -- REST server --
+    pub const REST_HOST: &str = "127.0.0.1";
+    pub const REST_PORT: u16 = 8000;
+    pub const CTRLC: bool = true;
+    pub const GRACE: u64 = 5;
+    pub const MERCILESS: bool = false;
+    pub const API_PATH: &str = "/api";
 
-impl LocalPostcardConfig {
-    pub const SERVER_DEPTH: usize = 1024;
-    pub const SERVER_RECEIVE_BUFFER_SIZE: usize = 1024;
-}
+    // -- Record storage --
+    /// Directory under CWD where session NDJSON files are stored.
+    pub const RECORDS_ROOT_DIR: &str = "logs/gs_records";
+    /// Timestamp format used in session directory names.
+    pub const RECORDS_TIMESTAMP_FORMAT: &str = "%Y_%m_%d_%H_%M_%S";
 
-pub struct RESTApiConfig {
-    pub service_path: String,
-    pub stream_path: String,
-    pub sim_path: String,
-}
-
-impl Default for RESTApiConfig {
-    fn default() -> Self {
-        Self {
-            service_path: "/api".to_string(),
-            stream_path: "/api/stream".to_string(),
-            sim_path: "/api/sim".to_string(),
-        }
-    }
-}
-
-pub struct LoggingConfig {
-    pub system_log_path: PathBuf,
-    pub system_json_log_level: LevelFilter,
-    pub system_stdout_log_level: LevelFilter,
-    pub flight_computer_log_name: &'static str,
-    pub log_dir_path: PathBuf,
-}
-
-impl Default for LoggingConfig {
-    fn default() -> Self {
-        let ts = Local::now();
-        let ts = ts.format("%Y_%m_%d_%H_%M_%S").to_string();
-        let log_dir_path: PathBuf = PathBuf::from("logs").join(&ts);
-        Self {
-            system_log_path: log_dir_path.join("system.log"),
-            system_json_log_level: LevelFilter::DEBUG,
-            system_stdout_log_level: LevelFilter::INFO,
-            flight_computer_log_name: "flight_computer",
-            log_dir_path,
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct GroundStationConfig {
-    pub postcard: LocalPostcardConfig,
-    pub rest_api: RESTApiConfig,
-    pub logging: LoggingConfig,
-}
-
-impl GroundStationConfig {
-    pub const PING_INTERVAL: Duration = Duration::from_secs(5);
+    // -- Logging --
+    /// Directory under CWD where per-level JSON logs are stored.
+    pub const LOG_ROOT_DIR: &str = "logs/gs_backend";
+    /// Timestamp format used in log session directory names.
+    pub const LOG_TIMESTAMP_FORMAT: &str = "%Y_%m_%d_%H_%M_%S";
+    /// Default RUST_LOG level for stdout when the env-var is unset.
+    pub const STDOUT_LOG_LEVEL: tracing::level_filters::LevelFilter =
+        tracing::level_filters::LevelFilter::INFO;
 }

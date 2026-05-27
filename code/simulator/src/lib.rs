@@ -1,3 +1,21 @@
+//! Physics simulator for the flight computer — drives the FC over postcard-rpc
+//! by publishing sensor data and reacting to actuator commands.
+//!
+//! This library is shared between two binaries (`host` and `pil`) that differ
+//! only in transport (interprocess socket vs USB). It provides:
+//!
+//! - **Physics engine** (`physics/`) — rocket flight model (1D parabolic MVP,
+//!   extensible to 3D kinematic attitude).
+//! - **Scripted scenario** (`scripted/`) — compile-time event sequences that
+//!   drive the FC through pre-defined flight phases.
+//! - **Postcard-rpc client** (`flight_computer/`) — sends sensor data,
+//!   receives FC actuator commands.
+//! - **TUI** (`tui/`) — read-only ratatui dashboard for live telemetry.
+//! - **JSON+stdout structured logging** (`logging/`).
+//!
+//! See [`README.md`](README.md) for the crate overview and
+//! [`spec.md`](spec.md) for the detailed design.
+
 pub mod config;
 pub mod connect;
 pub mod flight_computer;

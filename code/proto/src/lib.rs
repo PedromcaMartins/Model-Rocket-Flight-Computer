@@ -70,7 +70,7 @@ pub mod error;
 mod newtypes;
 pub use newtypes::*;
 
-pub(crate) mod record;
+pub mod record;
 pub mod wire;
 
 #[cfg(feature = "client")]

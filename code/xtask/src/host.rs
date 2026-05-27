@@ -11,12 +11,14 @@ use xshell::{cmd, Shell};
 
 const FC_HOST_STARTUP_TIMEOUT_SECS: Duration = Duration::from_secs(15);
 const POLL_INTERVAL: Duration = Duration::from_millis(200);
+const GS_RESTART_DELAY: Duration = Duration::from_secs(2);
+const MAX_GS_RESTARTS: u32 = 5;
 const SIM_SOCKET_NAME: &str = "fc-sim.sock";
 
 static CTRLC_TRIGGERED: AtomicBool = AtomicBool::new(false);
 
 pub fn run_host() -> Result<()> {
-    eprintln!("Building flight-computer-host and simulator...");
+    eprintln!("Building flight-computer-host, ground-station-backend and simulator...");
     build_host_binaries()?;
 
     ctrlc::set_handler(|| {
@@ -26,6 +28,7 @@ pub fn run_host() -> Result<()> {
 
     let target_debug = root_dir().join("target").join("debug");
     let fc_host_bin = target_debug.join("flight-computer-host");
+    let gs_backend_bin = target_debug.join("ground-station-backend");
     let sim_bin = target_debug.join("host");
 
     eprintln!("Starting flight-computer-host...");
@@ -37,6 +40,12 @@ pub fn run_host() -> Result<()> {
     .context("failed to spawn flight-computer-host")?;
 
     wait_for_fc_host(&mut fc_host)?;
+
+    eprintln!("Starting ground-station-backend...");
+    let gs_bin_str = gs_backend_bin.to_str().context("non-UTF8 path")?.to_owned();
+    let mut gs_backend = spawn_in_terminal(&gs_bin_str, &[], false)
+        .context("failed to spawn ground-station-backend")?;
+    let mut gs_restart_count = 0u32;
 
     eprintln!("Starting simulator...");
     let mut sim = spawn_in_terminal(
@@ -50,20 +59,46 @@ pub fn run_host() -> Result<()> {
         if CTRLC_TRIGGERED.load(Ordering::Relaxed) {
             eprintln!("\nShutdown by user");
             kill_child(&mut fc_host);
+            kill_child(&mut gs_backend);
             kill_child(&mut sim);
             break;
         }
 
         if let Some(status) = sim.try_wait().context("failed to wait on simulator")? {
-            eprintln!("Simulator exited ({status}); terminating FC host");
+            eprintln!("Simulator exited ({status}); terminating FC host and GS backend");
             kill_child(&mut fc_host);
+            kill_child(&mut gs_backend);
             break;
         }
 
         if let Some(status) = fc_host.try_wait().context("failed to wait on FC host")? {
-            eprintln!("FC host exited ({status}); terminating simulator");
+            eprintln!("FC host exited ({status}); terminating simulator and GS backend");
             kill_child(&mut sim);
+            kill_child(&mut gs_backend);
             break;
+        }
+
+        if let Some(status) = gs_backend.try_wait().context("failed to wait on GS backend")? {
+            if status.success() {
+                eprintln!("GS backend quit or window closed; shutting down");
+                kill_child(&mut fc_host);
+                kill_child(&mut sim);
+                break;
+            }
+            gs_restart_count += 1;
+            if gs_restart_count > MAX_GS_RESTARTS {
+                eprintln!("GS backend crashed {gs_restart_count} times; shutting down");
+                kill_child(&mut fc_host);
+                kill_child(&mut sim);
+                break;
+            }
+            eprintln!(
+                "GS backend crashed ({status}); restarting ({gs_restart_count}/{MAX_GS_RESTARTS})..."
+            );
+            std::thread::sleep(GS_RESTART_DELAY);
+            gs_backend = spawn_in_terminal(&gs_bin_str, &[], false)
+                .context("failed to re-spawn ground-station-backend")?;
+            continue;
         }
 
         std::thread::sleep(POLL_INTERVAL);
@@ -123,6 +158,10 @@ fn build_host_binaries() -> Result<()> {
             .env("RUSTC_WRAPPER", &sccache)
             .run()
             .context("flight-computer-host build failed")?;
+        cmd!(sh, "cargo build -p ground-station-backend")
+            .env("RUSTC_WRAPPER", &sccache)
+            .run()
+            .context("ground-station-backend build failed")?;
         cmd!(sh, "cargo build --bin host -p simulator")
             .env("RUSTC_WRAPPER", &sccache)
             .run()
@@ -132,6 +171,9 @@ fn build_host_binaries() -> Result<()> {
         cmd!(sh, "cargo build -p flight-computer-host")
             .run()
             .context("flight-computer-host build failed")?;
+        cmd!(sh, "cargo build -p ground-station-backend")
+            .run()
+            .context("ground-station-backend build failed")?;
         cmd!(sh, "cargo build --bin host -p simulator")
             .run()
             .context("simulator build failed")?;

@@ -23,8 +23,9 @@ Embedded-target binary crates (`cross-esp32-s3`, `cross-nucleo-f413zh`) are refe
 
 ## Where to read more
 
-- Per-crate detailed design lives in each crate's own `README.md` (add one when it doesn't exist yet — see [`../AGENTS.md`](../AGENTS.md) §1).
-- Module-level documentation lives in rustdoc (`//!` at the top of `lib.rs` or `mod.rs`). Run `cargo doc --open` from this directory.
+- **Crate overview** (purpose, consumers, build/run) — `README.md` in each crate.
+- **API reference** (feature flags, public types, developer guide) — `src/lib.rs` (or `src/main.rs`) rustdoc (`//!` at crate root). Run `cargo doc --open` from this directory.
+- **Detailed design** (internal architecture, rationale) — `spec.md` or sibling `.md` file in each crate.
 - Cross-cutting decisions about *which* crate owns a responsibility live in [`../docs/`](../docs/).
 
 ## Build & run

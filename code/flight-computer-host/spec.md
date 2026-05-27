@@ -29,14 +29,19 @@ enforcement, single binary for Linux and Windows without `#[cfg]`.
 
 1. Bind both listener sockets (allows clients to connect immediately).
 2. Accept simulator connection (blocking — waits until simulator connects).
-3. Accept GS backend connection (blocking — waits until GS connects).
-4. Split each stream into TX/RX halves, construct dispatch tables,
-   allocate receive buffers, build two `Server` instances.
-5. Hand both servers to `start_host_flight_computer`, which joins their
-   `postcard_server_task` futures alongside peripheral and FSM tasks.
+3. Start flight computer with a **GS backend factory** — each call accepts
+   one GS connection, retrying on transient errors. The factory is invoked
+   each time the GS subsystem loop attempts a (re)connect; a missing or
+   restarting GS never blocks the FC ↔ Sim loop.
+4. Inside `start_host_flight_computer`, the sim server runs directly as a
+   `postcard_server_task`; the GS factory is called on demand by the GS
+   subsystem loop.
 
-Sequential accept order: sim first, then GS. The orchestrator (`xtask`)
-spawns processes in that order.
+Sim accept is blocking because the FC has nothing to do until sensor data
+arrives. GS accept is deferred: the FC operates without a GS connection and
+will accept one whenever it connects (factory pattern). The orchestrator
+(`xtask`) spawns processes in the order: `GS backend → simulator → FC-host`,
+but FC-host independently handles whichever peer arrives first.
 
 ## Dispatch layout
 
