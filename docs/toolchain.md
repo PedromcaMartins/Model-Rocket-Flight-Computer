@@ -141,10 +141,11 @@ These aren't CLI tools — they appear in `Cargo.toml` as dependencies. Some are
 | `tokio` | Async runtime (ground-station backend) | `host`, `crates` |
 | `tokio-serial` | Serial port I/O for tokio | `host`, `crates` |
 | `tracing` | Structured diagnostics/telemetry (ground-station backend) | `host`, `logging`, `crates` |
-| `tracing-appender` | Non-blocking log file writer for tracing | `host`, `logging`, `crates` |
+| `tracing-appender` | Non-blocking log file writer for tracing (via `utils`) | `host`, `logging`, `crates` |
 | `tracing-flame` | Flamegraph generation from tracing span data | `host`, `profiling`, `crates` |
-| `tracing-log` | Bridge between `log` facade and `tracing` | `host`, `logging`, `crates` |
-| `tracing-subscriber` | Subscriber with fmt/env-filter/json output (ground-station logging config) | `host`, `logging`, `crates` |
+| `tracing-log` | Bridge between `log` facade and `tracing` (via `utils`) | `host`, `logging`, `crates` |
+| `tracing-subscriber` | Subscriber with fmt/env-filter/json output (via `utils`) | `host`, `logging`, `crates` |
+| `utils` | Shared host-side utilities: logging, workspace root, TUI buffer | `host`, `logging`, `crates` |
 | `uom` | Type-safe units of measure (SI with serde + defmt) | `no_std`, `crates` |
 | `xshell` | Shell command helpers for xtask build scripts | `host`, `crates` |
 

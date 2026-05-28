@@ -3,6 +3,7 @@
 //! All values are `pub const` on a unit struct per AGENTS.md §6 layout.
 //! Config is a namespace, never instantiated.
 
+use std::path::PathBuf;
 use std::time::Duration;
 
 /// Infrastructure configuration (sockets, REST, storage paths).
@@ -10,8 +11,6 @@ pub struct Config;
 
 impl Config {
     // -- FC connection --
-    /// Namespaced local-socket path for the FC ↔ GS link.
-    pub const FC_SOCKET_PATH: &str = "fc-gs.sock";
     /// Depth of the postcard-rpc outgoing message queue.
     pub const CLIENT_QUEUE_DEPTH: usize = 1024;
     /// Timeout for endpoint calls (e.g. ping).
@@ -26,17 +25,16 @@ impl Config {
     pub const API_PATH: &str = "/api";
 
     // -- Record storage --
-    /// Directory under CWD where session NDJSON files are stored.
-    pub const RECORDS_ROOT_DIR: &str = "logs/gs_records";
+    /// Absolute path to the session NDJSON storage directory,
+    /// anchored under `code/logs/gs_records` at compile time.
+    pub fn records_root_dir() -> PathBuf {
+        utils::workspace::workspace_root().join("logs").join("gs_records")
+    }
     /// Timestamp format used in session directory names.
-    pub const RECORDS_TIMESTAMP_FORMAT: &str = "%Y_%m_%d_%H_%M_%S";
+    pub const RECORDS_TIMESTAMP_FORMAT: &str = utils::constants::TIMESTAMP_FORMAT;
 
     // -- Logging --
-    /// Directory under CWD where per-level JSON logs are stored.
-    pub const LOG_ROOT_DIR: &str = "logs/gs_backend";
-    /// Timestamp format used in log session directory names.
-    pub const LOG_TIMESTAMP_FORMAT: &str = "%Y_%m_%d_%H_%M_%S";
     /// Default RUST_LOG level for stdout when the env-var is unset.
     pub const STDOUT_LOG_LEVEL: tracing::level_filters::LevelFilter =
-        tracing::level_filters::LevelFilter::INFO;
+        utils::constants::STDOUT_LOG_LEVEL;
 }

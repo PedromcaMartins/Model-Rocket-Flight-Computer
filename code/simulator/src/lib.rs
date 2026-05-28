@@ -11,7 +11,9 @@
 //! - **Postcard-rpc client** (`flight_computer/`) — sends sensor data,
 //!   receives FC actuator commands.
 //! - **TUI** (`tui/`) — read-only ratatui dashboard for live telemetry.
-//! - **JSON+stdout structured logging** (`logging/`).
+//! - **Structured logging** — delegates to the shared `utils::logging` crate for
+//!   per-level JSON files and combined `log.json`; the TUI log panel reads
+//!   from `utils::logging::LOG_BUFFER`.
 //!
 //! See [`README.md`](README.md) for the crate overview and
 //! [`spec.md`](spec.md) for the detailed design.
@@ -19,7 +21,6 @@
 pub mod config;
 pub mod connect;
 pub mod flight_computer;
-pub mod logging;
 pub mod physics;
 pub mod scripted;
 pub mod tui;

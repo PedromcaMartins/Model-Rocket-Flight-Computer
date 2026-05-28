@@ -11,7 +11,7 @@ use scopeguard::defer;
 use tokio_util::sync::CancellationToken;
 
 use crate::config::Config;
-use crate::logging;
+use utils::logging::LOG_BUFFER;
 use crate::physics::state::PhysicsState;
 use crate::types::{ActiveForceEvent, SimActuatorSnapshot};
 
@@ -106,7 +106,7 @@ fn tui_blocking(
         let forces = active_forces.load();
         let act = actuator_snapshot.load();
         let logs: Vec<String> = {
-            let guard = logging::LOG_BUFFER.lock().unwrap_or_else(|p| p.into_inner());
+            let guard = LOG_BUFFER.lock().unwrap_or_else(|p| p.into_inner());
             guard.iter().cloned().collect()
         };
 

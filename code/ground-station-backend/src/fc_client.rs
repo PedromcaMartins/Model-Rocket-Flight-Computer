@@ -42,11 +42,11 @@ pub async fn run_fc_client(
     storage: Arc<RwLock<Option<RecordStorage>>>,
     conn: Arc<RwLock<FcConnection>>,
 ) {
-    info!("Connecting to FC on {}...", Config::FC_SOCKET_PATH);
+    info!("Connecting to FC on {}...", utils::constants::GS_SOCKET_NAME);
 
     let client = match connect_fc().await {
         Ok(c) => {
-            info!("Connected to FC on {}", Config::FC_SOCKET_PATH);
+            info!("Connected to FC on {}", utils::constants::GS_SOCKET_NAME);
             // Clone so REST routes get their own handle for endpoint calls.
             let routes_client = c.clone();
             {
@@ -93,8 +93,8 @@ pub async fn run_fc_client(
 }
 
 async fn connect_fc() -> anyhow::Result<proto::PostcardClient> {
-    let client = connect_client::<{ Config::CLIENT_QUEUE_DEPTH }>(Config::FC_SOCKET_PATH)
+    let client = connect_client::<{ Config::CLIENT_QUEUE_DEPTH }>(utils::constants::GS_SOCKET_NAME)
         .await
-        .map_err(|e| anyhow::anyhow!("connect to {} failed: {e}", Config::FC_SOCKET_PATH))?;
+        .map_err(|e| anyhow::anyhow!("connect to {} failed: {e}", utils::constants::GS_SOCKET_NAME))?;
     Ok(client)
 }

@@ -5,7 +5,6 @@
 //! cache for REST API reads. The file is append-only within a session.
 
 use std::io::Write;
-use std::path::PathBuf;
 
 use chrono::Local;
 use serde::Serialize;
@@ -35,7 +34,7 @@ impl RecordStorage {
         let ts = Local::now()
             .format(Config::RECORDS_TIMESTAMP_FORMAT)
             .to_string();
-        let dir = PathBuf::from(Config::RECORDS_ROOT_DIR).join(&ts);
+        let dir = Config::records_root_dir().join(&ts);
         std::fs::create_dir_all(&dir)?;
 
         let path = dir.join("records.ndjson");

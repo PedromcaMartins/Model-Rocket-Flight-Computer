@@ -64,10 +64,9 @@ impl Config {
     pub const FORCE_EVENT_DEPTH: usize = 1024;
 
     // Logging
-    pub const LOG_BUFFER_CAPACITY: usize = 10_000;
+    pub const STDOUT_LOG_LEVEL: tracing::level_filters::LevelFilter =
+        utils::constants::STDOUT_LOG_LEVEL;
     pub const TUI_LOG_LEVEL: &'static str = "info";
-    pub const LOG_ROOT_DIR: &'static str = "logs";
-    pub const LOG_TIMESTAMP_FORMAT: &'static str = "%Y_%m_%d_%H_%M_%S";
 
     // TUI
     pub const TUI_REFRESH_RATE: u64 = 60;
@@ -82,6 +81,5 @@ impl Config {
     pub const CONNECT_RETRY_INTERVAL: Duration = Duration::from_millis(200);
 
     // Client connection
-    pub const SIM_SOCKET_PATH: &'static str = "fc-sim.sock";
     pub const CLIENT_OUTGOING_DEPTH: usize = 64;
 }

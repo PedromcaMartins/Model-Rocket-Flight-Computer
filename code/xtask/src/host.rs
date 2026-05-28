@@ -13,7 +13,6 @@ const FC_HOST_STARTUP_TIMEOUT_SECS: Duration = Duration::from_secs(15);
 const POLL_INTERVAL: Duration = Duration::from_millis(200);
 const GS_RESTART_DELAY: Duration = Duration::from_secs(2);
 const MAX_GS_RESTARTS: u32 = 5;
-const SIM_SOCKET_NAME: &str = "fc-sim.sock";
 
 static CTRLC_TRIGGERED: AtomicBool = AtomicBool::new(false);
 
@@ -130,7 +129,7 @@ fn fc_host_socket_ready() -> bool {
     {
         use std::ffi::OsStr;
         use std::os::windows::ffi::OsStrExt;
-        let pipe_path: Vec<u16> = OsStr::new(&format!(r"\\.\pipe\{SIM_SOCKET_NAME}"))
+        let pipe_path: Vec<u16> = OsStr::new(&format!(r"\\.\pipe\{}", utils::constants::SIM_SOCKET_NAME))
             .encode_wide()
             .chain(std::iter::once(0))
             .collect();
@@ -144,7 +143,7 @@ fn fc_host_socket_ready() -> bool {
     }
     #[cfg(not(windows))]
     {
-        root_dir().join(SIM_SOCKET_NAME).exists()
+        root_dir().join(utils::constants::SIM_SOCKET_NAME).exists()
     }
 }
 

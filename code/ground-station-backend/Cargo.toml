@@ -9,6 +9,7 @@ path = "src/main.rs"
 
 [dependencies]
 proto = { version = "*", path = "../proto", default-features = false, features = ["client", "transport-ipc"] }
+utils = { path = "../utils" }
 
 rocket = { version = "0.5.1", features = ["json"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
@@ -19,6 +20,3 @@ chrono = { version = "0.4", features = ["serde"] }
 anyhow = "1"
 
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter", "json"] }
-tracing-appender = "0.2"
-tracing-log = "0.2"

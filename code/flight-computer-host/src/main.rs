@@ -13,7 +13,6 @@
 
 mod config;
 mod dispatch;
-mod logging;
 
 use std::sync::Arc;
 
@@ -23,22 +22,28 @@ use postcard_rpc::server::impls::test_channels::ChannelWireSpawn;
 use flight_computer::tasks::{postcard::Context, simulation::start_host_flight_computer};
 use proto::wire::{accept_server, bind_listener};
 use tracing::{info, warn};
+use utils::logging::{LogConfig, UiConfig};
+use utils::workspace;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    logging::install_panic_hook();
-    let _guard = logging::init_tracing()?;
+    utils::logging::install_panic_hook();
+    let _guard = utils::logging::init_tracing(LogConfig {
+        log_root: workspace::workspace_root().join("logs"),
+        stdout_level: Config::STDOUT_LOG_LEVEL,
+        ui: UiConfig::Stdout,
+    })?;
 
     // Bind both listeners up front so clients can connect immediately.
-    let sim_listener = bind_listener(Config::SIM_SOCKET_PATH)?;
-    let gs_listener = Arc::new(bind_listener(Config::GS_SOCKET_PATH)?);
+    let sim_listener = bind_listener(utils::constants::SIM_SOCKET_NAME)?;
+    let gs_listener = Arc::new(bind_listener(utils::constants::GS_SOCKET_NAME)?);
 
     // Accept the simulator first (blocking — the FC has nothing to do until
     // sensor data arrives).
-    info!("Waiting for simulator on {}...", Config::SIM_SOCKET_PATH);
+    info!("Waiting for simulator on {}...", utils::constants::SIM_SOCKET_NAME);
     let sim_dispatch = sim::SimDispatch::new(Context::default(), ChannelWireSpawn);
     let sim_server =
         accept_server::<{ Config::SERVER_BUFFER_SIZE }, _, _>(&sim_listener, sim_dispatch, vec![0u8; Config::SERVER_BUFFER_SIZE]).await?;
-    info!("Simulator connected on {}", Config::SIM_SOCKET_PATH);
+    info!("Simulator connected on {}", utils::constants::SIM_SOCKET_NAME);
 
     // GS backend factory: each call returns a Future that resolves to a
     // freshly accepted GS server. Transient accept errors are logged and
@@ -48,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
     let gs_server_factory = move || {
         let gs_listener = gs_listener.clone();
         async move {
-            info!("Waiting for GS backend on {}...", Config::GS_SOCKET_PATH);
+            info!("Waiting for GS backend on {}...", utils::constants::GS_SOCKET_NAME);
             loop {
                 let gs_dispatch = gs::GsDispatch::new(Context::default(), ChannelWireSpawn);
                 match accept_server::<{ Config::SERVER_BUFFER_SIZE }, _, _>(
@@ -57,7 +62,7 @@ async fn main() -> anyhow::Result<()> {
                     vec![0u8; Config::SERVER_BUFFER_SIZE],
                 ).await {
                     Ok(server) => {
-                        info!("GS backend connected on {}", Config::GS_SOCKET_PATH);
+                        info!("GS backend connected on {}", utils::constants::GS_SOCKET_NAME);
                         return server;
                     }
                     Err(e) => {

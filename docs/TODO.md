@@ -55,8 +55,8 @@
         - [ ] tweak simulation options
         - [ ] send manual events
 - [ ] Implement Trace Parser that can generate somewhat flame-graphs
-- [ ] Store all data locally on disk/ memory
-- [ ] Use REST API with JSON serialization for communication between backend and frontend
+- [X] Store all data locally on disk/ memory
+- [X] Use REST API with JSON serialization for communication between backend and frontend
 
 # New Tasks
 

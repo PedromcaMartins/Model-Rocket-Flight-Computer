@@ -69,8 +69,9 @@ No runtime config loading — values are fixed at compile time.
 
 ## Logging
 
-Initialized in `main` by `logging::init_tracing()`. Writes structured JSON
-logs to `logs/<unix-timestamp>/`:
+Initialized in `main` by `logging::init_tracing()` (now delegates to the shared
+`utils::logging` crate). Writes structured JSON logs to
+`<workspace_root>/logs/<unix-timestamp>/`:
 
 ```
 logs/<ts>/

@@ -126,3 +126,16 @@ In tests, `std` is always available (see §6). Do not qualify dev-deps as "no_st
 ## 7. When this file is wrong
 
 If something here contradicts what you observe in the repo, the repo wins — and this file is a bug. Fix it in the same change.
+
+## 8. Worktree isolation (MANDATORY)
+
+Before touching any implementation file (not docs/config/README markdown), the agent
+MUST:
+
+1. Invoke the `using-git-worktrees` skill and follow its instructions to create an
+   isolated worktree on a new branch.
+2. Only then make changes.
+
+**Exception:** Trivial single-file edits under 5 lines (typo fix, one-line config
+change) do not require a worktree. This judgment must be conservative — when in
+doubt, create the worktree.

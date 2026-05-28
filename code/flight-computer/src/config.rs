@@ -129,6 +129,8 @@ pub mod host {
     pub struct HostConfig;
 
     impl HostConfig {
-        pub const STORAGE_PATH: &str = "host_storage";
+        /// Absolute path to the host storage directory (`<workspace>/code/host_storage/`).
+        pub const STORAGE_PATH: &str =
+            concat!(env!("CARGO_MANIFEST_DIR"), "/../host_storage");
     }
 }

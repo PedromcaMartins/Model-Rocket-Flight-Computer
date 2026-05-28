@@ -1,14 +1,19 @@
 use proto::wire::connect_client;
 use tokio_util::sync::CancellationToken;
 use tracing::info;
+use utils::logging::{LogConfig, UiConfig};
+use utils::workspace;
 
-use simulator::{connect::connect_with_retry, logging};
-use simulator::config::Config;
+use simulator::{connect::connect_with_retry, config::Config};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    logging::install_panic_hook();
-    let _guard = logging::init_tracing()?;
+    utils::logging::install_panic_hook();
+    let _guard = utils::logging::init_tracing(LogConfig {
+        log_root: workspace::workspace_root().join("logs"),
+        stdout_level: Config::STDOUT_LOG_LEVEL,
+        ui: UiConfig::TuiBuffer,
+    })?;
 
     // Two cancellation tokens: `cancel` stops core sim tasks (physics, FC, scripted),
     // `tui_cancel` signals the TUI loop. Separate so the TUI can outlive the core
@@ -26,13 +31,13 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    let client = connect_with_retry(Config::SIM_SOCKET_PATH, || async {
-        connect_client::<{ Config::CLIENT_OUTGOING_DEPTH }>(Config::SIM_SOCKET_PATH)
+    let client = connect_with_retry(utils::constants::SIM_SOCKET_NAME, || async {
+        connect_client::<{ Config::CLIENT_OUTGOING_DEPTH }>(utils::constants::SIM_SOCKET_NAME)
             .await
             .map_err(anyhow::Error::from)
     }, cancel.clone()).await?;
 
-    info!("connected to {}", Config::SIM_SOCKET_PATH);
+    info!("connected to {}", utils::constants::SIM_SOCKET_NAME);
 
     simulator::run_simulator(client, cancel, tui_cancel).await?;
     Ok(())

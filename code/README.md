@@ -17,6 +17,7 @@ It does **not** own goals, non-goals, system constraints, or cross-subsystem int
 | `simulator/` | Host-side simulator: physics, scripted scenarios, runtime, API. Drives the flight computer library through its sensor/actuator interfaces for SITL testing. | `std` |
 | `flight-computer-host/` | Host-side FC binary — binds two interprocess local sockets (Linux + Windows transparently via `GenericNamespaced`), runs the FC library with simulator-fed peripherals over `fc-sim.sock` and GS telemetry over `fc-gs.sock`. | `std` |
 | `ground-station-backend/` | Ground-station server: postcard client to the FC, REST/DB layer for the frontend. Binaries live in `src/bin/`. | `std` |
+| `utils/` | Shared host-side utilities: structured JSON logging (per-level files + combined `log.json`), TUI ring buffer, workspace root resolution. | `std` |
 | `xtask/` | Project task runner (build, run, test orchestration). Invoke via `cargo xtask <task>`. | `std` |
 
 Embedded-target binary crates (`cross-esp32-s3`, `cross-nucleo-f413zh`) are referenced from the root `README.md`; they live outside this workspace because they need different toolchains.

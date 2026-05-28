@@ -85,8 +85,8 @@ Gate `proto`'s contents so embedded targets never compile host-only symbols, and
 |---|---|
 | `default` (HW-safe) | `PingEndpoint`, `GlobalTickHzEndpoint`, `RecordTopic` |
 | `simulator-endpoints` | All `Sim*` topics (altimeter, GPS, IMU, arm, deployment, LEDs) |
-| `ipc-adapter` | `InterprocessWireTx` / `InterprocessWireRx` over `interprocess` + `tokio` |
-| `host` | `simulator-endpoints` + `ipc-adapter` |
+| `transport-ipc` | `InterprocessWireTx` / `InterprocessWireRx` over `interprocess` + `tokio` |
+| `host` | `simulator-endpoints` + `transport-ipc` + `log` + `timestamp-into-duration` |
 | `pil` | `simulator-endpoints` |
 
 **Status:** Not started.
@@ -197,9 +197,9 @@ proto's nalgebra 0.33 + uom 0.37).
 **TUI update:** Physics panel adds downrange distance, bearing, velocity magnitude,
 attitude (yaw/pitch/roll).
 
-**Status:** Not started.
+**Status:** Deferred.
 
-### Full 6-DOF rotational dynamics (deferred)
+#### Full 6-DOF rotational dynamics (deferred)
 
 Replace kinematic attitude with full rotational dynamics:
 
@@ -234,27 +234,39 @@ Scope:
 
 ### M3.1 — GS backend: REST API + storage (FC-facing)
 
-Total rewrite crate `code/ground-station-backend/`.
+**Status:** Done.
+
+Crate `code/ground-station-backend/` implements the full FC-facing GS backend:
 
 Architectural role:
 - Connects to FC on `fc-gs.sock` (telemetry subscriber, command issuer).
-- Stores FC telemetry records to disk (append-only, one file per session).
+- Stores FC telemetry records to NDJSON (append-only, one file per session) with an in-memory cache for REST reads.
 - Exposes REST/JSON API consumed exclusively by the frontend — GS frontend never speaks postcard-rpc.
 - Independent of the simulator for its core function: operates on FC telemetry alone.
 
-Cleanup before building:
-- Remove outdated code `code/ground-station-backend/` — its `PostcardClient` and `postcard_server` are superseded by `proto::PostcardClient` + `proto::transport::thread`.
-- `PostcardClient::try_new_raw_nusb` (USB serial) needs a new home if still needed.
+**REST API:**
 
-Simulator integration deferrred:
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/status` | FC connection state + session record count |
+| GET | `/api/records` | All records from current session |
+| GET | `/api/records/latest` | Most recent record |
+| GET | `/api/logs` | Recent GS-side log lines |
+| POST | `/api/commands/ping` | Ping FC with echo-check (`0xdeadbeef`) + latency response |
+
+**Implementation details:**
+- FC client loop: connects via postcard-rpc client over `fc-gs.sock`, subscribes to `RecordTopic`, writes to NDJSON + cache, marks disconnected on any error (no auto-reconnect — permanent per session).
+- `FcConnection` shared state: `connected` flag, `last_error` string, `PostcardClient` handle (cloned for REST route use).
+- `RecordStorage`: `Vec<Record>` in-memory cache + `BufWriter<File>` NDJSON writer.
+- Config: unit struct with `pub const` values per `AGENTS.md §6`.
+- Ping sends `0xdeadbeef`, verifies echo, returns `latency_ms` on success (HTTP 200) or error string on failure (HTTP 503).
+
+**Simulator integration deferred:**
 - `sim-gs.sock` connection (lifecycle, config-hash, manual triggers) postponed to M3.3+.
 
-Config convention cleanup (see `AGENTS.md §6`):
-- Convert `RESTApiConfig`, `LocalPostcardConfig` to unit structs with `pub const` values.
-- Extract `LoggingConfig` constant fields into a separate unit struct; keep only runtime-timestamp fields in `LoggingConfig`.
-- Update call sites.
-
-**Status:** Blocked — requires M2 running.
+**xtask integration:**
+- `cargo xtask run host` builds and spawns the GS backend after FC host is ready.
+- Restart on panic (non-zero exit, up to 5× with 2s delay); shutdown on quit/close (zero exit).
 
 ### M3.2 — GS frontend TUI
 
@@ -285,11 +297,16 @@ Phased approach:
 **Goal:** A single command starts the full HOST stack in dependency order, with correct process supervision and crash policy enforced.
 
 Architectural role of `xtask` in HOST:
-- Spawns processes in order: GS backend → Simulator → FC-host → GS frontend.
+- Spawns processes in dependency order: FC-host first (server on both sockets), then Simulator, then GS backend, then GS frontend.
 - Enforces crash policy: FC and Sim are run-lifecycle peers (either crashing ends the run); GS is observational (its crash leaves FC and Sim running).
 - Provides Restart and Shutdown commands; no automatic retry.
 
-**Status:** Deferred until M3 is stable.
+**Status:** Partial — GS backend spawn integrated. Full dependency ordering and GS frontend spawn deferred until M3.2 is ready.
+
+Done so far:
+- `cargo xtask run host` builds and spawns `ground-station-backend` after FC host is ready.
+- GS backend restart on panic (non-zero exit, up to 5× with 2s delay); exit code 0 treated as intentional shutdown.
+- FC-host and simulator spawn predate this task.
 
 ---
 
@@ -301,14 +318,14 @@ Architectural role of `xtask` in HOST:
 | M1.2 | FC library cleanup: `impl_software` → `impl_sim` rename | `spec.md §10` + `flight-computer` features | Done |
 | M1.3 | Task lifecycle separation: `run_flight_computer` + cooperative storage | `spec.md §6.6` + `flight-computer` tasks | Done |
 | M2.1 | `flight-computer-host` binary | `flight-computer-host/src/main.rs` + `dispatch.rs` + `config.rs` | Done |
-| M2.2 | Simulator binary (MVP) | `code/simulator/` — physics + FC client + scripted + minimal TUI | Ready |
+| M2.2 | Simulator binary (MVP) | `code/simulator/` — physics + FC client + scripted + minimal TUI | Done |
 | M2.3 | Simulator 3D physics (spatial crate + kinematic attitude) | `code/spatial/` crate + `code/simulator/` physics | Not started |
 | M2.3b | Full 6-DOF rotational dynamics | — | Deferred |
 | M2.4 | Simulator config, lifecycle & interactive TUI | — | Deferred |
-| M3.1 | GS backend: REST API + storage (FC-facing) | Spec | Blocked (M2) |
+| M3.1 | GS backend: REST API + storage (FC-facing) | `code/ground-station-backend/` | Done |
 | M3.2 | GS frontend TUI | Spec | Blocked (M3.1 REST contract) |
 | M3.3 | Simulator-GS integration (state, config, lifecycle) | Spec | Blocked (M2.4 + M3.1) |
-| M4 | `xtask run-host` orchestration | — | Deferred (after M3) |
+| M4 | `xtask run-host` orchestration | `code/xtask/src/host.rs` | Partial — GS backend spawn done |
 
 ---
 
@@ -361,20 +378,115 @@ Architectural role of `xtask` in HOST:
 **M2 progress:** 2 / 5 (40%)
 
 ### Milestone 3 — Ground station (GS backend + GS frontend + sim integration)
-- [ ] M3.1 — GS backend: REST API + storage (FC-facing)
+- [X] M3.1 — GS backend: REST API + storage (FC-facing)
 - [ ] M3.2 — GS frontend TUI
 - [ ] M3.3 — Simulator-GS integration (state → config → lifecycle)
 
-**M3 progress:** 0 / 3 (0%)
+**M3 progress:** 1 / 3 (33%)
 
 ### Milestone 4 — Orchestration (`xtask run-host`)
-- [ ] M4 — `xtask run-host` orchestration
+- [ ] M4 — `xtask run-host` orchestration (GS backend spawn done; full dep ordering deferred)
 
-**M4 progress:** 0 / 1 (0%)
+**M4 progress:** 0 / 1 (0%) — partial; see §M4 for current scope
 
 ---
 
-**Overall progress:** 4 / 12 tasks (33%)
+**Overall progress:** 6 / 12 tasks (50%)
+
+---
+
+## Milestone 5 — Systematic testing (cross-cutting)
+
+**Goal:** Every crate has unit tests, integration tests, and cross-crate tests
+per the testing strategy defined in `docs/testing-strategy.md`. CI runs all three
+tiers on every push. Coverage and benchmarks are tracked.
+
+Testing is implemented in phases, each building on the previous:
+
+| Phase | Tier | Location | Depends on |
+|---|---|---|---|
+| P1 | Unit | `#[cfg(test)]` in `src/` | Nothing |
+| P2 | Integration | `code/<crate>/tests/` | P1 (foundation) |
+| P3 | Cross-crate | `code/tests/` | P2 (stable behavior tests) |
+| P4 | CI & infra | `.github/workflows/ci.yml` | P1–P3 (full suite exists) |
+| P5 | HW-in-the-loop | HW binary `tests/` | P1 (unit helpers) |
+
+**Status:** Not started.
+
+### P1 — Unit tests
+
+| # | Task | Crate | Priority |
+|---|---|---|---|
+| P1.1 | Add `hw_test` feature flag | flight-computer | High |
+| P1.2 | Unit tests for FSM state transitions | flight-computer | Critical |
+| P1.3 | Unit tests for apogee detector | flight-computer | Critical |
+| P1.4 | Unit tests for landing detector | flight-computer | Critical |
+| P1.5 | Unit tests for config structs | flight-computer | Medium |
+| P1.6 | Unit tests for storage records | flight-computer | Medium |
+| P1.7 | Unit tests for proto newtypes | proto | High |
+| P1.8 | Unit tests for proto topics/endpoints | proto | Medium |
+| P1.9 | Unit tests for simulator physics | simulator | Critical |
+| P1.10 | Unit tests for simulator script engine | simulator | High |
+| P1.11 | Extend clippy lints to all workspace crates | workspace | Medium |
+| P1.12 | Property-based tests for FSM invariants | flight-computer | Medium |
+
+**Status:** Not started.
+
+### P2 — Integration tests
+
+| # | Task | Crate | Priority |
+|---|---|---|---|
+| P2.1 | Integration tests for proto transport handlers | proto | High |
+| P2.2 | Integration tests for FC task lifecycle | flight-computer | Critical |
+| P2.3 | Integration tests for full flight scenarios | flight-computer | Critical |
+| P2.4 | Integration tests for error injection | flight-computer | High |
+| P2.5 | Integration tests for panic isolation | flight-computer | Medium |
+| P2.6 | Integration tests for simulator scenarios | simulator | Critical |
+| P2.7 | Integration tests for GS backend REST API | ground-station-backend | High |
+| P2.8 | Integration tests for GS backend storage | ground-station-backend | High |
+| P2.9 | Integration tests for FC-host socket lifecycle | flight-computer-host | Medium |
+| P2.10 | `criterion` benchmarks for hot paths | multiple | Medium |
+
+**Status:** Not started.
+
+### P3 — Cross-crate tests
+
+| # | Task | Priority |
+|---|---|---|
+| P3.1 | Create `code/tests/` crate with harness library | Critical |
+| P3.2 | FC-host ↔ simulator IPC test | Critical |
+| P3.3 | FC-host ↔ GS IPC test | High |
+| P3.4 | Full-stack SITL scenario test | Critical |
+| P3.5 | Disconnect handling tests | High |
+| P3.6 | Protocol compatibility test | Medium |
+
+**Status:** Not started.
+
+### P4 — CI & infrastructure
+
+| # | Task | Priority |
+|---|---|---|
+| P4.1 | GitHub Actions: clippy + build + unit + integration | Critical |
+| P4.2 | GitHub Actions: cross-crate tests | High |
+| P4.3 | Coverage instrumentation (grcov) | Medium |
+| P4.4 | `xtask test-all` command | High |
+| P4.5 | `xtask test-hw` command | Low |
+| P4.6 | Benchmark regression tracking | Low |
+
+**Status:** Not started.
+
+### P5 — Embedded HW tests
+
+| # | Task | Priority |
+|---|---|---|
+| P5.1 | `test_bmp280()` helper | High |
+| P5.2 | `test_bno055()` helper | High |
+| P5.3 | `test_gps()` helper | High |
+| P5.4 | `test_sd_card()` helper | High |
+| P5.5 | `test_switch()` / `test_button()` / `test_led()` helpers | High |
+| P5.6 | HW binary crates call helpers from `#[test]` | High |
+
+**Status:** Not started.
 
 ---
 

@@ -5,16 +5,17 @@ members = [
     "ground-station-backend",
     "proto",
     "simulator",
+    "utils",
     "xtask",
 ]
 
 resolver = "2"
 
 [patch.crates-io]
-postcard-rpc     = { path = "../../postcard-rpc/source/postcard-rpc", version = "*" }
-postcard-schema  = { path = "../../postcard/source/postcard-schema", version = "*" }
-bmp280-ehal  = { path = "../../bmp280", version = "*" }
-switch-hal  = { path = "../../switch-hal", version = "*" }
+postcard-rpc     = { path = "C:/Users/Pipes/Repos/postcard-rpc/source/postcard-rpc", version = "*" }
+postcard-schema  = { path = "C:/Users/Pipes/Repos/postcard/source/postcard-schema", version = "*" }
+bmp280-ehal  = { path = "C:/Users/Pipes/Repos/bmp280", version = "*" }
+switch-hal  = { path = "C:/Users/Pipes/Repos/switch-hal", version = "*" }
 
 [profile.dev]
 debug = true
