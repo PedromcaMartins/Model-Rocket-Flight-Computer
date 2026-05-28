@@ -12,28 +12,37 @@ pub async fn run_scripted(
     fc_state_rx: watch::Receiver<FlightState>,
     cancel: CancellationToken,
 ) -> anyhow::Result<()> {
-    // Arming FC
-    info!(delay_ms = SimulatorConfig::ARM_DELAY.as_millis(), "scripted: waiting for arm delay");
-    tokio::select! {
-        _ = cancel.cancelled() => anyhow::bail!("cancelled"),
-        _ = tokio::time::sleep(SimulatorConfig::ARM_DELAY) => {}
-    }
-    scripted_cmd_tx.send(FcCommand::Arm).await.context("scripted_cmd_tx receiver dropped")?;
-    info!("scripted: arm sent, waiting for FC to arm");
+    // Arming FC (optional — skip when ARM_DELAY is None)
+    if let Some(arm_delay) = SimulatorConfig::ARM_DELAY {
+        info!(delay_ms = arm_delay.as_millis(), "scripted: waiting for arm delay");
+        tokio::select! {
+            _ = cancel.cancelled() => anyhow::bail!("cancelled"),
+            _ = tokio::time::sleep(arm_delay) => {}
+        }
+        scripted_cmd_tx.send(FcCommand::Arm).await.context("scripted_cmd_tx receiver dropped")?;
+        info!("scripted: arm sent, waiting for FC to arm");
 
-    wait_for_armed(fc_state_rx, cancel.clone()).await?;
-
-    // Igniting motors
-    info!(delay_ms = SimulatorConfig::IGNITION_DELAY.as_millis(), "scripted: FC armed, waiting for ignition");
-    tokio::select! {
-        _ = cancel.cancelled() => anyhow::bail!("cancelled"),
-        _ = tokio::time::sleep(SimulatorConfig::IGNITION_DELAY) => {}
+        wait_for_armed(fc_state_rx, cancel.clone()).await?;
+    } else {
+        info!("scripted: arm skipped (ARM_DELAY is None)");
     }
-    physics_trigger_tx
-        .send(ForceEvent::MotorThrust)
-        .await
-        .context("physics trigger receiver dropped")?;
-    info!("scripted: ignition sent");
+
+    // Igniting motors (optional — skip when IGNITION_DELAY is None)
+    if let Some(ignition_delay) = SimulatorConfig::IGNITION_DELAY {
+        info!(delay_ms = ignition_delay.as_millis(), "scripted: waiting for ignition");
+        tokio::select! {
+            _ = cancel.cancelled() => anyhow::bail!("cancelled"),
+            _ = tokio::time::sleep(ignition_delay) => {}
+        }
+        physics_trigger_tx
+            .send(ForceEvent::MotorThrust)
+            .await
+            .context("physics trigger receiver dropped")?;
+        info!("scripted: ignition sent");
+    } else {
+        info!("scripted: ignition skipped (IGNITION_DELAY is None)");
+    }
+
     Ok(())
 }
 
