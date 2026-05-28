@@ -40,8 +40,9 @@ impl SimulatorConfig {
     pub fn touch_down_altitude() -> Altitude { Altitude::new::<meter>(86.0) }
 
     // Scripted scenario delays (wall-clock)
-    pub const IGNITION_DELAY: Duration = Duration::from_millis(5_000);
-    pub const ARM_DELAY: Duration = Duration::from_millis(5_000);
+    // Set to `None` to skip the corresponding event entirely.
+    pub const IGNITION_DELAY: Option<Duration> = Some(Duration::from_millis(5_000));
+    pub const ARM_DELAY: Option<Duration> = Some(Duration::from_millis(5_000));
     pub const ARM_ACTIVE_DELAY: Duration = Duration::from_millis(500);
 
     // Environment
