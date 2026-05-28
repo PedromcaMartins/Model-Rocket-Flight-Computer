@@ -1,0 +1,140 @@
+code/utils/src/logging.rs
+  s_44d0d47724a3f3::t_6447b7740aa449 13
+  s_44d0d47724a3f3::t_c3666e2263d788 161
+  s_44d0d47724a3f3::t_55721c6f550eb5 2,4,8-12,14-71,73-99,101-103,113-115,117,119,121-133,135-137,139-141,143-145,147,149-160,162-170,173-190,197,205,217-220
+code/utils/src/workspace.rs
+  s_44d0d47724a3f3::t_571d14c80d9506 2,4,7,9,11
+  s_44d0d47724a3f3::t_2d1f2de3caf830 1,3,5-6,8,10
+code/simulator/Cargo.toml
+  s_44d0d47724a3f3::t_ad747437555385 32
+code/utils/Cargo.toml
+  s_14bc098aef6be5::t_c49c10579f7b0a 1-13
+code/flight-computer-host/spec.md
+  s_44d0d47724a3f3::t_915748c9e34b07 72-74
+code/ground-station-backend/src/storage.rs
+  s_44d0d47724a3f3::t_f607dbb7421f88 37
+AGENTS.md
+  s_8d0c5bc763e06f::t_ca03d118b62481 129-141
+docs/ROADMAP.md
+  s_c803807a2c68b8::t_b351014052ca82 89
+  s_05ce131738e6ae::t_62d634d223ac16 383-385,389-395,401-414,420-431,437-444,450-457,463-470
+  s_c803807a2c68b8::t_8b90cc0cb29c6f 88,308
+code/utils/src/constants.rs
+  s_44d0d47724a3f3::t_36044986068afa 1-15
+code/simulator/src/tui/mod.rs
+  s_44d0d47724a3f3::t_71306d12979597 14
+  s_44d0d47724a3f3::t_82f7e1efc868bf 109
+docs/testing-strategy.md
+  s_afd06f49da9c26::t_9a6c79fcf23546 1-575
+code/utils/src/lib.rs
+  s_44d0d47724a3f3::t_a60764a6b7b50a 2-3
+  s_44d0d47724a3f3::t_ca6ee4e8461ae3 1
+code/simulator/src/lib.rs
+  s_44d0d47724a3f3::t_5d2484a053feab 15-16
+code/ground-station-backend/src/fc_client.rs
+  s_44d0d47724a3f3::t_a3d45cc4f48101 45,49
+  s_44d0d47724a3f3::t_d64a0d3c38cd5f 96,98
+code/simulator/src/config.rs
+  s_44d0d47724a3f3::t_8b2409076da6ed 68
+  s_44d0d47724a3f3::t_20c8329ed53f39 67
+code/xtask/src/host.rs
+  s_44d0d47724a3f3::t_e7533aaa19574a 146
+  s_44d0d47724a3f3::t_90b58fd3966903 132
+docs/REQUIREMENTS.md
+  s_c803807a2c68b8::t_929276a99a3edd 3-7,10-59,63-67,69-136,140-477
+  s_05ce131738e6ae::t_5fb7c670991c9d 68
+code/xtask/Cargo.toml
+  s_44d0d47724a3f3::t_b7d9267f653147 10
+code/ground-station-backend/src/config.rs
+  s_44d0d47724a3f3::t_d87226dc049567 34
+  s_44d0d47724a3f3::t_100de15df821ba 6,28-32
+  s_44d0d47724a3f3::t_a99701f368ceae 39
+code/flight-computer-host/src/config.rs
+  s_44d0d47724a3f3::t_07ebaba7ca9630 9-10
+code/README.md
+  s_44d0d47724a3f3::t_28d3ef0f867a94 20
+code/Cargo.toml
+  s_ececf7a01aee26::t_e1a7b51f42f176 15-18
+  s_44d0d47724a3f3::t_5878651c19098c 8
+code/ground-station-backend/src/main.rs
+  s_44d0d47724a3f3::t_c2aa456b9b99e7 29-30,40-44
+  s_44d0d47724a3f3::t_6c83099d160ee6 17-19
+.omo/plans/testing-implementation.md
+  s_05ce131738e6ae::t_f26bcb0355ae1e 1-41
+code/flight-computer/src/config.rs
+  s_44d0d47724a3f3::t_062a7a1096a5d6 132-134
+docs/toolchain.md
+  s_44d0d47724a3f3::t_015fad5c2712d9 144,146-148
+code/flight-computer-host/src/main.rs
+  s_44d0d47724a3f3::t_f292984b7fadcf 25,29
+  s_44d0d47724a3f3::t_d83e33f6943e94 26,30-34
+  s_44d0d47724a3f3::t_d8ece62fb3a131 37-38,42,46,56,65
+code/simulator/src/bin/host.rs
+  s_44d0d47724a3f3::t_035b5916d1fc15 4,11
+  s_44d0d47724a3f3::t_3581bf1e3202dd 34-35,40
+  s_44d0d47724a3f3::t_69f755e67c0ce7 5,7,12-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "f73848fd914a2af7ecbdec99ca8422958bcae0a4",
+  "prompts": {},
+  "sessions": {
+    "s_05ce131738e6ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_196f6a830ffeDbE946xWtL8o6V",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_14bc098aef6be5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1971c6d86ffeWI75qngVxyG2lJ",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_44d0d47724a3f3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1971c6d86ffeWI75qngVxyG2lJ",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_8d0c5bc763e06f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_196c619b8ffeQEioSPNLZG66dE",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_afd06f49da9c26": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_196f6a830ffeDbE946xWtL8o6V",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_c803807a2c68b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_19773f894ffeQ2RacXw5t7RrWY",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_ececf7a01aee26": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_194d28c0cffe737Ri7NiHOvhFW",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
