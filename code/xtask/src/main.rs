@@ -1,6 +1,6 @@
-#![allow(dead_code)]
 #![deny(unused_must_use)]
 
+mod check;
 mod host;
 
 use std::env;
@@ -13,8 +13,14 @@ fn main() -> Result<()> {
 
     match &args[..] {
         ["host"] => host::run_host(),
+        ["check"] => check::run_check(),
         _ => {
-            println!("USAGE cargo xtask host");
+            println!("USAGE: cargo xtask <command>");
+            println!();
+            println!("Commands:");
+            println!("  check    Clippy → build (dev+release) → test (dev+release) on the");
+            println!("           whole workspace (host features only)");
+            println!("  host     Build and run the full host stack (FC + GS + Simulator)");
             Ok(())
         }
     }

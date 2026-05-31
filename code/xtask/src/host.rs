@@ -7,7 +7,6 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use xshell::{cmd, Shell};
 
 const FC_HOST_STARTUP_TIMEOUT_SECS: Duration = Duration::from_secs(15);
 const POLL_INTERVAL: Duration = Duration::from_millis(200);
@@ -148,37 +147,48 @@ fn fc_host_socket_ready() -> bool {
 }
 
 fn build_host_binaries() -> Result<()> {
-    let sh = Shell::new()?;
-    sh.change_dir(root_dir());
+    let root = root_dir();
+    let sccache = sccache_wrapper();
 
-    if let Some(sccache) = sccache_wrapper() {
+    if let Some(ref sccache) = sccache {
         eprintln!("Using sccache at: {sccache}");
-        cmd!(sh, "cargo build -p flight-computer-host")
-            .env("RUSTC_WRAPPER", &sccache)
-            .run()
-            .context("flight-computer-host build failed")?;
-        cmd!(sh, "cargo build -p ground-station-backend")
-            .env("RUSTC_WRAPPER", &sccache)
-            .run()
-            .context("ground-station-backend build failed")?;
-        cmd!(sh, "cargo build --bin host -p simulator")
-            .env("RUSTC_WRAPPER", &sccache)
-            .run()
-            .context("simulator build failed")?;
     } else {
         eprintln!("sccache unavailable; building without cache");
-        cmd!(sh, "cargo build -p flight-computer-host")
-            .run()
-            .context("flight-computer-host build failed")?;
-        cmd!(sh, "cargo build -p ground-station-backend")
-            .run()
-            .context("ground-station-backend build failed")?;
-        cmd!(sh, "cargo build --bin host -p simulator")
-            .run()
-            .context("simulator build failed")?;
     }
 
-    Ok(())
+    let builds: [(&str, &[&str]); 3] = [
+        ("flight-computer-host", &["build", "-p", "flight-computer-host"]),
+        ("ground-station-backend", &["build", "-p", "ground-station-backend"]),
+        ("simulator", &["build", "--bin", "host", "-p", "simulator"]),
+    ];
+
+    std::thread::scope(|s| {
+        let mut handles = Vec::new();
+        for (name, args) in &builds {
+            let root = root.clone();
+            let sccache = sccache.clone();
+            handles.push(s.spawn(move || -> Result<()> {
+                let mut cmd = Command::new("cargo");
+                cmd.args(*args);
+                cmd.current_dir(&root);
+                if let Some(ref sccache) = sccache {
+                    cmd.env("RUSTC_WRAPPER", sccache);
+                }
+                let status = cmd.status()?;
+                if status.success() {
+                    Ok(())
+                } else {
+                    anyhow::bail!("{name} build failed ({status})");
+                }
+            }));
+        }
+
+        for h in handles {
+            h.join().unwrap()?;
+        }
+
+        Ok(())
+    })
 }
 
 fn sccache_wrapper() -> Option<String> {
