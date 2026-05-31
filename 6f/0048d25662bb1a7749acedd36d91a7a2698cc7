@@ -1,0 +1,56 @@
+code/xtask/src/host.rs
+  s_7460577bf12631::t_5fd190c4b16814 150-151,153,159-165,185-191
+  s_7460577bf12631::t_adb44985d43acc 166-184
+code/xtask/src/check.rs
+  s_c3ff926e49e5c7::t_e97ed289079915 6,10-12,17-19,21-26,28-29,31-33
+  s_50e1d98dc2e322::t_366bf1c78a4f3a 7-9
+  s_50e1d98dc2e322::t_30e7e897fabc96 1-5,13-15,27,30,34-43
+  s_50e1d98dc2e322::t_787603d055b0f2 16,20
+.zed/tasks.json
+  s_50e1d98dc2e322::t_23652a9152d6fa 3-9
+AGENTS.md
+  s_2a8176297859ac::t_aa55da37cf48bd 117,119
+code/xtask/src/main.rs
+  s_50e1d98dc2e322::t_fe99652a21140f 21-22
+  s_50e1d98dc2e322::t_0e5f847c3c31aa 3,16,18-20,23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "6f0048d25662bb1a7749acedd36d91a7a2698cc7",
+  "prompts": {},
+  "sessions": {
+    "s_2a8176297859ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1826166b4ffevwUp4P5FZNqJ3E",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_50e1d98dc2e322": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_182901210ffestOmKbU0Pd08Sw",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_7460577bf12631": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_18291fa4effeNJVdqjqSpEocc2",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_c3ff926e49e5c7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_182901210ffestOmKbU0Pd08Sw",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
