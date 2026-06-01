@@ -16,7 +16,7 @@ const MAX_GS_RESTARTS: u32 = 5;
 static CTRLC_TRIGGERED: AtomicBool = AtomicBool::new(false);
 
 pub fn run_host() -> Result<()> {
-    eprintln!("Building flight-computer-host, ground-station-backend and simulator...");
+    eprintln!("Building flight-computer-host, ground-station-backend, ground-station-frontend and simulator...");
     build_host_binaries()?;
 
     ctrlc::set_handler(|| {
@@ -27,6 +27,7 @@ pub fn run_host() -> Result<()> {
     let target_debug = root_dir().join("target").join("debug");
     let fc_host_bin = target_debug.join("flight-computer-host");
     let gs_backend_bin = target_debug.join("ground-station-backend");
+    let gs_frontend_bin = target_debug.join("ground-station-frontend");
     let sim_bin = target_debug.join("host");
 
     eprintln!("Starting flight-computer-host...");
@@ -53,26 +54,34 @@ pub fn run_host() -> Result<()> {
     )
     .context("failed to spawn simulator")?;
 
+    eprintln!("Starting ground-station-frontend...");
+    let gs_fe_bin_str = gs_frontend_bin.to_str().context("non-UTF8 path")?.to_owned();
+    let mut gs_frontend = spawn_in_terminal(&gs_fe_bin_str, &[], false)
+        .context("failed to spawn ground-station-frontend")?;
+
     loop {
         if CTRLC_TRIGGERED.load(Ordering::Relaxed) {
             eprintln!("\nShutdown by user");
             kill_child(&mut fc_host);
             kill_child(&mut gs_backend);
+            kill_child(&mut gs_frontend);
             kill_child(&mut sim);
             break;
         }
 
         if let Some(status) = sim.try_wait().context("failed to wait on simulator")? {
-            eprintln!("Simulator exited ({status}); terminating FC host and GS backend");
+            eprintln!("Simulator exited ({status}); terminating FC host, GS backend, and GS frontend");
             kill_child(&mut fc_host);
             kill_child(&mut gs_backend);
+            kill_child(&mut gs_frontend);
             break;
         }
 
         if let Some(status) = fc_host.try_wait().context("failed to wait on FC host")? {
-            eprintln!("FC host exited ({status}); terminating simulator and GS backend");
+            eprintln!("FC host exited ({status}); terminating simulator, GS backend, and GS frontend");
             kill_child(&mut sim);
             kill_child(&mut gs_backend);
+            kill_child(&mut gs_frontend);
             break;
         }
 
@@ -81,6 +90,7 @@ pub fn run_host() -> Result<()> {
                 eprintln!("GS backend quit or window closed; shutting down");
                 kill_child(&mut fc_host);
                 kill_child(&mut sim);
+                kill_child(&mut gs_frontend);
                 break;
             }
             gs_restart_count += 1;
@@ -88,6 +98,7 @@ pub fn run_host() -> Result<()> {
                 eprintln!("GS backend crashed {gs_restart_count} times; shutting down");
                 kill_child(&mut fc_host);
                 kill_child(&mut sim);
+                kill_child(&mut gs_frontend);
                 break;
             }
             eprintln!(
@@ -96,6 +107,22 @@ pub fn run_host() -> Result<()> {
             std::thread::sleep(GS_RESTART_DELAY);
             gs_backend = spawn_in_terminal(&gs_bin_str, &[], false)
                 .context("failed to re-spawn ground-station-backend")?;
+            continue;
+        }
+
+        // GS frontend lifecycle: observational — its crash leaves the rest running.
+        if let Some(status) = gs_frontend.try_wait().context("failed to wait on GS frontend")? {
+            if status.success() {
+                eprintln!("GS frontend quit or window closed; shutting down");
+                kill_child(&mut fc_host);
+                kill_child(&mut gs_backend);
+                kill_child(&mut sim);
+                break;
+            }
+            eprintln!("GS frontend crashed ({status}); restarting...");
+            std::thread::sleep(GS_RESTART_DELAY);
+            gs_frontend = spawn_in_terminal(&gs_fe_bin_str, &[], false)
+                .context("failed to re-spawn ground-station-frontend")?;
             continue;
         }
 
@@ -156,9 +183,10 @@ fn build_host_binaries() -> Result<()> {
         eprintln!("sccache unavailable; building without cache");
     }
 
-    let builds: [(&str, &[&str]); 3] = [
+    let builds: [(&str, &[&str]); 4] = [
         ("flight-computer-host", &["build", "-p", "flight-computer-host"]),
         ("ground-station-backend", &["build", "-p", "ground-station-backend"]),
+        ("ground-station-frontend", &["build", "-p", "ground-station-frontend"]),
         ("simulator", &["build", "--bin", "host", "-p", "simulator"]),
     ];
 

@@ -4,12 +4,12 @@
 //! `RecordTopic` for telemetry, stores records to NDJSON, and serves
 //! a REST/JSON API for the frontend.
 //!
-//! ## Config (compile-time constants in [`config`])
+//! ## Config (shared constants in `utils::constants`)
 //!
 //! | Constant | Default | Purpose |
 //! |---|---|---|
-//! | `REST_HOST` | `127.0.0.1` | REST server bind address |
-//! | `REST_PORT` | `8000` | REST server port |
+//! | `GS_HOST` | `"127.0.0.1"` | REST server bind address |
+//! | `GS_PORT` | `8000` | REST server port |
 //! | `RECORDS_ROOT_DIR` | `logs/gs_records` | Session NDJSON output directory |
 //!
 //! ## Logging
@@ -25,8 +25,9 @@ mod storage;
 
 use std::sync::Arc;
 
-use tokio::sync::RwLock;
+use tokio::sync::{broadcast, RwLock};
 use utils::logging::{LogConfig, LoggingGuard, UiConfig};
+use utils::constants as c;
 use utils::workspace;
 
 use config::Config as GsConfig;
@@ -37,7 +38,7 @@ use storage::RecordStorage;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     utils::logging::install_panic_hook();
-    let guard: LoggingGuard = utils::logging::init_tracing(LogConfig {
+    let _guard: LoggingGuard = utils::logging::init_tracing(LogConfig {
         log_root: workspace::workspace_root().join("logs/gs_backend"),
         stdout_level: GsConfig::STDOUT_LOG_LEVEL,
         ui: UiConfig::Stdout,
@@ -46,38 +47,40 @@ async fn main() -> anyhow::Result<()> {
     // Shared state between the FC client task and REST routes.
     let conn = Arc::new(RwLock::new(FcConnection::default()));
     let storage = Arc::new(RwLock::new(Some(RecordStorage::create()?)));
-    let log_dir = guard.log_dir.clone();
 
-    // Spawn the FC client loop (connects, subscribes, writes records).
-    let fc_conn = conn.clone();
-    let fc_storage = storage.clone();
-    tokio::spawn(async move {
-        fc_client::run_fc_client(fc_storage, fc_conn).await;
-    });
+    // Broadcast channel for WS clients — FC records are forwarded here.
+    let (ws_tx, _) = broadcast::channel(256);
+
+    let state = AppState { conn, storage, ws_sender: ws_tx };
+
+    // Spawn the FC client loop (connects, subscribes, writes records, broadcasts).
+    tokio::spawn(fc_client::run_fc_client(state.clone()));
+
+    // Spawn a periodic FC ping task — latency flows through WS status messages.
+    tokio::spawn(fc_client::run_ping_loop(state.clone()));
 
     tracing::info!(
         "Starting REST API on {}:{}",
-        GsConfig::REST_HOST,
-        GsConfig::REST_PORT
+        c::GS_HOST,
+        c::GS_PORT
     );
 
-    let state = AppState { conn, storage, log_dir };
-
     let figment = rocket::figment::Figment::from(rocket::config::Config::default())
-        .merge(("address", GsConfig::REST_HOST))
-        .merge(("port", GsConfig::REST_PORT))
+        .merge(("address", c::GS_HOST))
+        .merge(("port", c::GS_PORT))
         .merge(("shutdown.ctrlc", GsConfig::CTRLC))
         .merge(("shutdown.grace", GsConfig::GRACE))
         .merge(("shutdown.merciless", GsConfig::MERCILESS));
 
     let _rocket = rocket::custom(figment)
         .manage(state)
-        .mount(GsConfig::API_PATH, rocket::routes![
+        .mount(c::API_PATH, rocket::routes![
             routes::status,
             routes::records,
-            routes::records_latest,
-            routes::logs,
             routes::ping,
+            routes::ws_events,
+            routes::arm,
+            routes::ignite,
         ])
         .launch()
         .await?;

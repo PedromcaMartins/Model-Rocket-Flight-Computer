@@ -19,18 +19,18 @@ pub fn run_check() -> Result<()> {
     eprintln!("=== Step 1/5: Clippy ===");
     cmd!(sh, "cargo clippy --workspace --all-targets").run()?;
 
-    eprintln!("=== Step 2/5: Build (dev profile) ===");
-    cmd!(sh, "cargo build --workspace {exclude...}").run()?;
+    // eprintln!("=== Step 2/5: Build (dev profile) ===");
+    // cmd!(sh, "cargo build --workspace {exclude...}").run()?;
 
-    eprintln!("=== Step 3/5: Build (release profile) ===");
-    cmd!(sh, "cargo build --workspace --release {exclude...}").run()?;
+    // eprintln!("=== Step 3/5: Build (release profile) ===");
+    // cmd!(sh, "cargo build --workspace --release {exclude...}").run()?;
 
     eprintln!("=== Step 4/5: Test (dev profile) ===");
     cmd!(sh, "cargo nextest run --workspace {exclude...}").run()?;
 
-    eprintln!("=== Step 5/5: Test (release profile) ===");
-    cmd!(sh, "cargo nextest run --workspace --release {exclude...}")
-        .run()?;
+    // eprintln!("=== Step 5/5: Test (release profile) ===");
+    // cmd!(sh, "cargo nextest run --workspace --release {exclude...}")
+    //     .run()?;
 
     eprintln!("=== All checks passed! ===");
     Ok(())

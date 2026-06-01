@@ -3,6 +3,7 @@ members = [
     "flight-computer",
     "flight-computer-host",
     "ground-station-backend",
+    "ground-station-frontend",
     "proto",
     "simulator",
     "utils",

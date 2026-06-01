@@ -112,11 +112,7 @@ In tests, `std` is always available (see §6). Do not qualify dev-deps as "no_st
 
 - **Rust workspace** is under `code/`. Run `cargo` commands from there unless a crate's README says otherwise.
 - **Approved verification commands:** `cargo check`, `cargo clippy`, `cargo build`, `cargo nextest run`
-- **Always use `savepoint` before editing code.** Before making any change that has associated tests, start `savepoint` in a background terminal from the `code/` directory:
-  ```
-  savepoint -f rs -- cmd /c "cargo xtask check"
-  ```
-  The `cmd /c` wrapper is necessary because shell operators (`&&`, `;`) are consumed by PowerShell before they reach savepoint. `cargo xtask check` runs clippy, build (dev + release), and nextest (dev + release). Savepoint watches `.rs` files, re-runs on change, and auto-commits when the check flips from failing → passing. This creates a recoverable checkpoint at each fixed state. Use `-d` (dry-run) to preview without committing, or `-c` to clear screen between runs.
+- **Always use `savepoint` before editing code.** Before making any change that has associated tests, spawn zed task: savepoint. This ensures you have a known-good state to return to if your change breaks tests. If you break tests, revert to the savepoint, fix the issue, and make a new savepoint with a descriptive name (e.g. "fix config consts"). Do not leave broken tests in the repo.
 - **Never use `cargo test`** — it produces misleading failures; `cargo nextest run` isolates each test in its own process.
 - **Do not invent URLs or crate versions.** Point at `datasheets/`, `papers/`, or already-cited upstream docs.
 - **Config values that don't change at runtime use `pub const` on a unit struct,** not instance fields. Const-first: plain types use `pub const`; only fall back to `pub fn` (no `self`) when const arithmetic is impossible (e.g. uom types). Config is a namespace, never instantiated. See `flight-computer/src/config.rs` for the pattern. Config does not change over time!

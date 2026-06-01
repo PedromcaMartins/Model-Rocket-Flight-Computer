@@ -1,0 +1,65 @@
+{
+  "started_at": "2026-05-31T17:43:09.1545702+01:00",
+  "plan_name": "m3-2-gs-frontend-implementation",
+  "session_ids": [
+    "opencode:ses_181491024ffeGYsEQ1KNFS4bHa",
+    "opencode:ses_1810f59ceffeUJ0QLmNUcUT1Zq",
+    "opencode:ses_1810f4d38ffeCfOB1jG6zC8q04",
+    "opencode:ses_180f4c399ffeLnTbcOKNrfuY9J"
+  ],
+  "active_plan": "C:\\Users\\Pipes\\Repos\\Model-Rocket-Flight-Computer\\.omo\\plans\\m3-2-gs-frontend-implementation.md",
+  "session_origins": {
+    "opencode:ses_181491024ffeGYsEQ1KNFS4bHa": "direct",
+    "opencode:ses_1810f59ceffeUJ0QLmNUcUT1Zq": "appended",
+    "opencode:ses_1810f4d38ffeCfOB1jG6zC8q04": "appended",
+    "opencode:ses_180f4c399ffeLnTbcOKNrfuY9J": "appended"
+  },
+  "task_sessions": {
+    "todo:0": {
+      "task_key": "todo:0",
+      "task_label": "0",
+      "task_title": "**Add WS broadcast endpoint to GS backend**",
+      "session_id": "opencode:ses_180f4c399ffeLnTbcOKNrfuY9J",
+      "agent": "explore",
+      "started_at": "2026-05-31T16:46:49.065Z",
+      "status": "running",
+      "updated_at": "2026-05-31T17:18:23.600Z"
+    }
+  },
+  "schema_version": 2,
+  "works": {
+    "m3-2-gs-frontend-implementation-legacy": {
+      "work_id": "m3-2-gs-frontend-implementation-legacy",
+      "active_plan": "C:\\Users\\Pipes\\Repos\\Model-Rocket-Flight-Computer\\.omo\\plans\\m3-2-gs-frontend-implementation.md",
+      "plan_name": "m3-2-gs-frontend-implementation",
+      "started_at": "2026-05-31T17:43:09.1545702+01:00",
+      "updated_at": "2026-05-31T17:18:23.600Z",
+      "session_ids": [
+        "opencode:ses_181491024ffeGYsEQ1KNFS4bHa",
+        "opencode:ses_1810f59ceffeUJ0QLmNUcUT1Zq",
+        "opencode:ses_1810f4d38ffeCfOB1jG6zC8q04",
+        "opencode:ses_180f4c399ffeLnTbcOKNrfuY9J"
+      ],
+      "session_origins": {
+        "opencode:ses_181491024ffeGYsEQ1KNFS4bHa": "direct",
+        "opencode:ses_1810f59ceffeUJ0QLmNUcUT1Zq": "appended",
+        "opencode:ses_1810f4d38ffeCfOB1jG6zC8q04": "appended",
+        "opencode:ses_180f4c399ffeLnTbcOKNrfuY9J": "appended"
+      },
+      "task_sessions": {
+        "todo:0": {
+          "task_key": "todo:0",
+          "task_label": "0",
+          "task_title": "**Add WS broadcast endpoint to GS backend**",
+          "session_id": "opencode:ses_180f4c399ffeLnTbcOKNrfuY9J",
+          "agent": "explore",
+          "started_at": "2026-05-31T16:46:49.065Z",
+          "status": "running",
+          "updated_at": "2026-05-31T17:18:23.600Z"
+        }
+      }
+    }
+  },
+  "active_work_id": "m3-2-gs-frontend-implementation-legacy",
+  "updated_at": "2026-05-31T17:18:23.600Z"
+}

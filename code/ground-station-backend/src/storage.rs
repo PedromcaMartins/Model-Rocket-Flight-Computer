@@ -6,7 +6,7 @@
 
 use std::io::Write;
 
-use chrono::Local;
+use chrono::{Local, Utc};
 use serde::Serialize;
 use tracing::info;
 
@@ -17,8 +17,8 @@ pub struct RecordStorage {
     file: std::io::BufWriter<std::fs::File>,
     /// Number of records written so far.
     count: u64,
-    /// Human-readable session start time.
-    session_start: String,
+    /// Absolute session start time (UTC).
+    session_start: chrono::DateTime<Utc>,
     /// In-memory cache of all records for REST API reads.
     records: Vec<proto::record::Record>,
 }
@@ -31,7 +31,9 @@ impl RecordStorage {
     /// Returns an error if the directory cannot be created or the file
     /// cannot be opened for writing.
     pub fn create() -> anyhow::Result<Self> {
-        let ts = Local::now()
+        let now_utc = Utc::now();
+        let ts = now_utc
+            .with_timezone(&Local)
             .format(Config::RECORDS_TIMESTAMP_FORMAT)
             .to_string();
         let dir = Config::records_root_dir().join(&ts);
@@ -46,7 +48,7 @@ impl RecordStorage {
         Ok(Self {
             file,
             count: 0,
-            session_start: ts,
+            session_start: now_utc,
             records: Vec::new(),
         })
     }
@@ -71,8 +73,8 @@ impl RecordStorage {
         self.count
     }
 
-    pub fn session_start(&self) -> &str {
-        &self.session_start
+    pub fn session_start(&self) -> chrono::DateTime<Utc> {
+        self.session_start
     }
 
     /// Store a telemetry record: write to NDJSON and retain in memory.
@@ -91,10 +93,5 @@ impl RecordStorage {
     /// All records from the current session, in arrival order.
     pub fn records(&self) -> &[proto::record::Record] {
         &self.records
-    }
-
-    /// The most recent record, if any.
-    pub fn latest_record(&self) -> Option<&proto::record::Record> {
-        self.records.last()
     }
 }

@@ -15,14 +15,17 @@ impl Config {
     pub const CLIENT_QUEUE_DEPTH: usize = 1024;
     /// Timeout for endpoint calls (e.g. ping).
     pub const ENDPOINT_TIMEOUT: Duration = Duration::from_secs(2);
+    /// Interval between FC ping measurements.
+    pub const PING_POLL: Duration = Duration::from_secs(1);
+    /// Echo payload for FC ping endpoint.
+    pub const PING_PAYLOAD: u32 = 0xdeadbeef;
+    /// Delay between reconnection attempts after a FC disconnect.
+    pub const RECONNECT_INTERVAL: Duration = Duration::from_secs(1);
 
     // -- REST server --
-    pub const REST_HOST: &str = "127.0.0.1";
-    pub const REST_PORT: u16 = 8000;
     pub const CTRLC: bool = true;
     pub const GRACE: u64 = 5;
     pub const MERCILESS: bool = false;
-    pub const API_PATH: &str = "/api";
 
     // -- Record storage --
     /// Absolute path to the session NDJSON storage directory,

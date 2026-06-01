@@ -270,14 +270,23 @@ Architectural role:
 
 ### M3.2 — GS frontend TUI
 
-New ratatui binary.
+New ratatui binary in `code/ground-station-frontend/`.
 
 Architectural role:
-- Pure REST client of GS backend; no direct postcard-rpc.
+- Pure REST + WebSocket client of GS backend; no direct postcard-rpc.
 - Minimum viable screens: live telemetry (altimeter, GPS, IMU, flight state), log tail, manual controls (arm, ignition, deploy).
 - Disconnect UX: affected panel turns red within one UI refresh; last-known state stays visible, dimmed, with stale-indicator badge; Restart / Shutdown buttons available; no automatic reconnect retry.
 
-**Status:** Blocked — requires M3.1 REST contract settled.
+**GS-FE sub-milestones:**
+
+| Sub-MS | Name | Tasks | Status |
+|---|---|---|---|
+| M3.2a | Foundation + WS Backend | WS endpoint, spec, Cargo.toml, config, history | Done |
+| M3.2b | Core Library | backend client, state, lib.rs | Done |
+| M3.2c | TUI Infrastructure | terminal, render, telemetry, logs, controls | Done |
+| M3.2d | Binary Entry + Polish | main.rs, README | Done |
+
+**Status:** Done.
 
 ### M3.3 — Simulator-GS integration
 
@@ -323,7 +332,7 @@ Done so far:
 | M2.3b | Full 6-DOF rotational dynamics | — | Deferred |
 | M2.4 | Simulator config, lifecycle & interactive TUI | — | Deferred |
 | M3.1 | GS backend: REST API + storage (FC-facing) | `code/ground-station-backend/` | Done |
-| M3.2 | GS frontend TUI | Spec | Blocked (M3.1 REST contract) |
+| M3.2 | GS frontend TUI | `code/ground-station-frontend/` | Done |
 | M3.3 | Simulator-GS integration (state, config, lifecycle) | Spec | Blocked (M2.4 + M3.1) |
 | M4 | `xtask run-host` orchestration | `code/xtask/src/host.rs` | Partial — GS backend spawn done |
 
@@ -379,10 +388,10 @@ Done so far:
 
 ### Milestone 3 — Ground station (GS backend + GS frontend + sim integration)
 - [X] M3.1 — GS backend: REST API + storage (FC-facing)
-- [ ] M3.2 — GS frontend TUI
+- [X] M3.2 — GS frontend TUI
 - [ ] M3.3 — Simulator-GS integration (state → config → lifecycle)
 
-**M3 progress:** 1 / 3 (33%)
+**M3 progress:** 2 / 3 (67%)
 
 ### Milestone 4 — Orchestration (`xtask run-host`)
 - [ ] M4 — `xtask run-host` orchestration (GS backend spawn done; full dep ordering deferred)
@@ -391,7 +400,7 @@ Done so far:
 
 ---
 
-**Overall progress:** 6 / 12 tasks (50%)
+**Overall progress:** 7 / 12 tasks (58%)
 
 ---
 

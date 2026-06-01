@@ -9,7 +9,7 @@ REST/JSON server + telemetry storage for the ground station.
 
 **M3.1 scope:**
 - FC-facing only — no `sim-gs.sock` connection (deferred to M3.3).
-- No auto-reconnect — a FC disconnect is permanent for the session; operator restarts GS.
+- Automatic reconnection — the FC client loops indefinitely, reconnecting after [`Config::RECONNECT_INTERVAL`](src/config.rs) on any failure or disconnect.
 
 ## REST API
 

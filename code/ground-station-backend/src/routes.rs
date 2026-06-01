@@ -1,45 +1,70 @@
-//! Rocket route handlers for the GS REST API.
+//! Rocket route handlers for the GS REST API + WebSocket endpoint.
 //!
 //! All routes are scoped under `/api`.
 
-use std::io::BufRead;
-use std::path::PathBuf;
 use std::sync::Arc;
 
+use rocket::futures::SinkExt;
 use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::serde::json::Json;
 use rocket::State;
-use serde::Serialize;
-use tokio::sync::RwLock;
+use tokio::sync::{broadcast, RwLock};
+use tokio::sync::broadcast::error::RecvError;
+
+use tracing::{debug, info, warn};
 
 use crate::config::Config;
 use crate::fc_client::FcConnection;
+use crate::storage::RecordStorage;
+
+/// Shared broadcast sender for WebSocket clients.
+/// Pre-serialized JSON strings (one per record/status message).
+pub type WsSender = broadcast::Sender<String>;
 
 /// Shared application state managed by Rocket.
+#[derive(Clone)]
 pub struct AppState {
     pub conn: Arc<RwLock<FcConnection>>,
-    pub storage: Arc<RwLock<Option<crate::storage::RecordStorage>>>,
-    pub log_dir: PathBuf,
+    pub storage: Arc<RwLock<Option<RecordStorage>>>,
+    pub ws_sender: WsSender,
+}
+
+impl AppState {
+    /// Broadcast the current FC connection status as a JSON string to WebSocket clients.
+    pub(crate) async fn broadcast_status(&self) {
+        let conn = self.conn.read().await;
+        let store = self.storage.read().await;
+        let (session_start, record_count) = match &*store {
+            Some(s) => (s.session_start(), s.count()),
+            None => (chrono::DateTime::UNIX_EPOCH, 0),
+        };
+        if let Ok(json) = serde_json::to_string(&utils::status::WsMessage::Status(
+            utils::status::Status { connected: conn.connected(), session_start, record_count, latency: conn.latency },
+        )) && let Err(e) = self.ws_sender.send(json) {
+            debug!("Failed to send status update (no WS clients): {}", e);
+        }
+    }
+
+    /// Extract the FC postcard client from shared state.
+    ///
+    /// Returns a 503 error response when the FC is disconnected.
+    pub(crate) async fn get_fc_client(&self) -> Result<proto::PostcardClient, Custom<Json<CommandError>>> {
+        match self.conn.read().await.client.clone() {
+            Some(client) => Ok(client),
+            None => Err(json_error(Status::ServiceUnavailable, "FC not connected")),
+        }
+    }
 }
 
 // ---- Response types ----
 
-#[derive(Serialize)]
-pub struct StatusResponse {
-    pub connected: bool,
-    pub session_start: String,
-    pub record_count: u64,
-}
+pub use utils::status::{CommandError, CommandSuccess, PingSuccess, Status as StatusResponse};
 
-#[derive(Serialize)]
-pub struct PingSuccess {
-    pub latency_ms: f64,
-}
+// ---- Helpers ----
 
-#[derive(Serialize)]
-pub struct PingError {
-    pub error: String,
+fn json_error(status: Status, msg: impl Into<String>) -> Custom<Json<CommandError>> {
+    Custom(status, Json(CommandError { error: msg.into() }))
 }
 
 // ---- Routes ----
@@ -49,105 +74,60 @@ pub struct PingError {
 pub async fn status(state: &State<AppState>) -> Json<StatusResponse> {
     let conn = state.conn.read().await;
     let store = state.storage.read().await;
-    let (session_start, record_count) = match &*store {
-        Some(s) => (s.session_start().to_string(), s.count()),
-        None => (String::new(), 0),
-    };
-    Json(StatusResponse {
-        connected: conn.connected,
+        let (session_start, record_count) = match &*store {
+            Some(s) => (s.session_start(), s.count()),
+            None => (chrono::DateTime::UNIX_EPOCH, 0),
+        };
+        Json(StatusResponse {
+        connected: conn.connected(),
         session_start,
         record_count,
+        latency: None,
     })
 }
 
-/// `GET /api/records` — all telemetry records from the current session.
-#[rocket::get("/records")]
+/// `GET /api/records` — telemetry records from the current session.
+///
+/// Supports optional `?limit=N` to return only the last N records.
+///
+/// Rank 1 (lower priority than `ws_events` at rank 0) so that
+/// WebSocket upgrade requests hit the WS handler first.
+#[rocket::get("/records?<limit>", rank = 1)]
 pub async fn records(
     state: &State<AppState>,
+    limit: Option<usize>,
 ) -> Result<Json<Vec<proto::record::Record>>, rocket::response::status::NotFound<&'static str>> {
     let store = state.storage.read().await;
     match &*store {
-        Some(s) => Ok(Json(s.records().to_vec())),
-        None => Err(rocket::response::status::NotFound("no active session")),
-    }
-}
-
-/// `GET /api/records/latest` — most recent telemetry record.
-#[rocket::get("/records/latest")]
-pub async fn records_latest(
-    state: &State<AppState>,
-) -> Result<Json<proto::record::Record>, rocket::response::status::NotFound<&'static str>> {
-    let store = state.storage.read().await;
-    match &*store {
-        Some(s) => match s.latest_record() {
-            Some(r) => Ok(Json(r.clone())),
-            None => Err(rocket::response::status::NotFound("no records yet")),
-        },
-        None => Err(rocket::response::status::NotFound("no active session")),
-    }
-}
-
-/// `GET /api/logs` — recent GS-side log lines from the current session.
-///
-/// Returns the last 200 JSON log entries from the combined log file.
-#[rocket::get("/logs?<lines>")]
-pub async fn logs(
-    state: &State<AppState>,
-    lines: Option<usize>,
-) -> Result<Json<Vec<serde_json::Value>>, rocket::response::status::NotFound<&'static str>> {
-    let max_lines = lines.unwrap_or(200).min(2000);
-    let log_file = state.log_dir.join("log.json");
-
-    let file = match std::fs::File::open(&log_file) {
-        Ok(f) => f,
-        Err(_) => return Err(rocket::response::status::NotFound("log file not available")),
-    };
-
-    let reader = std::io::BufReader::new(file);
-    // Collect up to max_lines from the end.
-    let mut all_lines: Vec<String> = Vec::new();
-    for line in reader.lines() {
-        match line {
-            Ok(l) => all_lines.push(l),
-            Err(_) => continue, // skip malformed lines
+        Some(s) => {
+            let all = s.records();
+            let records = match limit {
+                Some(n) => {
+                    let start = all.len().saturating_sub(n);
+                    all[start..].to_vec()
+                }
+                None => all.to_vec(),
+            };
+            Ok(Json(records))
         }
+        None => Err(rocket::response::status::NotFound("no active session")),
     }
-
-    let tail: Vec<serde_json::Value> = all_lines
-        .into_iter()
-        .rev()
-        .take(max_lines)
-        .filter_map(|l| serde_json::from_str(&l).ok())
-        .collect();
-
-    Ok(Json(tail))
 }
 
 /// `POST /api/commands/ping` — ping the FC, echo-check, return round-trip latency.
 ///
-/// Sends `0xdeadbeef` and verifies the FC echoes it back.
+/// Sends `Config::PING_PAYLOAD` and verifies the FC echoes it back.
 ///
-/// - **200** `{"latency_ms": 1.23}` on success.
+/// - **200** `{"latency"}` on success.
 /// - **503** `{"error": "..."}` on failure (disconnected, timeout, echo mismatch).
 #[rocket::post("/commands/ping")]
 pub async fn ping(
     state: &State<AppState>,
-) -> Result<Json<PingSuccess>, Custom<Json<PingError>>> {
-    let client = {
-        let c = state.conn.read().await;
-        c.client.clone()
-    };
+) -> Result<Json<PingSuccess>, Custom<Json<CommandError>>> {
+    debug!("ping requested");
+    let client = state.get_fc_client().await?;
 
-    let Some(client) = client else {
-        return Err(Custom(
-            Status::ServiceUnavailable,
-            Json(PingError {
-                error: "FC not connected".into(),
-            }),
-        ));
-    };
-
-    let payload: u32 = 0xdeadbeef;
+    let payload = Config::PING_PAYLOAD;
     let start = std::time::Instant::now();
 
     match tokio::time::timeout(
@@ -159,32 +139,101 @@ pub async fn ping(
         Ok(Ok(resp)) => {
             let latency = start.elapsed();
             if *resp != payload {
-                Err(Custom(
+                warn!("ping echo mismatch: sent {payload:#x}, got {:#x}", *resp);
+                Err(json_error(
                     Status::InternalServerError,
-                    Json(PingError {
-                        error: format!(
-                            "ping echo mismatch: sent {payload:#x}, got {:#x}",
-                            *resp,
-                        ),
-                    }),
+                    format!("ping echo mismatch: sent {payload:#x}, got {:#x}", *resp),
                 ))
             } else {
-                Ok(Json(PingSuccess {
-                    latency_ms: latency.as_secs_f64() * 1000.0,
-                }))
+                debug!("ping OK: {}ms", latency.as_millis());
+                Ok(Json(PingSuccess { latency }))
             }
         }
-        Ok(Err(e)) => Err(Custom(
-            Status::InternalServerError,
-            Json(PingError {
-                error: format!("ping failed: {e}"),
-            }),
-        )),
-        Err(_) => Err(Custom(
-            Status::RequestTimeout,
-            Json(PingError {
-                error: "ping timed out".into(),
-            }),
-        )),
+        Ok(Err(e)) => {
+            warn!("ping failed: {e}");
+            Err(json_error(Status::InternalServerError, format!("ping failed: {e}")))
+        }
+        Err(_) => {
+            warn!("ping timed out");
+            Err(json_error(Status::RequestTimeout, "ping timed out"))
+        }
     }
+}
+
+/// `GET /api/records` (WebSocket upgrade) — live telemetry stream.
+///
+/// On connect, subscribes to the broadcast channel and forwards all
+/// record/status messages to the WS client. Regular GET requests fall
+/// through to the JSON `records` handler.
+///
+/// Rank 0 (default) so this route is tried before the REST `records`
+/// handler (rank 1). Rocket falls through to the REST handler when
+/// the request lacks WebSocket upgrade headers.
+#[rocket::get("/records")]
+pub fn ws_events(
+    ws: rocket_ws::WebSocket,
+    state: &State<AppState>,
+) -> rocket_ws::Channel<'static> {
+    let mut rx = state.ws_sender.subscribe();
+    ws.channel(move |mut stream| Box::pin(async move {
+        loop {
+            match rx.recv().await {
+                Ok(msg) => {
+                    if stream
+                        .send(rocket_ws::Message::Text(msg))
+                        .await
+                        .is_err()
+                    {
+                        warn!("WS client disconnected (send error)");
+                        break;
+                    }
+                }
+                Err(RecvError::Closed) => {
+                    info!("WS broadcast channel closed");
+                    break;
+                }
+                Err(RecvError::Lagged(n)) => {
+                    warn!("WS client lagged behind by {n} messages");
+                    continue;
+                }
+            }
+        }
+        Ok(())
+    }))
+}
+
+/// `POST /api/commands/arm` — arm the FC flight computer.
+///
+/// Placeholder for M3.2 — validates FC connectivity but the actual postcard-rpc
+/// arm endpoint is wired in M3.3 (sim-gs.sock integration).
+///
+/// - **200** `{"status": "accepted"}` when FC is connected.
+/// - **503** `{"error": "..."}` when FC is disconnected.
+#[rocket::post("/commands/arm")]
+pub async fn arm(
+    state: &State<AppState>,
+) -> Result<Json<CommandSuccess>, Custom<Json<CommandError>>> {
+    let _client = state.get_fc_client().await?;
+    info!("arm command accepted");
+    Ok(Json(CommandSuccess {
+        status: "accepted".into(),
+    }))
+}
+
+/// `POST /api/commands/ignite` — ignite the rocket motor.
+///
+/// Placeholder for M3.2 — validates FC connectivity but the actual postcard-rpc
+/// ignite endpoint is wired in M3.3 (sim-gs.sock integration).
+///
+/// - **200** `{"status": "accepted"}` when FC is connected.
+/// - **503** `{"error": "..."}` when FC is disconnected.
+#[rocket::post("/commands/ignite")]
+pub async fn ignite(
+    state: &State<AppState>,
+) -> Result<Json<CommandSuccess>, Custom<Json<CommandError>>> {
+    let _client = state.get_fc_client().await?;
+    info!("ignite command accepted");
+    Ok(Json(CommandSuccess {
+        status: "accepted".into(),
+    }))
 }
