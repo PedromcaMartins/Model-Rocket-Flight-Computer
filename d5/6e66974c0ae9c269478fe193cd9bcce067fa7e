@@ -1,0 +1,39 @@
+code/ground-station-frontend/src/config.rs
+  s_6bc60df9a39b19::t_3f7a5a4db92504 1-26
+code/ground-station-frontend/Cargo.toml
+  s_6bc60df9a39b19::t_5f8d7e7f3d5534 1-38
+code/ground-station-frontend/src/bin/tui/render.rs
+  s_6bc60df9a39b19::t_52c54aebb7f0fc 3
+  s_6bc60df9a39b19::t_dca756b0d06ced 60-64
+  s_86f7d02bfc4fe0::t_c7984c52c6aa42 65
+  s_6bc60df9a39b19::t_ab1b72c79ed0fc 1,4-59,67-108
+code/ground-station-frontend/src/bin/tui/telemetry.rs
+  s_6bc60df9a39b19::t_263503ba4dd297 1-72,77-153,158-177,184-190,194-200,202-205,207-213,218-225,227-230,232-234,239-248,252-261,263-268,270-273,275-277,283-298
+code/ground-station-frontend/src/state.rs
+  s_6bc60df9a39b19::t_615d4379436271 1-52,54-173
+  s_6bc60df9a39b19::t_fa786536623878 53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "d56e66974c0ae9c269478fe193cd9bcce067fa7e",
+  "prompts": {},
+  "sessions": {
+    "s_6bc60df9a39b19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17b041069ffeIBhgsYH5tmW6r2",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_86f7d02bfc4fe0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17b041069ffeIBhgsYH5tmW6r2",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
