@@ -1,0 +1,40 @@
+code/ground-station-frontend/src/backend.rs
+  s_a4d8aa6f03d711::t_4bb6f9245eb97f 7,121
+code/ground-station-frontend/src/state.rs
+  s_41411e5152e91d::t_faccf7dba92671 57
+  s_41411e5152e91d::t_c275196de2759c 117
+  s_41411e5152e91d::t_6b6bd55de135ff 41-42
+  s_41411e5152e91d::t_61846bbdb97678 160-161
+  s_41411e5152e91d::t_d18fa421f21301 19
+  s_a4d8aa6f03d711::t_9adcd766b75bcc 139,155-159
+  s_41411e5152e91d::t_975e7a8cda8cda 73
+  s_41411e5152e91d::t_4e19db363dbc5d 2
+code/ground-station-frontend/src/bin/tui/render.rs
+  s_41411e5152e91d::t_d37fa91f203371 34,36-40,42,55
+code/ground-station-frontend/src/bin/tui/telemetry.rs
+  s_41411e5152e91d::t_b4f0a9a0d24e95 54-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "4a973a269687d8f021dfad69fe4124cd52bad57a",
+  "prompts": {},
+  "sessions": {
+    "s_41411e5152e91d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17be10c06ffeJzkE1tDOIqrZpz",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_a4d8aa6f03d711": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17be10c06ffeJzkE1tDOIqrZpz",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
