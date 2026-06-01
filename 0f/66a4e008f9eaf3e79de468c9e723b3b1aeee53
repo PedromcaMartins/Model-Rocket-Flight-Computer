@@ -1,0 +1,75 @@
+docs/ROADMAP.md
+  s_3f092ba92100d9::t_1c9ce0ff6d68fe 273,276,280-289,335,391,394,403
+code/ground-station-backend/src/fc_client.rs
+  s_259930f6977b6a::t_2eb3e81c842ec1 18,20-21,25-29,60-62,64-65,67-74,76-79,82-83,86,102,118,132-134,136-137
+  s_89fdc514fe31be::t_93dcc4619618cc 75,80-81
+  s_3f092ba92100d9::t_785450d01bfd1f 85,87-91,93,95,98,100-101,103-106,108-113,115-117,119-120,140
+  s_3f092ba92100d9::t_eb1b7031d4e79e 37-46,48,50-51,53-56
+  s_89fdc514fe31be::t_f5ee9efedd8296 107,114,123,127,135
+  s_89fdc514fe31be::t_fdce6249abec84 57-59,66
+  s_4797dbc1de2ab3::t_04354c35da69d8 129
+  s_89fdc514fe31be::t_bd63a9f4507192 92,94,96-97
+  s_89fdc514fe31be::t_1a23bc241eb96d 10
+code/ground-station-backend/src/main.rs
+  s_3f092ba92100d9::t_4c98b12ebb0b5f 7,11-12,28,30,41,51-53,56,58-59,64-65,69-70,77,81-83
+  s_89fdc514fe31be::t_2e89ddbae2d119 54-55,57,60
+code/ground-station-backend/src/routes.rs
+  s_89fdc514fe31be::t_2596f4141fa5d3 19,29
+  s_89fdc514fe31be::t_39781e85372968 26
+  s_3f092ba92100d9::t_ddd412a52b3f56 1,7,12-15,20-23,30,35,49,52,56-59,62,66-75,77,83,85,91,106,118,129,131,135-252
+code/ground-station-backend/src/config.rs
+  s_9be6c78c416a46::t_6430c0a845665e 22-23
+  s_3f092ba92100d9::t_f15468cde6af76 18-21
+code/ground-station-backend/README.md
+  s_3f092ba92100d9::t_d706a25f785919 12
+code/ground-station-frontend/src/bin/tui/controls.rs
+  s_259930f6977b6a::t_10664296940639 1-174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "0f66a4e008f9eaf3e79de468c9e723b3b1aeee53",
+  "prompts": {},
+  "sessions": {
+    "s_259930f6977b6a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17b7abf11ffeUutYfrYyRe2VnD",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_3f092ba92100d9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17b68d87effe5uBqcOQ7Vfbil2",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_4797dbc1de2ab3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17b4d097dffep3TmZZEQkhHwUi",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_89fdc514fe31be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17b413ed6ffeatfCBFAtALCfcP",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_9be6c78c416a46": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17b68d87effe5uBqcOQ7Vfbil2",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
