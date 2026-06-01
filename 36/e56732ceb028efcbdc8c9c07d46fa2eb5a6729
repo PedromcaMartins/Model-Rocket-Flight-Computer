@@ -1,0 +1,239 @@
+code/ground-station-frontend/src/bin/tui/render.rs
+  s_0b06dc04e23a84::t_1f212a612214d5 1-8,11-14,16-31,36,38-39,42-44,46-48,53-54,57-92,94-99
+  s_0b06dc04e23a84::t_5496a28653afb0 9
+  s_0b06dc04e23a84::t_63ca5609783551 10
+  s_0b06dc04e23a84::t_6b9bf609a3a4f6 15
+  s_0b06dc04e23a84::t_13c69ee5a06daf 32
+  s_0b06dc04e23a84::t_24e3e7cbf07eaf 33
+  s_0b06dc04e23a84::t_ae02a76f083c1d 34
+  s_0b06dc04e23a84::t_acbde11f94a072 40-41,45,49,52
+  s_0b06dc04e23a84::t_9dd4f5adaa1279 55-56
+  s_0b06dc04e23a84::t_2609236c685cce 93
+code/ground-station-frontend/src/config.rs
+  s_0b06dc04e23a84::t_5838f847b32f79 1-2,5-14,26
+  s_0b06dc04e23a84::t_7e0c54a3911cff 3-4
+  s_0b06dc04e23a84::t_2e7a01cf94739f 15-17,22-25
+  s_0b06dc04e23a84::t_007b9740e41bdd 18-21
+code/utils/src/status.rs
+  s_0b06dc04e23a84::t_c1d802beb920f2 1
+  s_0b06dc04e23a84::t_0f51b7b605c79e 2-5,7
+  s_0b06dc04e23a84::t_1b3f1f1cdb9e73 8,10,12-27
+  s_0b06dc04e23a84::t_23378b8fc9ff40 28,31-35
+  s_0b06dc04e23a84::t_18937842123d27 29-30,9
+  s_0b06dc04e23a84::t_ec87928b7b082b 6
+  s_0b06dc04e23a84::t_31f291d2938b10 11
+code/ground-station-frontend/src/state.rs
+  s_0b06dc04e23a84::t_6fce1e926d4ce4 1,3-4,7,9,11-14,16,18-24,26-28,30-34,36-38,42-43,46,53-55,57-67,69-73,75-82,86-91,94-97,99-103,105-112,114-116,118-120,122,141-143,145,148-149,152-158
+  s_0b06dc04e23a84::t_3e07264afed79a 2
+  s_0b06dc04e23a84::t_09178920f2009d 5
+  s_0b06dc04e23a84::t_e17df83571609d 6
+  s_0b06dc04e23a84::t_4ac3395db2a67e 8
+  s_0b06dc04e23a84::t_a95580511d8c61 10
+  s_0b06dc04e23a84::t_8c49ef41260478 15,35,44-45
+  s_0b06dc04e23a84::t_f836280bbd4856 17
+  s_0b06dc04e23a84::t_581632660bd92a 25
+  s_0b06dc04e23a84::t_93998d8ea13923 29
+  s_0b06dc04e23a84::t_be1a3c2f7a9bbc 39-41
+  s_0b06dc04e23a84::t_5b89565c77060f 47,52
+  s_0b06dc04e23a84::t_ad930aab3a7bfa 48-50
+  s_0b06dc04e23a84::t_171e811dfa1bdd 56
+  s_0b06dc04e23a84::t_d712e7a4dab078 68
+  s_0b06dc04e23a84::t_971962561cbed5 74
+  s_0b06dc04e23a84::t_bae9c370d0ec3a 83-85
+  s_0b06dc04e23a84::t_2679ef0296f398 92,98
+  s_0b06dc04e23a84::t_bb71c6fd4cc9f9 93
+  s_0b06dc04e23a84::t_d0b3fc7b201f6a 104
+  s_0b06dc04e23a84::t_4f07276dca2e06 113
+  s_0b06dc04e23a84::t_33e47438d43591 121
+  s_0b06dc04e23a84::t_a095d1573cca46 127
+  s_0b06dc04e23a84::t_c5c543162cae22 128-131
+  s_0b06dc04e23a84::t_f17e1ce861edec 144,146
+  s_0b06dc04e23a84::t_ebe1c8a08801c8 150
+  s_0b06dc04e23a84::t_47b5c2d5833caf 151
+  s_0b06dc04e23a84::t_e9f4c8b210a671 51
+code/ground-station-frontend/spec.md
+  s_0b06dc04e23a84::t_77a0bb545eb822 1-282,284-564
+code/ground-station-backend/src/main.rs
+  s_0b06dc04e23a84::t_a327b8ac7f14c0 7,11-12
+  s_0b06dc04e23a84::t_d17841444485a1 28
+  s_0b06dc04e23a84::t_9e69d4da74480e 30
+  s_0b06dc04e23a84::t_4f8f9fdec15128 41
+  s_0b06dc04e23a84::t_d71026a173d709 51-54,57,59
+  s_0b06dc04e23a84::t_1406d8d9a4d309 65-66,64
+  s_0b06dc04e23a84::t_0d2bc16064ae54 69-70,74-75
+  s_0b06dc04e23a84::t_2fbbbaea884e5c 82
+  s_0b06dc04e23a84::t_0cc5ae7d723223 86-88
+  s_0b06dc04e23a84::t_1e0a6b8c90e3a6 62
+  s_0b06dc04e23a84::t_cfc51d4f3d76f8 63
+code/ground-station-frontend/src/bin/tui/telemetry.rs
+  s_0b06dc04e23a84::t_fb26e9f7cb3ab3 1-8,10-13,15-53,55-160,162-186,188-189,192-197,199-213,215,217-243,246,248-290
+  s_0b06dc04e23a84::t_83bf4f672ba164 9
+  s_0b06dc04e23a84::t_5525b36f83528a 14
+  s_0b06dc04e23a84::t_17e90cb502dc53 161
+  s_0b06dc04e23a84::t_0ea03dd25bdb14 187,190-191
+  s_0b06dc04e23a84::t_9c20023a289584 198
+  s_0b06dc04e23a84::t_74075c66b45b2a 244-245,247
+.omo/plans/m3-2-gs-frontend-implementation.md
+  s_7f05b08db53e78::t_03aee224287347 1-65,68-117,120-122,126-135,140-169,171-178,180-183,186-198,1090-1114,1116-1138
+  s_7f05b08db53e78::t_733363cb11b32e 66
+  s_88c449f990f85d::t_40e8acaaf16c99 67
+  s_7f05b08db53e78::t_3faa5c6f2ff6d7 118-119,123-125
+  s_7f05b08db53e78::t_95cb17f7a01833 136-139,170
+  s_7f05b08db53e78::t_1dae8d233ed325 179,184-185
+  s_7f05b08db53e78::t_8c6b2dc5a554c0 199-200,202-203,227-228,231-246,250-255,265-269,271-278,280-283,285-288,290-291
+  s_88c449f990f85d::t_eb48f84253bd86 201,204-208,210-220
+  s_88c449f990f85d::t_4cf600ca480fd0 209,223-225,229-230
+  s_88c449f990f85d::t_8e186a29cb51d5 221-222,226
+  s_88c449f990f85d::t_8d43f1c308d320 247-249,256-258,260-261,270,279,284
+  s_88c449f990f85d::t_ad88b977e5990b 259,262-264,289
+  s_7f05b08db53e78::t_54114563e626c0 292-345,347-402,419-476,478-479,481-514,516,518-519,522-535,537-540,548-568,570-572,574-612,615-980,982-1089
+  s_88c449f990f85d::t_1c7d341f985b00 346
+  s_88c449f990f85d::t_b05b11d58596d2 403-411,418
+  s_88c449f990f85d::t_dcc2c2f036c17a 412-417
+  s_88c449f990f85d::t_01c9777b96d816 477,480
+  s_88c449f990f85d::t_5f10877dbff72e 515,517,520-521
+  ai_agent 536,541-543,545
+  s_88c449f990f85d::t_7e83d96758a152 544,546-547
+  s_88c449f990f85d::t_644c80275813e7 569,573
+  s_88c449f990f85d::t_be78732886b4e1 613-614
+  s_88c449f990f85d::t_91d63c371769b0 981
+  s_7f05b08db53e78::t_53e48948fff7ac 1115
+code/ground-station-frontend/src/bin/tui/main.rs
+  s_0b06dc04e23a84::t_61bf782cbfd5ad 81
+  s_098824f62c4d6f::t_028f529880f559 120-135,141,145
+  s_0b06dc04e23a84::t_2940a788abfe43 136,142
+  s_0b06dc04e23a84::t_86bf1debd45137 166-183
+.omo/run-continuation/ses_181491024ffeGYsEQ1KNFS4bHa.json
+  ai_agent 1-11
+code/ground-station-backend/src/config.rs
+  s_0b06dc04e23a84::t_697b8ed34522a9 18-19
+  s_0b06dc04e23a84::t_c978e7df8147c1 20-21
+.omo/boulder.json
+  s_88c449f990f85d::t_c5d36fb9800aad 1-4,65
+  ai_agent 5-64
+code/ground-station-frontend/src/bin/tui/logs.rs
+  s_0b06dc04e23a84::t_aa405cf9feb8a5 1-8,11-16,18-81
+  s_0b06dc04e23a84::t_1a98b2765ae7aa 9
+  s_0b06dc04e23a84::t_d12c8d0d4595a3 10
+  s_0b06dc04e23a84::t_3567b93a3a5391 17
+code/ground-station-backend/src/fc_client.rs
+  s_0b06dc04e23a84::t_487c35eaa85840 13
+  s_2a94a77f2383e2::t_18db56de1e7164 22
+  s_626b2b2b5b1b49::t_f73c6ee30025c9 29-33
+  s_0b06dc04e23a84::t_878d9302c63289 41-43,45-51,53-57
+  s_0b06dc04e23a84::t_489a229c3abcda 118,58-59,71
+  s_0b06dc04e23a84::t_823e85d3fff59d 154
+  s_0b06dc04e23a84::t_0158b4259579bc 159,163-164
+  s_0b06dc04e23a84::t_c0c4052d27c808 165,168,87
+  s_0b06dc04e23a84::t_041f60b7209040 175,108
+  s_0b06dc04e23a84::t_1e43d7e9429a76 24-25
+  s_0b06dc04e23a84::t_2ac13f56c7e65f 44
+  s_0b06dc04e23a84::t_829eff93ed571c 52
+  s_0b06dc04e23a84::t_d844c25937b718 60,64-70,72-86,88-107
+  s_0b06dc04e23a84::t_867e2e46724b0f 153,176
+code/ground-station-frontend/src/backend.rs
+  s_0b06dc04e23a84::t_827944f716b269 2
+  s_0b06dc04e23a84::t_e9b8b2f436c6df 3-4,14,52
+  s_0b06dc04e23a84::t_78f8a80671e15d 5-8,10-13,16-17,19-20,22-23,25-26,28-51,53,57-58,68-69,79-80,91-95,134
+  s_0b06dc04e23a84::t_c1947f545313c8 15
+  s_0b06dc04e23a84::t_56aa1d90115dc4 18,21,24
+  s_0b06dc04e23a84::t_6372fe39f8bb0c 54,56,59,61-65,67,70,72-76,78,83,86-88,90
+  s_0b06dc04e23a84::t_d1ad0f18245ba0 55
+  s_0b06dc04e23a84::t_f19ed48383e8ca 60
+  s_0b06dc04e23a84::t_9d9bf244763095 71
+  s_0b06dc04e23a84::t_600deb72228072 82
+  s_0b06dc04e23a84::t_39249002279122 96-112,114,116,118-133
+  s_0b06dc04e23a84::t_cdcfdd21eddda1 113
+  s_0b06dc04e23a84::t_181e55d02cccd6 115
+  s_0b06dc04e23a84::t_ae2759f0162a6c 117
+  s_0b06dc04e23a84::t_506eb6815ebed9 9
+  s_0b06dc04e23a84::t_ae91870aae971c 84
+code/ground-station-backend/src/routes.rs
+  s_0b06dc04e23a84::t_75c17459be69f9 1,13
+  s_0b06dc04e23a84::t_7b70741560d92a 7
+  s_0b06dc04e23a84::t_a051fd24468fe8 12,14,20-23,28,151-152
+  s_0b06dc04e23a84::t_42a20fd0fafc19 15
+  s_0b06dc04e23a84::t_e798f159577713 33
+  s_626b2b2b5b1b49::t_e828067fb77f13 47
+  s_0b06dc04e23a84::t_bb1b54ead29ed2 54-57,60,64-73,75
+  s_0b06dc04e23a84::t_d02277abf5f73b 89
+  s_0b06dc04e23a84::t_630370caee27f8 116,133-150
+  s_0b06dc04e23a84::t_b3968966ec1ca3 153-164,166-169,171-173,175-177,186-203,220-233
+  s_0b06dc04e23a84::t_90e1af8c3d8424 165
+  s_0b06dc04e23a84::t_318b77674f66d5 170
+  s_0b06dc04e23a84::t_d60526968d3d11 174,178-185
+  s_626b2b2b5b1b49::t_915bb0995c85bd 204
+  s_0b06dc04e23a84::t_6c96b4fdf23c17 205-219
+  s_626b2b2b5b1b49::t_19561723ec92be 234,236-250
+  s_626b2b2b5b1b49::t_90c5a4cc067737 235
+  s_0b06dc04e23a84::t_1f72c0ef90fe24 50
+  s_0b06dc04e23a84::t_3a0292110783be 81
+  s_0b06dc04e23a84::t_e2910e8402242c 104
+  s_0b06dc04e23a84::t_57adfffcdbfc27 129
+code/ground-station-frontend/src/bin/tui/controls.rs
+  s_0b06dc04e23a84::t_2ad2cadd254df7 1-8,11-12,15-20,24-26,29-36,38-51,66-81,96-148,150-174
+  s_0b06dc04e23a84::t_aca42e7939a229 9
+  s_0b06dc04e23a84::t_1091d0b8cf13be 10
+  s_0b06dc04e23a84::t_e74f76cd889fd2 13
+  s_0b06dc04e23a84::t_0f5725cba7f485 14,21-23
+  s_0b06dc04e23a84::t_a8ddbc1e706552 37
+  s_0b06dc04e23a84::t_2b8929c3d272d0 52-65
+  s_0b06dc04e23a84::t_79cae93680f73c 82-95
+  s_0b06dc04e23a84::t_976aaf9cbb8e1e 149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "36e56732ceb028efcbdc8c9c07d46fa2eb5a6729",
+  "prompts": {},
+  "sessions": {
+    "s_098824f62c4d6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17bd06f69ffeiBHaL3OBINJ7qd",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_0b06dc04e23a84": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1810ca2f9ffeRm7n0p8dSZkzvq",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_2a94a77f2383e2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17fcf768effenU6J02fTUmZUOM",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_626b2b2b5b1b49": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17fcf768effenU6J02fTUmZUOM",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_7f05b08db53e78": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_18174841fffe3QUz7US6yVS2t1",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_88c449f990f85d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_181491024ffeGYsEQ1KNFS4bHa",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
