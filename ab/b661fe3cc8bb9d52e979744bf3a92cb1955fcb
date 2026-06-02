@@ -1,0 +1,92 @@
+code/ground-station-frontend/src/config.rs
+  s_63092656b5eb1b::t_c89754ab6156bf 14,16
+  s_6bc60df9a39b19::t_3f7a5a4db92504 1,3,5,7-12,17-19,21-23,25-29
+  s_0b06dc04e23a84::t_096c6b4ea98d36 2,4,6,13,20,24
+  s_3ebc6df6c6531c::t_5df29bd3f4b12a 15
+code/ground-station-frontend/README.md
+  s_3ebc6df6c6531c::t_365a7a1f4bc3c5 40-41
+code/ground-station-frontend/Cargo.toml
+  s_3ebc6df6c6531c::t_365a7a1f4bc3c5 1-38
+code/ground-station-frontend/src/lib.rs
+  s_3ebc6df6c6531c::t_365a7a1f4bc3c5 1-9
+code/ground-station-frontend/src/bin/tui/main.rs
+  s_0b06dc04e23a84::t_9262b7180a8fd6 68
+  s_aab0ac99432344::t_a088742722f35d 10,17
+  s_0b06dc04e23a84::t_5f53e6a42bbf0f 67
+  s_aab0ac99432344::t_62e6fbbfb0c5d8 71
+  s_0b06dc04e23a84::t_98e1c955adbf34 1-9,11-16,18-66,69-70,72-82
+code/ground-station-frontend/src/state.rs
+  s_a4a62412b411cf::t_5a7948e0d69ef9 31
+  s_63092656b5eb1b::t_2fdb2de4edca4e 79,81,88-96,98-106,109-125,128-129,131-132,134,137-144,147-148
+  s_6bc60df9a39b19::t_615d4379436271 1-3,6-30,33-52,54-77,80,83-86,97,107,127,130,133,135-136,145-146,149
+  s_a4a62412b411cf::t_828ecdf6f05094 126
+  s_a4a62412b411cf::t_316a191d64a672 4
+  s_6bc60df9a39b19::t_fa786536623878 53
+  s_0b06dc04e23a84::t_8939267d941001 82,87
+code/ground-station-frontend/src/backend.rs
+  s_ec1bd46094d920::t_ac09a15c5ae04d 48-60,62
+  s_3ebc6df6c6531c::t_365a7a1f4bc3c5 1-5,7-46,63-66,69-73,75,77,79,81,83,87-88,90-92,97-101,107-128
+  s_3ebc6df6c6531c::t_079e1abc28d0c7 76,80,84-86
+  s_3ebc6df6c6531c::t_5fcc8d9f821595 6
+code/ground-station-frontend/spec.md
+  s_3ebc6df6c6531c::t_365a7a1f4bc3c5 23,71-75,228,379,382,397-398,400-402
+code/ground-station-frontend/src/history.rs
+  s_a4a62412b411cf::t_3a6259e2b9fa70 1-11,13-47,49,51-109
+  s_a4a62412b411cf::t_02ee1893f6639b 12,48,50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "abb661fe3cc8bb9d52e979744bf3a92cb1955fcb",
+  "prompts": {},
+  "sessions": {
+    "s_0b06dc04e23a84": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1810ca2f9ffeRm7n0p8dSZkzvq",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_3ebc6df6c6531c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17a5b7a58ffeUcOylkh73PK199",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_63092656b5eb1b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1810ca2f9ffeRm7n0p8dSZkzvq",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_a4a62412b411cf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17ad0ff3bffeSPV517qj3xcTyT",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_aab0ac99432344": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17a472012ffeLUzKbOeZrlANwf",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_ec1bd46094d920": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_17a5b7a58ffeUcOylkh73PK199",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
