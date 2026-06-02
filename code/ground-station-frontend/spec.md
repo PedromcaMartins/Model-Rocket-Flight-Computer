@@ -20,7 +20,7 @@ never speak postcard-rpc. All data flows through the GS backend.
 - WebSocket client receiving telemetry `Record`s and status updates. Protocol schema also defines `log` type (forward compatibility — backend does not emit logs yet).
 - REST client for commands (arm, ignite) and ping heartbeat.
 - Three-tab TUI: Telemetry (raw values + recent history), Logs (placeholder — deferred to M3.6), Controls.
-- Disconnect UX: red banner, dimmed stale data, last-seen timestamp, reconnect button.
+- Disconnect UX: red banner, dimmed stale data, last-seen timestamp. Auto-reconnect after [`Config::RECONNECT_INTERVAL`].
 - Connection heartbeat with latency display.
 - Library/binary split: library owns transport, state, pollers; binary owns UI.
 
@@ -68,10 +68,11 @@ dispatches on `type` to the appropriate state handler.
 1. **Connect** — TUI starts → frontend opens WS to `/api/records`.
 2. **Streaming** — Backend pushes record/log/status messages as they happen.
 3. **Disconnect** — WS close or error → frontend sets `connected=false`, red
-   banner + dimmed stale data. The WS reader task returns; no auto-retry.
-4. **Reconnect** — User presses `r` (reconnect) → frontend opens a fresh WS.
-   The old `AppState` (stale data) stays visible until the first post-reconnect
-   messages arrive.
+   banner + dimmed stale data. The WS reader task sleeps
+   [`Config::RECONNECT_INTERVAL`] then retries.
+4. **Reconnect** — Automatic. On disconnect, the reader waits [`Config::RECONNECT_INTERVAL`]
+   and opens a fresh WS connection. The old `AppState` (stale data) stays visible
+   until the first post-reconnect messages arrive.
 
 ---
 
@@ -224,7 +225,7 @@ Opens the WS, reads messages in a loop, dispatches by `type`:
 | `log` | No-op in M3.2 (backend does not emit). Handler wired for forward compatibility — when M3.6 activates log forwarding, pushes to `log_buffer` (configurable max lines). |
 | `status` | Updates `connected`, `session_start`, `record_count`. |
 
-On WS close/error: sets `connected=false`, captures error, **exits** (no auto-retry).
+On WS close/error: sets `connected=false`, captures error, **exits** the session. The outer reconnect loop sleeps [`Config::RECONNECT_INTERVAL`] and retries.
 
 ### 4.5 Heartbeat poller
 
@@ -375,10 +376,10 @@ Scrollable with mouse wheel.
 │  Session:   2026-05-31 14:30:00                                  │
 │  Records:   42                                                   │
 │                                                                  │
-│  [r] Reconnect to backend                                        │
+│  Auto-reconnect: `Config::RECONNECT_INTERVAL`                    │
 │                                                                  │
 │ ── Keybinds ─────────────────────────────────────                │
-│  a=arm  i=ignite  r=reconnect  q=quit                            │
+│  a=arm  i=ignite  q=quit                                         │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -393,13 +394,12 @@ When the WS connection closes:
 
 1. **Within one render frame:** Status-bar ● turns red/dim. Latency hidden.
 2. **Telemetry tab:** Last-known values dimmed. Stale badge `⚠ STALE — Last seen: Xs ago`.
-3. **Controls tab:** Arm/ignite show `(FC disconnected)`. Reconnect button `r` available.
-4. **No auto-retry** — operator initiates reconnect.
+3. **Controls tab:** Arm/ignite show `(FC disconnected)`.
+4. **Auto-retry** — the reconnect loop sleeps [`Config::RECONNECT_INTERVAL`] and opens a fresh connection.
 
-On reconnect success (user presses `r`):
-1. New WS connection opened.
-2. First incoming messages populate fresh state.
-3. Stale badge disappears, values brighten, ● turns green.
+On reconnect success:
+1. First incoming messages populate fresh state.
+2. Stale badge disappears, values brighten, ● turns green.
 
 ---
 

@@ -37,7 +37,8 @@ cargo run -p ground-station-frontend
 | `1` / `2` / `3` | Select tab (Telemetry / Logs / Controls) |
 | `a` | Arm system |
 | `i` | Motor ignition |
-| `r` | Reconnect WebSocket |
+
+WS reconnect is automatic — no manual keybind needed.
 
 ## See also
 

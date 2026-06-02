@@ -1,0 +1,38 @@
+[package]
+name = "ground-station-frontend"
+version = "0.0.0"
+edition = "2024"
+
+[[bin]]
+name = "ground-station-frontend"
+path = "src/bin/tui/main.rs"
+
+[dependencies]
+proto = { version = "*", path = "../proto", default-features = false, features = ["client"] }
+utils = { path = "../utils" }
+
+# WebSocket client
+tokio-tungstenite = "0.24"
+futures-util = "0.3"
+
+# REST client
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# TUI
+ratatui = "0.29"
+crossterm = "0.28"
+
+# Async
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "macros", "signal"] }
+tokio-util = "0.7"
+
+# Concurrency
+arc-swap = "1"
+
+# General
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = "0.4"
+tracing = "0.1"
+scopeguard = "1"
