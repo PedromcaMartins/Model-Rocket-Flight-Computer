@@ -1,0 +1,56 @@
+code/ground-station-frontend/src/bin/tui/logs.rs
+  s_3ebc6df6c6531c::t_365a7a1f4bc3c5 1-81
+code/ground-station-frontend/src/bin/tui/telemetry.rs
+  s_a4a62412b411cf::t_de9ff0db7622ef 152-153,158-160,205,218,232,282,310
+  s_a4a62412b411cf::t_682ace8bfa8425 192-197
+  s_6bc60df9a39b19::t_263503ba4dd297 1-72,77-151,161-177,184-190,199-204,207-210,212-217,223-230,233-235,237-239,244-254,261,265-266,268-273,275-280,283-285,287-289,295-309
+  s_a4a62412b411cf::t_fabe9b798c6726 255-257,262-264,267
+code/ground-station-frontend/src/bin/tui/controls.rs
+  s_0b06dc04e23a84::t_5eb3da16ad8f11 129-130
+  s_0b06dc04e23a84::t_bab8daba22bf2a 1-128,132-171
+code/ground-station-frontend/src/bin/tui/tui.rs
+  s_aab0ac99432344::t_dae9377e7b2389 15
+  s_aab0ac99432344::t_e52065254693a3 1-14,16-100
+code/ground-station-frontend/src/bin/tui/render.rs
+  s_3ebc6df6c6531c::t_365a7a1f4bc3c5 1-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "30e79b2af57edf00c1a200f55293a3f6a7148a90",
+  "prompts": {},
+  "sessions": {
+    "s_0b06dc04e23a84": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1810ca2f9ffeRm7n0p8dSZkzvq",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_3ebc6df6c6531c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17a5b7a58ffeUcOylkh73PK199",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_a4a62412b411cf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17ad0ff3bffeSPV517qj3xcTyT",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_aab0ac99432344": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17a472012ffeLUzKbOeZrlANwf",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
