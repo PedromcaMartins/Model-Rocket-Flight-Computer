@@ -1,0 +1,61 @@
+code/ground-station-frontend/src/state.rs
+  s_0b06dc04e23a84::t_8971ccbf01dded 55
+  s_0b06dc04e23a84::t_bf7d5f90168c45 18
+  s_0b06dc04e23a84::t_7cee48a02cb532 109
+code/ground-station-backend/src/routes.rs
+  s_0b06dc04e23a84::t_c97d780599078f 82
+  s_0b06dc04e23a84::t_c505d027c2772b 43
+code/ground-station-frontend/src/bin/tui/tui.rs
+  s_aab0ac99432344::t_e52065254693a3 1-14,16-83,89,99-100,106-108,111
+  s_aab0ac99432344::t_dae9377e7b2389 15
+  s_d50595eedc7ea2::t_ae505f255010c8 84-88,90-98,101-105,109-110
+code/ground-station-backend/src/fc_client.rs
+  s_0b06dc04e23a84::t_f1cf5fff837b90 39,48-52,55,57,70-71,126-128
+code/utils/src/status.rs
+  s_0b06dc04e23a84::t_773389d31923ea 3-4
+code/ground-station-frontend/src/bin/tui/render.rs
+  s_0b06dc04e23a84::t_3db7cc4d9d8ba7 43,46,50-52,54-59,66,91
+  s_0b06dc04e23a84::t_4bff2bd0902bb2 38,40-42,49
+  s_3ebc6df6c6531c::t_365a7a1f4bc3c5 1-33,45,47,60-65,67-89,93-111
+  s_0b06dc04e23a84::t_fb70ca386169fe 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "c6cdc65cb56037fa40382706d501ab40f1bfb69c",
+  "prompts": {},
+  "sessions": {
+    "s_0b06dc04e23a84": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1810ca2f9ffeRm7n0p8dSZkzvq",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_3ebc6df6c6531c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17a5b7a58ffeUcOylkh73PK199",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_aab0ac99432344": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17a472012ffeLUzKbOeZrlANwf",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    },
+    "s_d50595eedc7ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_17a41b263ffeCp0f5PNekvU6yd",
+        "model": "unknown"
+      },
+      "human_author": "PedromcaMartins <pedromcamartins@duck.com>"
+    }
+  }
+}
