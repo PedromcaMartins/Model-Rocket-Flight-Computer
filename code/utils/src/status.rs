@@ -1,6 +1,7 @@
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Status {
-    pub connected: bool,
+    /// Whether the backend is connected to the flight computer.
+    pub fc_connected: bool,
     pub session_start: chrono::DateTime<chrono::Utc>,
     pub record_count: u64,
     pub latency: Option<std::time::Duration>,

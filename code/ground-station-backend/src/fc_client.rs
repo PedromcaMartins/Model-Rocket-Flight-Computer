@@ -36,7 +36,7 @@ impl FcConnection {
 
 impl FcConnection {
     /// Measure FC ping latency and update the connection state.
-    async fn update_ping(&mut self) {
+    async fn ping(&self) -> Option<std::time::Duration> {
         if let Some(client) = &self.client {
             let start = std::time::Instant::now();
             if let Ok(Ok(resp)) = tokio::time::timeout(
@@ -45,11 +45,16 @@ impl FcConnection {
             ).await
                 && *resp == Config::PING_PAYLOAD
             {
-                self.latency = Some(start.elapsed());
+                let latency = start.elapsed();
+                debug!("FC ping successful: latency = {:?}", latency);
+                return Some(latency)
+            } else {
+                debug!("FC ping failed: invalid response");
             }
         } else {
-            self.latency = None;
+            debug!("FC not connected");
         }
+        None
     }
 }
 
@@ -62,7 +67,8 @@ pub async fn run_ping_loop(state: AppState) {
     ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     loop {
         ticker.tick().await;
-        state.conn.write().await.update_ping().await;
+        let latency = state.conn.read().await.ping().await;
+        state.conn.write().await.latency = latency;
         state.broadcast_status().await;
     }
 }
@@ -117,9 +123,9 @@ async fn try_run_fc_client(state: &AppState) -> anyhow::Result<()> {
 
         // Broadcast to WebSocket clients as JSON.
         if let Ok(json) = serde_json::to_string(&utils::status::WsMessage::Record(record.clone()))
-    && let Err(e) = state.ws_sender.send(json) {
-        debug!("Failed to broadcast record (no WS clients): {}", e);
-    }
+            && let Err(e) = state.ws_sender.send(json) {
+            debug!("Failed to broadcast record (no WS clients): {}", e);
+        }
     }
 
     anyhow::bail!("FC disconnected (subscription closed)")

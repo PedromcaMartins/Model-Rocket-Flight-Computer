@@ -15,8 +15,9 @@ use crate::history::RollingHistory;
 /// TUI render loop. Concurrency model per spec §4.2.
 pub struct AppState<B: BackendClient> {
     // -- Connection --
+    pub ws_connected: AtomicBool,
+    pub ping: AtomicBool,
     pub status: Mutex<Status>,
-    pub ping_heartbeat: AtomicBool,
     pub last_error: Mutex<Option<String>>,
     pub last_cmd_result: Mutex<Option<String>>,
 
@@ -48,13 +49,14 @@ pub struct AppState<B: BackendClient> {
 impl<B: BackendClient> AppState<B> {
     pub fn new(backend: Arc<B>) -> Self {
         Self {
+            ws_connected: AtomicBool::new(false),
+            ping: AtomicBool::new(false),
             status: Mutex::new(Status {
-                connected: false,
+                fc_connected: false,
                 session_start: chrono::DateTime::UNIX_EPOCH,
                 record_count: 0,
                 latency: None,
             }),
-            ping_heartbeat: AtomicBool::new(false),
             last_error: Mutex::new(None),
             last_cmd_result: Mutex::new(None),
             latest_record: ArcSwap::new(Arc::new(None)),
@@ -104,7 +106,7 @@ async fn try_run_ws_reader<B: BackendClient>(
     state: &Arc<AppState<B>>,
 ) -> anyhow::Result<()> {
     let mut stream = backend.connect_ws().await?;
-    state.status.lock().unwrap_or_else(|p| p.into_inner()).connected = true;
+    state.ws_connected.store(true, std::sync::atomic::Ordering::Relaxed);
 
     while let Some(msg) = stream.next().await {
         match msg {
@@ -135,11 +137,8 @@ async fn try_run_ws_reader<B: BackendClient>(
                 }
             }
             WsMessage::Status(status) => {
-                let mut s = state.status.lock().unwrap_or_else(|p| p.into_inner());
-                s.latency = status.latency;
-                s.session_start = status.session_start;
-                drop(s);
-                state.ping_heartbeat.fetch_xor(true, std::sync::atomic::Ordering::Relaxed);
+                *state.status.lock().unwrap_or_else(|p| p.into_inner()) = status;
+                state.ping.fetch_xor(true, std::sync::atomic::Ordering::Relaxed);
             }
             WsMessage::Log(_) => {}
         }

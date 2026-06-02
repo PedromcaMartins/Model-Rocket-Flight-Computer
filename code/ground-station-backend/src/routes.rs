@@ -40,7 +40,7 @@ impl AppState {
             None => (chrono::DateTime::UNIX_EPOCH, 0),
         };
         if let Ok(json) = serde_json::to_string(&utils::status::WsMessage::Status(
-            utils::status::Status { connected: conn.connected(), session_start, record_count, latency: conn.latency },
+            utils::status::Status { fc_connected: conn.connected(), session_start, record_count, latency: conn.latency },
         )) && let Err(e) = self.ws_sender.send(json) {
             debug!("Failed to send status update (no WS clients): {}", e);
         }
@@ -79,7 +79,7 @@ pub async fn status(state: &State<AppState>) -> Json<StatusResponse> {
             None => (chrono::DateTime::UNIX_EPOCH, 0),
         };
         Json(StatusResponse {
-        connected: conn.connected(),
+        fc_connected: conn.connected(),
         session_start,
         record_count,
         latency: None,
